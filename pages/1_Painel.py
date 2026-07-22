@@ -671,472 +671,193 @@ def carregar_pdfs_estado(
 # ============================================================
 # INTERFACE
 # ============================================================
+# ============================================================
+# INTERFACE
+# ============================================================
 
-st.set_page_config(
-    page_title="Extrator RREO Cloud",
-    page_icon="📊",
-    layout="wide",
-)
+import pandas as pd
+from ui.theme import apply_theme, metric_card, render_sidebar
 
-st.title("Extrator RREO Cloud")
-
-st.caption(
-    "Cloud Storage → processamento → Excel → "
-    "Cloud Storage → download no computador"
-)
+st.set_page_config(page_title="Painel de Extração", page_icon="📊", layout="wide", initial_sidebar_state="expanded")
+apply_theme()
+render_sidebar()
 
 status = health_check()
+cloud_ok = bool(status.get("ok"))
+gemini_ok = bool((__import__("os").getenv("GEMINI_API_KEY") or __import__("os").getenv("GOOGLE_API_KEY") or "").strip())
 
-if not status.get("ok"):
-    st.error(
-        "Não foi possível conectar ao Google Cloud Storage."
-    )
-
-    st.code(
-        status.get(
-            "message",
-            "Erro desconhecido.",
-        )
-    )
-
-    st.stop()
-
-st.success(
-    f"Conectado ao bucket: {status['bucket']}"
+st.markdown(
+    f'<div class="hero-row"><div><div class="hero-title">Painel de Extração</div><div class="hero-sub">Selecione o estado ou município, acompanhe o progresso e baixe o resultado.</div></div><span class="online">● Sistema Online</span></div>',
+    unsafe_allow_html=True,
 )
 
+m1,m2,m3,m4=st.columns(4)
+with m1: metric_card("☁","Armazenamento","Cloud Storage","Conectado" if cloud_ok else "Verificar","blue")
+with m2: metric_card("🗄","Banco de Dados","SQLite","Ativo","purple")
+with m3: metric_card("🛡","Credenciais GCS","Configuradas" if cloud_ok else "Pendentes","OK" if cloud_ok else "Atenção","green")
+with m4: metric_card("✦","Gemini API","Configurado" if gemini_ok else "Pendente","OK" if gemini_ok else "Atenção","blue")
+
+if not cloud_ok:
+    st.error("Não foi possível conectar ao Google Cloud Storage.")
+    st.code(status.get("message","Erro desconhecido."))
+    st.stop()
 if not PLANILHA_BASE.exists():
-    st.error(
-        "A planilha-base não foi encontrada."
-    )
-
-    st.code(
-        str(PLANILHA_BASE)
-    )
-
+    st.error("A planilha-base não foi encontrada.")
     st.stop()
 
 try:
-    estados_cloud = carregar_estados_cloud()
+    estados_cloud=carregar_estados_cloud()
 except Exception as error:
-    st.error(
-        "Não foi possível listar os estados do Cloud Storage."
-    )
-
+    st.error("Não foi possível listar os estados do Cloud Storage.")
     st.exception(error)
     st.stop()
-
 if not estados_cloud:
-    st.warning(
-        "Nenhuma pasta de estado foi encontrada no bucket."
-    )
-
+    st.warning("Nenhuma pasta de estado foi encontrada no bucket.")
     st.stop()
 
-coluna_1, coluna_2 = st.columns(2)
-
-with coluna_1:
-    modo = st.radio(
-        "Modo de processamento",
-        options=[
-            "Município único",
-            "Estado inteiro",
-        ],
-        horizontal=True,
-    )
-
-with coluna_2:
-    estado_cloud = st.selectbox(
-        "Estado disponível no Cloud Storage",
-        options=estados_cloud,
-    )
-
-uf = extrair_uf(
-    estado_cloud
-)
-
+st.markdown('<div class="section-card"><div class="section-title"><span class="section-num">1.</span>Seleção de Estado ou Município</div>',unsafe_allow_html=True)
+c1,c2,c3,c4=st.columns([1.15,1.45,1.7,.9])
+with c1:
+    modo_curto=st.segmented_control("Modo de Processamento",options=["Estado","Município"],default="Estado")
+    modo="Estado inteiro" if modo_curto=="Estado" else "Município único"
+with c2:
+    estado_cloud=st.selectbox("Estado (UF)",estados_cloud)
+uf=extrair_uf(estado_cloud)
 if not uf:
-    uf_manual = st.selectbox(
-        "Não consegui reconhecer a UF da pasta. Selecione:",
-        options=sorted(
-            CODIGOS_UF.keys()
-        ),
-    )
-
-    uf = uf_manual
-
-st.info(
-    f"UF reconhecida: {uf} — "
-    f"código estadual IBGE: {CODIGOS_UF[uf]}"
-)
+    uf=st.selectbox("UF",sorted(CODIGOS_UF))
+with c4:
+    ano=st.selectbox("Ano de Referência",[2025,2024,2023],index=0)
 
 try:
-    arquivos_pdf = carregar_pdfs_estado(
-        estado_cloud
-    )
-except Exception as error:
-    st.error(
-        "Não foi possível listar os PDFs desse estado."
-    )
-
-    st.exception(error)
-    st.stop()
-
-st.metric(
-    "PDFs encontrados",
-    len(arquivos_pdf),
-)
-
-if not arquivos_pdf:
-    st.warning(
-        "Não existem PDFs na pasta selecionada."
-    )
-
-    st.stop()
-
-try:
-    workbook_consulta = load_workbook(
-        PLANILHA_BASE,
-        read_only=False,
-        data_only=False,
-    )
-
-    worksheet_consulta = escolher_aba_principal(
-        workbook_consulta
-    )
-
-    municipios = carregar_municipios(
-        worksheet_consulta,
-        uf,
-    )
-
+    arquivos_pdf=carregar_pdfs_estado(estado_cloud)
+    workbook_consulta=load_workbook(PLANILHA_BASE,read_only=False,data_only=False)
+    worksheet_consulta=escolher_aba_principal(workbook_consulta)
+    municipios=carregar_municipios(worksheet_consulta,uf)
     workbook_consulta.close()
-
 except Exception as error:
-    st.error(
-        "Não foi possível ler a planilha-base."
-    )
-
+    st.error("Não foi possível preparar os dados do estado.")
     st.exception(error)
     st.stop()
 
-if not municipios:
-    st.error(
-        f"Nenhum município de {uf} foi encontrado "
-        "na planilha-base."
-    )
-
-    st.stop()
-
-municipio_selecionado = None
-arquivo_selecionado = None
-
-if modo == "Município único":
-    municipio_selecionado = st.selectbox(
-        "Selecione o município",
-        options=municipios,
-        format_func=lambda item: (
-            f"{item['codigo_ibge']} — "
-            f"{item['nome']}/{item['uf']}"
-        ),
-    )
-
-    arquivo_selecionado, nota_pdf = (
-        localizar_pdf_municipio(
-            municipio_selecionado,
-            arquivos_pdf,
-        )
-    )
-
-    if arquivo_selecionado:
-        st.write(
-            "**PDF sugerido:** "
-            f"`{arquivo_selecionado['name']}`"
-        )
-
-        st.caption(
-            "Correspondência do nome: "
-            f"{nota_pdf * 100:.1f}%"
-        )
-
-        nomes_arquivos = [
-            arquivo["name"]
-            for arquivo in arquivos_pdf
-        ]
-
-        nome_escolhido = st.selectbox(
-            "Confirme ou altere o PDF",
-            options=nomes_arquivos,
-            index=nomes_arquivos.index(
-                arquivo_selecionado["name"]
-            ),
-        )
-
-        arquivo_selecionado = next(
-            arquivo
-            for arquivo in arquivos_pdf
-            if arquivo["name"] == nome_escolhido
-        )
-
+municipio_selecionado=None
+arquivo_selecionado=None
+with c3:
+    if modo=="Município único":
+        municipio_selecionado=st.selectbox("Município",municipios,format_func=lambda i:f"{i['nome']} - {i['uf']}")
     else:
-        st.warning(
-            "O PDF do município não foi identificado "
-            "automaticamente."
-        )
+        st.selectbox("Município (opcional)",["Todos os municípios"],disabled=True)
+st.markdown('</div>',unsafe_allow_html=True)
 
-        nome_escolhido = st.selectbox(
-            "Selecione manualmente o PDF",
-            options=[
-                arquivo["name"]
-                for arquivo in arquivos_pdf
-            ],
-        )
+if modo=="Município único":
+    arquivo_selecionado,nota_pdf=localizar_pdf_municipio(municipio_selecionado,arquivos_pdf)
+    nomes=[a["name"] for a in arquivos_pdf]
+    if nomes:
+        indice=nomes.index(arquivo_selecionado["name"]) if arquivo_selecionado else 0
+        nome_escolhido=st.selectbox("PDF confirmado",nomes,index=indice)
+        arquivo_selecionado=next(a for a in arquivos_pdf if a["name"]==nome_escolhido)
 
-        arquivo_selecionado = next(
-            arquivo
-            for arquivo in arquivos_pdf
-            if arquivo["name"] == nome_escolhido
-        )
+left,mid,right=st.columns([1.55,1.05,1.0])
+with left:
+    st.markdown('<div class="section-card"><div class="section-title"><span class="section-num">2.</span>Arquivos Encontrados</div>',unsafe_allow_html=True)
+    a,b,c,d=st.columns(4)
+    total_size=sum(int(x.get("size") or 0) for x in arquivos_pdf)
+    with a: st.markdown(f'<div class="mini-stat"><div class="mini-label">Municípios</div><div class="mini-value">{len(municipios)}</div></div>',unsafe_allow_html=True)
+    with b: st.markdown(f'<div class="mini-stat"><div class="mini-label">PDFs</div><div class="mini-value">{len(arquivos_pdf)}</div></div>',unsafe_allow_html=True)
+    with c: st.markdown(f'<div class="mini-stat"><div class="mini-label">Tamanho Total</div><div class="mini-value">{total_size/1024/1024:.1f} MB</div></div>',unsafe_allow_html=True)
+    with d: st.markdown(f'<div class="mini-stat"><div class="mini-label">Ano</div><div class="mini-value">{ano}</div></div>',unsafe_allow_html=True)
+    preview=[]
+    for mun in municipios[:50]:
+        arq,nota=localizar_pdf_municipio(mun,arquivos_pdf)
+        preview.append({"Município":mun["nome"],"Código IBGE":mun["codigo_ibge"],"PDF":"Sim" if arq else "Não","Correspondência":f"{nota*100:.0f}%" if arq else "-"})
+    st.dataframe(pd.DataFrame(preview),use_container_width=True,hide_index=True,height=330)
+    st.caption(f"Exibindo os primeiros {min(50,len(preview))} municípios. O processamento usa a lista completa.")
+    st.markdown('</div>',unsafe_allow_html=True)
 
-st.divider()
+with mid:
+    st.markdown('<div class="section-card"><div class="section-title"><span class="section-num">3.</span>Processamento</div>',unsafe_allow_html=True)
+    state=st.session_state.setdefault("job",{"status":"Aguardando","progress":0,"current":"Nenhum","success":0,"errors":0,"total":0})
+    st.write("**Situação Atual**")
+    st.info(state["status"])
+    st.progress(float(state["progress"]),text=f"Progresso geral: {state['progress']*100:.0f}%")
+    st.write("**Município Atual**")
+    st.write(state["current"])
+    x,y,z=st.columns(3)
+    x.metric("Concluídos",state["success"])
+    y.metric("Pendentes",max(state["total"]-state["success"]-state["errors"],0))
+    z.metric("Erros",state["errors"])
+    executar=st.button("▶ Processar agora",type="primary",use_container_width=True)
+    st.markdown('</div>',unsafe_allow_html=True)
 
-executar = st.button(
-    "Processar agora",
-    type="primary",
-    use_container_width=True,
-)
+with right:
+    st.markdown('<div class="section-card"><div class="section-title"><span class="section-num">4.</span>Logs do Sistema</div>',unsafe_allow_html=True)
+    logbox=st.empty()
+    logs=st.session_state.setdefault("logs",["Sistema pronto para iniciar.",f"{len(arquivos_pdf)} PDFs encontrados em {uf}."])
+    logbox.code("\n".join(logs[-12:]),language=None)
+    st.markdown('</div>',unsafe_allow_html=True)
+    st.markdown('<div class="section-card"><div class="section-title"><span class="section-num">5.</span>Resultado</div>',unsafe_allow_html=True)
+    result=st.session_state.get("last_result")
+    if result:
+        st.success(result["name"])
+        st.download_button("⬇ Download",data=result["bytes"],file_name=result["name"],mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",use_container_width=True)
+        st.caption(result["cloud"])
+    else:
+        st.caption("O arquivo Excel aparecerá aqui após o processamento.")
+    st.markdown('</div>',unsafe_allow_html=True)
 
 if executar:
-    pasta_temporaria = Path(
-        tempfile.mkdtemp(
-            prefix="rreo_cloud_"
-        )
-    )
-
+    pasta_temporaria=Path(tempfile.mkdtemp(prefix="rreo_cloud_"))
     try:
-        caminho_saida = (
-            pasta_temporaria
-            / gerar_nome_saida(
-                uf=uf,
-                modo=modo,
-                municipio=municipio_selecionado,
-            )
-        )
-
-        shutil.copy2(
-            PLANILHA_BASE,
-            caminho_saida,
-        )
-
-        workbook = load_workbook(
-            caminho_saida
-        )
-
-        worksheet = escolher_aba_principal(
-            workbook
-        )
-
-        colunas_codigos = localizar_colunas_codigos(
-            worksheet,
-            CODIGOS_RREO,
-        )
-
-        codigos_ausentes = [
-            codigo
-            for codigo in CODIGOS_RREO
-            if codigo not in colunas_codigos
-        ]
-
-        if codigos_ausentes:
-            st.warning(
-                "Algumas colunas não foram localizadas: "
-                + ", ".join(codigos_ausentes)
-            )
-
-        sucessos = 0
-        falhas = 0
-        divergencias: list[dict[str, Any]] = []
-
-        if modo == "Município único":
-            arquivos_processar = [
-                arquivo_selecionado
-            ]
-
-            municipios_alvo = [
-                municipio_selecionado
-            ]
-
-        else:
-            arquivos_processar = arquivos_pdf
-            municipios_alvo = municipios
-
-        progresso = st.progress(0)
-
-        mensagem = st.empty()
-
-        total = len(arquivos_processar)
-
-        for indice, arquivo_pdf in enumerate(
-            arquivos_processar,
-            start=1,
-        ):
-            mensagem.write(
-                f"Processando {indice} de {total}: "
-                f"{arquivo_pdf['name']}"
-            )
-
+        caminho_saida=pasta_temporaria/gerar_nome_saida(uf,modo,municipio_selecionado)
+        shutil.copy2(PLANILHA_BASE,caminho_saida)
+        workbook=load_workbook(caminho_saida)
+        worksheet=escolher_aba_principal(workbook)
+        colunas_codigos=localizar_colunas_codigos(worksheet,CODIGOS_RREO)
+        arquivos_processar=[arquivo_selecionado] if modo=="Município único" else arquivos_pdf
+        municipios_alvo=[municipio_selecionado] if modo=="Município único" else municipios
+        total=len(arquivos_processar)
+        state.update({"status":"Em andamento","progress":0,"current":"Preparando...","success":0,"errors":0,"total":total})
+        divergencias=[]
+        progress_slot=st.progress(0,text="Iniciando...")
+        status_slot=st.empty()
+        for indice,arquivo_pdf in enumerate(arquivos_processar,start=1):
+            state["current"]=arquivo_pdf["name"]
+            logs.append(f"{datetime.now().strftime('%H:%M:%S')}  Processando {arquivo_pdf['name']}")
+            logbox.code("\n".join(logs[-12:]),language=None)
+            status_slot.info(f"Processando {indice} de {total}: {arquivo_pdf['name']}")
             try:
-                resultados, texto_pdf = processar_um_pdf(
-                    arquivo_pdf,
-                    pasta_temporaria,
-                )
-
-                if modo == "Município único":
-                    municipio_encontrado = (
-                        municipio_selecionado
-                    )
-
-                    nota = 1.0
-                    origem = "seleção manual"
-
+                resultados,texto_pdf=processar_um_pdf(arquivo_pdf,pasta_temporaria)
+                if modo=="Município único":
+                    municipio_encontrado,nota,origem=municipio_selecionado,1.0,"seleção manual"
                 else:
-                    (
-                        municipio_encontrado,
-                        nota,
-                        origem,
-                    ) = localizar_municipio_pdf(
-                        arquivo_pdf,
-                        texto_pdf,
-                        municipios_alvo,
-                    )
-
+                    municipio_encontrado,nota,origem=localizar_municipio_pdf(arquivo_pdf,texto_pdf,municipios_alvo)
                 if municipio_encontrado is None:
-                    falhas += 1
-
-                    divergencias.append(
-                        {
-                            "arquivo": arquivo_pdf["name"],
-                            "problema": (
-                                "Município não identificado"
-                            ),
-                            "nota": nota,
-                        }
-                    )
-
+                    state["errors"]+=1
+                    divergencias.append({"arquivo":arquivo_pdf["name"],"problema":"Município não identificado","nota":nota})
                 else:
-                    preencher_resultados(
-                        worksheet=worksheet,
-                        row=municipio_encontrado["row"],
-                        resultados=resultados,
-                        colunas_codigos=colunas_codigos,
-                    )
-
-                    sucessos += 1
-
-                    if nota < 0.88:
-                        divergencias.append(
-                            {
-                                "arquivo": arquivo_pdf["name"],
-                                "problema": (
-                                    "Nome aproximado: "
-                                    f"{municipio_encontrado['nome']}/"
-                                    f"{municipio_encontrado['uf']} "
-                                    f"({origem})"
-                                ),
-                                "nota": nota,
-                            }
-                        )
-
+                    preencher_resultados(worksheet,municipio_encontrado["row"],resultados,colunas_codigos)
+                    state["success"]+=1
             except Exception as error:
-                falhas += 1
-
-                divergencias.append(
-                    {
-                        "arquivo": arquivo_pdf["name"],
-                        "problema": str(error),
-                        "nota": 0.0,
-                    }
-                )
-
-            progresso.progress(
-                indice / total
-            )
-
-        workbook.save(
-            caminho_saida
-        )
-
-        workbook.close()
-
-        mensagem.success(
-            "Processamento concluído."
-        )
-
-        resultado_cloud = upload_result(
-            local_path=caminho_saida,
-            state=uf,
-        )
-
-        dados_excel = caminho_saida.read_bytes()
-
-        st.success(
-            "Planilha gerada e salva automaticamente "
-            "no Google Cloud Storage."
-        )
-
-        coluna_a, coluna_b, coluna_c = st.columns(3)
-
-        coluna_a.metric(
-            "Processados",
-            total,
-        )
-
-        coluna_b.metric(
-            "Sucessos",
-            sucessos,
-        )
-
-        coluna_c.metric(
-            "Falhas",
-            falhas,
-        )
-
-        st.write(
-            "**Arquivo no Cloud:** "
-            f"`{resultado_cloud['blob_name']}`"
-        )
-
-        st.download_button(
-            label="Baixar planilha no computador",
-            data=dados_excel,
-            file_name=caminho_saida.name,
-            mime=(
-                "application/vnd.openxmlformats-officedocument."
-                "spreadsheetml.sheet"
-            ),
-            use_container_width=True,
-        )
-
+                state["errors"]+=1
+                divergencias.append({"arquivo":arquivo_pdf["name"],"problema":str(error),"nota":0})
+            state["progress"]=indice/total
+            progress_slot.progress(state["progress"],text=f"Progresso geral: {state['progress']*100:.0f}%")
+        workbook.save(caminho_saida); workbook.close()
+        resultado_cloud=upload_result(caminho_saida,uf)
+        dados=caminho_saida.read_bytes()
+        st.session_state["last_result"]={"name":caminho_saida.name,"bytes":dados,"cloud":resultado_cloud["blob_name"]}
+        state["status"]="Concluído"; state["current"]="Finalizado"
+        logs.append(f"{datetime.now().strftime('%H:%M:%S')}  Extração concluída: {state['success']} sucesso(s), {state['errors']} erro(s).")
+        status_slot.success("Processamento concluído. O Excel foi salvo no Cloud Storage.")
         if divergencias:
-            st.warning(
-                "Alguns arquivos precisam de conferência."
-            )
-
-            st.dataframe(
-                divergencias,
-                use_container_width=True,
-                hide_index=True,
-            )
-
+            st.warning("Alguns arquivos precisam de conferência.")
+            st.dataframe(divergencias,use_container_width=True,hide_index=True)
+        st.rerun()
     except Exception as error:
-        st.error(
-            "O processamento não foi concluído."
-        )
-
+        state["status"]="Falha"
+        logs.append(f"ERRO: {error}")
         st.exception(error)
-
     finally:
-        shutil.rmtree(
-            pasta_temporaria,
-            ignore_errors=True,
-        )
+        shutil.rmtree(pasta_temporaria,ignore_errors=True)
+
+st.markdown('<div class="section-card"><div class="section-title">Fluxo Operacional</div><div class="flow"><div class="flow-step"><div class="flow-num">1</div><div><div class="flow-name">Listagem</div><div class="flow-desc">PDFs localizados no Google Cloud Storage</div></div></div><div class="flow-arrow">→</div><div class="flow-step"><div class="flow-num">2</div><div><div class="flow-name">Extração</div><div class="flow-desc">Gemini lê Receitas Realizadas Até o Bimestre (b)</div></div></div><div class="flow-arrow">→</div><div class="flow-step"><div class="flow-num">3</div><div><div class="flow-name">Geração</div><div class="flow-desc">Excel preenchido automaticamente</div></div></div><div class="flow-arrow">→</div><div class="flow-step"><div class="flow-num">4</div><div><div class="flow-name">Upload</div><div class="flow-desc">Resultado salvo e liberado</div></div></div></div></div>',unsafe_allow_html=True)
+st.markdown('<div class="footerbar">● Sistema operando com Gemini &nbsp;•&nbsp; Extração inteligente &nbsp;•&nbsp; Cache de listagem &nbsp;•&nbsp; Armazenamento seguro na nuvem</div>',unsafe_allow_html=True)
