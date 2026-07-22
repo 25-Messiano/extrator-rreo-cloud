@@ -1,0 +1,28 @@
+{
+  "arquivo": "templates/RREO-TCM+FNDE_PLANILHA_BASE.xlsx",
+  "aba": "BaseDadosCaracterística_C.INEP",
+  "colunas": {
+    "codigo_ibge": "Código IBGE",
+    "ente_federado": "Ente Federado",
+    "1.1": "1.1 IPTU",
+    "1.2": "1.2 ITBI",
+    "1.3": "1.3 ISS",
+    "1.4": "1.4 IRRF",
+    "2.1": "2.1 FPM",
+    "2.1.1": "2.1.1",
+    "2.1.2": "2.1.2",
+    "2.2": "2.2 ICMS",
+    "2.3": "2.3 IPI-Exportação",
+    "2.4": "2.4 ITR",
+    "2.5": "2.5 IPVA",
+    "2.6": "2.6 IOF-Ouro",
+    "6.1.1": "6.1.1 Principal",
+    "6.2": "6.2 FUNDEB VAAF",
+    "6.2.1": "6.2.1 Principal",
+    "PNAE": "PNAE",
+    "PNATE": "PNATE",
+    "PDDE": "PDDE",
+    "QSE": "QSE",
+    "PNLD": "PNLD"
+  }
+}

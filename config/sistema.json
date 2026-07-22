@@ -1,0 +1,12 @@
+{
+  "modo_economico": true,
+  "evitar_reprocessamento": true,
+  "backup_drive": true,
+  "max_arquivos_por_lote": 100,
+  "extensoes_permitidas": [
+    ".pdf",
+    ".zip",
+    ".xlsx"
+  ],
+  "usar_gemini": true
+}
