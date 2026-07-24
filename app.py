@@ -5,11 +5,29 @@ from datetime import datetime
 
 import streamlit as st
 
+from auth.database import AuthDatabase
+from auth.session import current_user
+from auth.views import render_first_admin, render_force_password_change, render_login
 from integrations.google_storage import health_check
 from ui.theme import apply_theme, metric_card, render_sidebar
 
 st.set_page_config(page_title="Extrator RREO Cloud", page_icon="☁️", layout="wide", initial_sidebar_state="expanded")
 apply_theme()
+
+auth_db = AuthDatabase()
+if not auth_db.has_admin():
+    render_first_admin(auth_db)
+    st.stop()
+
+user = current_user()
+if not user:
+    render_login(auth_db)
+    st.stop()
+
+if user.get("trocar_senha"):
+    render_force_password_change(auth_db, user)
+    st.stop()
+
 render_sidebar()
 
 cloud_env = bool((os.getenv("GOOGLE_SERVICE_ACCOUNT_JSON") or os.getenv("GCP_KEY") or "").strip())
