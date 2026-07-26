@@ -31,7 +31,7 @@ def new_user_dialog() -> None:
                 email=email,
                 password=password,
                 perfil=perfil,
-                trocar_senha=True,
+                trocar_senha=False,
             )
             if send_email:
                 if email_configured():
@@ -72,8 +72,8 @@ def manage_user_dialog(user: dict) -> None:
 
     if save_password:
         try:
-            db.update_password(user["id"], temporary, force_change=True)
-            st.success("Nova senha salva. A troca será exigida no próximo acesso.")
+            db.update_password(user["id"], temporary, force_change=False)
+            st.success("Nova senha salva com sucesso.")
         except ValueError as exc:
             st.error(str(exc))
 
