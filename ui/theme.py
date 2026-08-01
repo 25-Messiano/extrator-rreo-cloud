@@ -78,7 +78,8 @@ def render_sidebar(db: AuthDatabase | None = None) -> None:
             unsafe_allow_html=True,
         )
         st.page_link("app.py", label="Painel inicial", icon="🏠")
-        st.page_link("pages/1_Painel.py", label="Painel de extração", icon="📊")
+        st.page_link("pages/1_Painel.py", label="Painel de extração RREO", icon="📊")
+        st.page_link("pages/6_Painel_FNDE.py", label="Painel de extração FNDE", icon="💰")
         st.page_link("pages/4_Arquivos_Cloud.py", label="Arquivos Cloud", icon="📁")
         st.page_link("pages/2_Historico.py", label="Histórico", icon="🕘")
         if is_admin():
