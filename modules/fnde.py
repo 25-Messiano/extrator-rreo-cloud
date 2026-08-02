@@ -16,7 +16,14 @@ from openpyxl import load_workbook
 from pypdf import PdfReader
 import pypdfium2 as pdfium
 
-DEFAULT_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+DEFAULT_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash")
+
+BASE_DIR = Path(__file__).resolve().parents[1]
+REFERENCIAS_FNDE_DIR = BASE_DIR / "data" / "referencias_fnde"
+ARQUIVO_REGRAS = REFERENCIAS_FNDE_DIR / "regras_programas.json"
+ARQUIVO_ALIASES = REFERENCIAS_FNDE_DIR / "aliases_programas.json"
+ARQUIVO_EXCLUSOES = REFERENCIAS_FNDE_DIR / "palavras_excluir.json"
+ARQUIVO_CASOS_TESTE = REFERENCIAS_FNDE_DIR / "casos_teste_fnde.json"
 
 COLUNAS_FNDE = {
     "PNAE": 20,   # T
@@ -59,6 +66,184 @@ class ResultadoFNDE:
         return asdict(self)
 
 
+CONFIG_AVISOS: list[str] = []
+
+
+def _carregar_json_configuracao(
+    caminho: Path,
+    padrao: dict[str, Any],
+) -> dict[str, Any]:
+    if not caminho.exists():
+        CONFIG_AVISOS.append(
+            f"Configuração opcional não encontrada: {caminho.as_posix()}. "
+            "As regras internas de segurança serão utilizadas."
+        )
+        return padrao
+
+    try:
+        conteudo = json.loads(caminho.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError) as erro:
+        CONFIG_AVISOS.append(
+            f"Não foi possível carregar {caminho.name}: {erro}. "
+            "As regras internas de segurança serão utilizadas."
+        )
+        return padrao
+
+    if not isinstance(conteudo, dict):
+        CONFIG_AVISOS.append(
+            f"O arquivo {caminho.name} não contém um objeto JSON válido. "
+            "As regras internas de segurança serão utilizadas."
+        )
+        return padrao
+
+    return conteudo
+
+
+_ALIASES_PADRAO = {
+    "aliases": {
+        "PNAE": [
+            "PROGRAMA NACIONAL DE ALIMENTAÇÃO ESCOLAR",
+            "PROG.NACIONAL DE ALIMENTAÇÃO ESCOLAR",
+            "NACIONAL DE ALIMENTAÇÃO ESCOLAR",
+            "PNAE",
+        ],
+        "PNATE": [
+            "PROGRAMA NACIONAL DE APOIO AO TRANSPORTE DO ESCOLAR",
+            "PROGRAMA NACIONAL DE APOIO AO TRANSP DO ESCOLAR",
+            "NACIONAL DE APOIO AO TRANSPORTE DO ESCOLAR",
+            "NACIONAL DE APOIO AO TRANSP DO ESCOLAR",
+            "PNATE",
+        ],
+        "PDDE": [
+            "PROGRAMA DINHEIRO DIRETO NA ESCOLA",
+            "PDDE",
+        ],
+        "QSE": [
+            "QUOTA ESTADUAL/MUNICIPAL",
+            "COTA ESTADUAL/MUNICIPAL",
+            "SALÁRIO-EDUCAÇÃO",
+            "QSE",
+            "QESE",
+        ],
+    }
+}
+
+_EXCLUSOES_PADRAO = {
+    "excluir_do_pdde": [
+        "ANTIGO PDDE ESTRUTURA",
+        "ÁGUA E ESGOTAMENTO SANITÁRIO",
+        "ESCOLA DO CAMPO",
+        "ESCOLA ACESSÍVEL",
+        "PDE ESCOLA",
+        "ENSINO MÉDIO INOVADOR",
+        "MAIS CULTURA",
+        "ESCOLA DE FRONTEIRA",
+        "ATLETA NA ESCOLA",
+        "ESCOLA SUSTENTÁVEL",
+    ],
+    "ignorar_programas": [
+        "PNLD",
+        "PROGRAMA NACIONAL DO LIVRO DIDÁTICO",
+    ],
+}
+
+_REGRAS_PADRAO = {
+    "programas": {
+        "PNAE": {"titulo_canonico": "PROGRAMA NACIONAL DE ALIMENTAÇÃO ESCOLAR"},
+        "PNATE": {"titulo_canonico": "PROGRAMA NACIONAL DE APOIO AO TRANSPORTE DO ESCOLAR"},
+        "PDDE": {"titulo_canonico": "PROGRAMA DINHEIRO DIRETO NA ESCOLA"},
+        "QSE": {"titulo_canonico": "QUOTA ESTADUAL/MUNICIPAL"},
+    }
+}
+
+REGRAS_CONFIG: dict[str, Any] = {}
+ALIASES_CONFIG: dict[str, Any] = {}
+EXCLUSOES_CONFIG: dict[str, Any] = {}
+CASOS_TESTE_CONFIG: dict[str, Any] = {}
+ALIASES_NORMALIZADOS: dict[str, tuple[str, ...]] = {}
+EXCLUSOES_PDDE_NORMALIZADAS: tuple[str, ...] = ()
+PROGRAMAS_IGNORADOS_NORMALIZADOS: tuple[str, ...] = ()
+
+
+def _lista_textos_configuracao(valor: Any) -> list[str]:
+    if not isinstance(valor, list):
+        return []
+    return [str(item).strip() for item in valor if str(item).strip()]
+
+
+def _normalizar_lista_configuracao(valores: list[str]) -> tuple[str, ...]:
+    return tuple(
+        item
+        for item in (normalizar_texto(valor) for valor in valores)
+        if item
+    )
+
+
+def _aliases_normalizados() -> dict[str, tuple[str, ...]]:
+    aliases_brutos = ALIASES_CONFIG.get("aliases", {})
+    if not isinstance(aliases_brutos, dict):
+        aliases_brutos = {}
+
+    resultado: dict[str, tuple[str, ...]] = {}
+    aliases_padrao = _ALIASES_PADRAO["aliases"]
+
+    for programa in ("PNAE", "PNATE", "PDDE", "QSE"):
+        configurados = _lista_textos_configuracao(aliases_brutos.get(programa))
+        padrao = _lista_textos_configuracao(aliases_padrao.get(programa))
+        resultado[programa] = _normalizar_lista_configuracao(
+            list(dict.fromkeys(configurados + padrao))
+        )
+
+    return resultado
+
+
+def _inicializar_configuracoes() -> None:
+    global REGRAS_CONFIG
+    global ALIASES_CONFIG
+    global EXCLUSOES_CONFIG
+    global CASOS_TESTE_CONFIG
+    global ALIASES_NORMALIZADOS
+    global EXCLUSOES_PDDE_NORMALIZADAS
+    global PROGRAMAS_IGNORADOS_NORMALIZADOS
+
+    REGRAS_CONFIG = _carregar_json_configuracao(ARQUIVO_REGRAS, _REGRAS_PADRAO)
+    ALIASES_CONFIG = _carregar_json_configuracao(ARQUIVO_ALIASES, _ALIASES_PADRAO)
+    EXCLUSOES_CONFIG = _carregar_json_configuracao(ARQUIVO_EXCLUSOES, _EXCLUSOES_PADRAO)
+    CASOS_TESTE_CONFIG = _carregar_json_configuracao(
+        ARQUIVO_CASOS_TESTE,
+        {"casos": []},
+    )
+
+    ALIASES_NORMALIZADOS = _aliases_normalizados()
+    EXCLUSOES_PDDE_NORMALIZADAS = _normalizar_lista_configuracao(
+        _lista_textos_configuracao(EXCLUSOES_CONFIG.get("excluir_do_pdde"))
+        + _lista_textos_configuracao(_EXCLUSOES_PADRAO.get("excluir_do_pdde"))
+    )
+    PROGRAMAS_IGNORADOS_NORMALIZADOS = _normalizar_lista_configuracao(
+        _lista_textos_configuracao(EXCLUSOES_CONFIG.get("ignorar_programas"))
+        + _lista_textos_configuracao(_EXCLUSOES_PADRAO.get("ignorar_programas"))
+    )
+
+
+def _resumo_regras_para_prompt() -> str:
+    linhas: list[str] = []
+    for programa in ("PNAE", "PNATE", "PDDE", "QSE"):
+        aliases = ALIASES_CONFIG.get("aliases", {}).get(programa, [])
+        if isinstance(aliases, list):
+            nomes = "; ".join(str(item) for item in aliases if str(item).strip())
+            if nomes:
+                linhas.append(f"- {programa}: {nomes}")
+
+    exclusoes = EXCLUSOES_CONFIG.get("excluir_do_pdde", [])
+    if isinstance(exclusoes, list) and exclusoes:
+        linhas.append(
+            "- Nunca incorporar ao PDDE: "
+            + "; ".join(str(item) for item in exclusoes if str(item).strip())
+        )
+
+    return "\n".join(linhas)
+
+
 def _api_key() -> str:
     chave = (
         os.getenv("GEMINI_API_KEY")
@@ -86,6 +271,9 @@ def normalizar_texto(valor: Any) -> str:
     texto = texto.upper()
     texto = re.sub(r"\s+", " ", texto)
     return texto.strip()
+
+
+_inicializar_configuracoes()
 
 
 def normalizar_codigo_ibge(valor: Any) -> str:
@@ -191,6 +379,150 @@ def renderizar_paginas_png(
     return imagens
 
 
+def _normalizar_lista_aliases(programa: str) -> list[str]:
+    aliases_json = (
+        CONFIG_FNDE.get("aliases", {})
+        .get("aliases", {})
+        .get(programa, [])
+    )
+
+    aliases_padrao = {
+        "PNAE": [
+            "PROGRAMA NACIONAL DE ALIMENTACAO ESCOLAR",
+            "PROG NACIONAL DE ALIMENTACAO ESCOLAR",
+            "NACIONAL DE ALIMENTACAO ESCOLAR",
+            "PNAE",
+        ],
+        "PNATE": [
+            "PROGRAMA NACIONAL DE APOIO AO TRANSPORTE DO ESCOLAR",
+            "PROGRAMA NACIONAL DE APOIO AO TRANSP DO ESCOLAR",
+            "NACIONAL DE APOIO AO TRANSPORTE DO ESCOLAR",
+            "NACIONAL DE APOIO AO TRANSP DO ESCOLAR",
+            "PNATE",
+        ],
+        "PDDE": [
+            "PROGRAMA DINHEIRO DIRETO NA ESCOLA",
+            "PDDE",
+        ],
+        "QSE": [
+            "QUOTA ESTADUAL MUNICIPAL",
+            "COTA ESTADUAL MUNICIPAL",
+            "SALARIO EDUCACAO",
+            "QSE",
+            "QESE",
+        ],
+    }
+
+    combinados = [
+        normalizar_texto(item)
+        for item in [*aliases_padrao.get(programa, []), *aliases_json]
+        if str(item).strip()
+    ]
+    return sorted(set(combinados), key=len, reverse=True)
+
+
+def _expressoes_excluidas_pdde() -> list[str]:
+    exclusoes_json = (
+        CONFIG_FNDE.get("exclusoes", {})
+        .get("excluir_do_pdde", [])
+    )
+    exclusoes_padrao = [
+        "ANTIGO PDDE ESTRUTURA",
+        "AGUA E ESGOTAMENTO SANITARIO",
+        "ESCOLA DO CAMPO",
+        "ESCOLA ACESSIVEL",
+        "PDE ESCOLA",
+        "ENSINO MEDIO INOVADOR",
+        "MAIS CULTURA",
+        "ESCOLA DE FRONTEIRA",
+        "ATLETA NA ESCOLA",
+        "ESCOLA SUSTENTAVEL",
+    ]
+    return sorted(
+        {
+            normalizar_texto(item)
+            for item in [*exclusoes_padrao, *exclusoes_json]
+            if str(item).strip()
+        },
+        key=len,
+        reverse=True,
+    )
+
+
+ALIASES_FNDE = {
+    programa: _normalizar_lista_aliases(programa)
+    for programa in ("PNAE", "PNATE", "PDDE", "QSE")
+}
+EXCLUSOES_PDDE = _expressoes_excluidas_pdde()
+
+
+def _classificar_titulo_programa(titulo: str) -> str | None:
+    texto = normalizar_texto(titulo)
+
+    if any(expressao in texto for expressao in EXCLUSOES_PDDE):
+        return None
+
+    for programa in ("PNAE", "PNATE", "PDDE", "QSE"):
+        if any(alias in texto for alias in ALIASES_FNDE[programa]):
+            return programa
+
+    return None
+
+
+def _recalcular_valores_por_ocorrencias(
+    ocorrencias: list[OcorrenciaFNDE],
+) -> tuple[dict[str, float], list[OcorrenciaFNDE], list[str]]:
+    totais = {"PNAE": 0.0, "PNATE": 0.0, "PDDE": 0.0, "QSE": 0.0}
+    ocorrencias_validas: list[OcorrenciaFNDE] = []
+    avisos: list[str] = []
+    vistos: set[tuple[str, str, int | None, float]] = set()
+
+    for ocorrencia in ocorrencias:
+        programa = _classificar_titulo_programa(ocorrencia.titulo)
+        if programa is None:
+            avisos.append(
+                "Ocorrência descartada por não pertencer a um bloco oficial: "
+                f"{ocorrencia.titulo or 'sem título'}."
+            )
+            continue
+
+        chave = (
+            programa,
+            normalizar_texto(ocorrencia.titulo),
+            ocorrencia.pagina,
+            round(float(ocorrencia.valor), 2),
+        )
+        if chave in vistos:
+            avisos.append(
+                f"Ocorrência duplicada descartada: {ocorrencia.titulo}."
+            )
+            continue
+
+        vistos.add(chave)
+        ocorrencia.programa = programa
+        ocorrencias_validas.append(ocorrencia)
+        totais[programa] += round(float(ocorrencia.valor), 2)
+
+    return (
+        {programa: round(valor, 2) for programa, valor in totais.items()},
+        ocorrencias_validas,
+        avisos,
+    )
+
+
+def _resumo_regras_para_prompt() -> str:
+    return f"""
+ALIASES CARREGADOS DOS JSONs:
+- PNAE: {ALIASES_FNDE['PNAE']}
+- PNATE: {ALIASES_FNDE['PNATE']}
+- PDDE: {ALIASES_FNDE['PDDE']}
+- QSE: {ALIASES_FNDE['QSE']}
+
+EXCLUSÕES OBRIGATÓRIAS DO PDDE:
+{EXCLUSOES_PDDE}
+""".strip()
+
+
 def _schema_gemini() -> dict[str, Any]:
     return {
         "type": "object",
@@ -253,30 +585,114 @@ OBJETIVO:
 Extrair os valores totais de PNAE, PNATE, PDDE e QSE/QESE e retornar JSON.
 
 REGRAS OBRIGATÓRIAS:
-1. PNAE: reconhecer "PROGRAMA NACIONAL DE ALIMENTAÇÃO ESCOLAR"; usar o
-   "Valor Total" da seção; somar todas as seções PNAE encontradas.
-2. PNATE: reconhecer "PROGRAMA NACIONAL DE APOIO AO TRANSPORTE DO ESCOLAR"
-   e variações abreviadas; usar o "Valor Total"; somar todas as seções.
-3. QSE/QESE: reconhecer "QUOTA ESTADUAL / MUNICIPAL", "SALÁRIO-EDUCAÇÃO",
-   QSE ou QESE quando representarem a mesma transferência; usar o total.
-4. PDDE: reconhecer "PROGRAMA DINHEIRO DIRETO NA ESCOLA" e seções antigas
-   claramente ligadas ao PDDE, como "ANTIGO PDDE ESTRUTURA"; somar os totais.
-5. NÃO incluir PNLD, Ensino Médio Inovador, Mais Cultura, Escola de Fronteira,
-   Atleta na Escola, Escola Sustentável nem outros programas alheios.
-6. Evitar duplicidade: cada seção entra uma única vez. Não somar subtotais das
-   esferas ao total do cabeçalho da mesma seção.
-7. Para cada valor incluído, registrar programa, título, valor, página e
-   justificativa.
-8. Converter "1.873.565,86" para 1873565.86.
+1. Cada programa deve ser extraído apenas do seu próprio bloco.
+2. Use o "Valor Total" exibido no título do bloco; as linhas das esferas
+   servem somente para conferência e não podem ser somadas novamente.
+3. PNAE: aceitar as variações configuradas para o Programa Nacional de
+   Alimentação Escolar.
+4. PNATE: aceitar as variações configuradas para o Programa Nacional de
+   Apoio ao Transporte do Escolar.
+5. PDDE: aceitar somente o bloco principal "PROGRAMA DINHEIRO DIRETO NA
+   ESCOLA". Nunca incluir ANTIGO PDDE ESTRUTURA nem programas associados.
+6. QSE: aceitar QUOTA/COTA ESTADUAL MUNICIPAL, SALÁRIO-EDUCAÇÃO, QSE ou QESE.
+7. Se houver vários blocos realmente válidos do mesmo programa, somar o
+   Valor Total de cada bloco uma única vez.
+8. Para cada bloco incluído, registrar título completo, programa, valor,
+   página e justificativa.
 9. Se um programa não existir, retornar 0.0.
-10. Se houver dúvida, registrar em avisos e não inventar valor.
-11. Confirmar município e código IBGE pelo nome e pelo conteúdo quando possível.
+10. Não inventar valores; dúvidas devem ir para avisos.
+
+{_resumo_regras_para_prompt()}
 
 TEXTO EXTRAÍDO DO PDF:
 --- INÍCIO ---
 {texto_pdf[:120000]}
 --- FIM ---
 """.strip()
+
+
+def _texto_contem_alias(texto: str, alias: str) -> bool:
+    if not alias:
+        return False
+
+    # Siglas curtas exigem limite de palavra para evitar falsos positivos.
+    if len(alias) <= 5 and " " not in alias:
+        return bool(re.search(rf"\b{re.escape(alias)}\b", texto))
+
+    return alias in texto
+
+
+def _classificar_titulo_programa(titulo: str) -> str | None:
+    texto = normalizar_texto(titulo)
+    if not texto:
+        return None
+
+    if any(
+        _texto_contem_alias(texto, item)
+        for item in PROGRAMAS_IGNORADOS_NORMALIZADOS
+    ):
+        return None
+
+    # Exclusões prevalecem sobre o alias genérico PDDE.
+    if any(
+        _texto_contem_alias(texto, item)
+        for item in EXCLUSOES_PDDE_NORMALIZADAS
+    ):
+        return None
+
+    for programa in ("PNAE", "PNATE", "PDDE", "QSE"):
+        for alias in ALIASES_NORMALIZADOS.get(programa, ()):
+            if _texto_contem_alias(texto, alias):
+                return programa
+
+    return None
+
+
+def _recalcular_valores_por_ocorrencias(
+    ocorrencias: list[OcorrenciaFNDE],
+) -> tuple[dict[str, float], list[str]]:
+    totais = {"PNAE": 0.0, "PNATE": 0.0, "PDDE": 0.0, "QSE": 0.0}
+    avisos: list[str] = []
+    vistos: set[tuple[str, str, int | None, float]] = set()
+
+    for ocorrencia in ocorrencias:
+        programa_correto = _classificar_titulo_programa(ocorrencia.titulo)
+
+        if programa_correto is None:
+            avisos.append(
+                "Ocorrência descartada por não pertencer a um bloco oficial: "
+                f"{ocorrencia.titulo or 'sem título'}."
+            )
+            continue
+
+        if ocorrencia.programa != programa_correto:
+            avisos.append(
+                "Classificação corrigida pelo título do bloco: "
+                f"{ocorrencia.programa} -> {programa_correto} "
+                f"({ocorrencia.titulo})."
+            )
+
+        chave = (
+            programa_correto,
+            normalizar_texto(ocorrencia.titulo),
+            ocorrencia.pagina,
+            round(float(ocorrencia.valor), 2),
+        )
+        if chave in vistos:
+            avisos.append(
+                "Ocorrência duplicada descartada: "
+                f"{ocorrencia.titulo} - {ocorrencia.valor:.2f}."
+            )
+            continue
+
+        vistos.add(chave)
+        ocorrencia.programa = programa_correto
+        totais[programa_correto] += round(float(ocorrencia.valor), 2)
+
+    return (
+        {programa: round(valor, 2) for programa, valor in totais.items()},
+        avisos,
+    )
 
 
 def _normalizar_resposta_gemini(
@@ -301,9 +717,16 @@ def _normalizar_resposta_gemini(
             )
         )
 
-    valores = {}
-    for chave in ("pnae", "pnate", "pdde", "qse"):
-        valores[chave] = converter_valor_brasileiro(bruto.get(chave)) or 0.0
+    valores_gemini = {
+        "PNAE": converter_valor_brasileiro(bruto.get("pnae")) or 0.0,
+        "PNATE": converter_valor_brasileiro(bruto.get("pnate")) or 0.0,
+        "PDDE": converter_valor_brasileiro(bruto.get("pdde")) or 0.0,
+        "QSE": converter_valor_brasileiro(bruto.get("qse")) or 0.0,
+    }
+
+    valores_validados, avisos_validacao = _recalcular_valores_por_ocorrencias(
+        ocorrencias
+    )
 
     codigo_resposta = normalizar_codigo_ibge(bruto.get("codigo_ibge"))
     codigo = codigo_resposta or codigo_nome
@@ -315,6 +738,29 @@ def _normalizar_resposta_gemini(
         for aviso in (bruto.get("avisos") or [])
         if str(aviso).strip()
     ]
+    avisos.extend(AVISOS_CONFIG_FNDE)
+    avisos.extend(avisos_validacao)
+
+    for programa in ("PNAE", "PNATE", "PDDE", "QSE"):
+        informado = round(float(valores_gemini[programa]), 2)
+        validado = round(float(valores_validados[programa]), 2)
+        if informado != validado:
+            avisos.append(
+                f"{programa}: valor informado pelo Gemini ({informado:.2f}) "
+                f"substituído pelo valor validado dos blocos ({validado:.2f})."
+            )
+    avisos.extend(CONFIG_AVISOS)
+    avisos.extend(avisos_validacao)
+
+    for programa in ("PNAE", "PNATE", "PDDE", "QSE"):
+        valor_gemini = round(float(valores_gemini[programa]), 2)
+        valor_validado = round(float(valores_validados[programa]), 2)
+        if valor_gemini != valor_validado:
+            avisos.append(
+                f"{programa}: total informado pelo Gemini ({valor_gemini:.2f}) "
+                f"foi substituído pelo total validado dos blocos "
+                f"({valor_validado:.2f})."
+            )
 
     if codigo_nome and codigo_resposta and codigo_nome != codigo_resposta:
         avisos.append(
@@ -327,10 +773,10 @@ def _normalizar_resposta_gemini(
         codigo_ibge=codigo,
         municipio=municipio,
         uf=uf,
-        pnae=valores["pnae"],
-        pnate=valores["pnate"],
-        pdde=valores["pdde"],
-        qse=valores["qse"],
+        pnae=valores_validados["PNAE"],
+        pnate=valores_validados["PNATE"],
+        pdde=valores_validados["PDDE"],
+        qse=valores_validados["QSE"],
         ocorrencias=ocorrencias,
         avisos=avisos,
     )
@@ -368,7 +814,6 @@ def extrair_com_gemini(
             model=model or DEFAULT_MODEL,
             contents=conteudo,
             config=types.GenerateContentConfig(
-                temperature=0,
                 response_mime_type="application/json",
                 response_json_schema=_schema_gemini(),
             ),
