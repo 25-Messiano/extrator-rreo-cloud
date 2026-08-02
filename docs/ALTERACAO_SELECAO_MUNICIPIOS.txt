@@ -1,0 +1,32 @@
+ALTERACAO CONTROLADA - SELECAO DE MUNICIPIOS
+
+Arquivos alterados:
+- pages/1_Painel.py
+- pages/6_Painel_FNDE.py
+
+Novos modos no painel RREO:
+- Estado inteiro
+- Município único
+- Municípios selecionados
+- Amostra
+- Todos os Estados (mantido)
+
+Novos modos no painel FNDE:
+- Estado inteiro
+- Município único
+- Municípios selecionados
+- Amostra
+- Todos os Estados FNDE (mantido e controlado pelas Configurações)
+
+Amostra:
+- quantidade configurável;
+- primeiros da lista;
+- aleatórios repetíveis, usando semente estável por estado e ano.
+
+Antes do processamento:
+- mostra quantidade selecionada;
+- lista os municípios/PDFs escolhidos;
+- informa RREO/FNDE ativos;
+- bloqueia o botão se não houver seleção.
+
+Nenhum outro arquivo do projeto foi alterado.
