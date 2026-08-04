@@ -1,0 +1,22 @@
+ALTERAÇÕES DO PAINEL
+
+1. Ano de Referência ampliado para 2023 a 2030, com 2025 selecionado por padrão.
+2. Modos de Processamento reunidos em uma única lista:
+   - Estado inteiro
+   - Município único
+   - Municípios selecionados
+   - Todos os Estados
+   - Amostra
+3. Janela "O que o sistema está fazendo?" adicionada acima dos indicadores.
+   Ela descreve Python, Gemini Vision, OCR/Tesseract, PDFium, OpenPyXL,
+   Google Cloud Storage, lotes e checkpoints.
+4. Na página Arquivos Cloud foram adicionados acessos rápidos para:
+   - GitHub do projeto
+   - Dashboard do Render
+   - Upload/gerenciamento no Google Cloud Storage
+5. Tipografia principal do aplicativo aumentada levemente.
+
+ARQUIVOS ALTERADOS
+- pages/1_Painel.py
+- pages/4_Arquivos_Cloud.py
+- ui/theme.py
