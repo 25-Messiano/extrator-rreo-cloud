@@ -1,0 +1,24 @@
+REGRA DE TESTE - MUNICIPIO INTERNO DO RREO
+
+ESCOPO
+- Aplica-se somente aos PDFs RREO.
+- Vale para Estado inteiro, Municipio unico, Municipios selecionados,
+  Todos os Estados e Amostra.
+
+REGRA
+1. O nome externo do arquivo nao decide o municipio.
+2. O sistema baixa e le todos os PDFs RREO da UF necessarios para montar o indice.
+3. O municipio e a UF sao identificados no conteudo interno do PDF.
+4. O Gemini e usado como fallback quando a leitura local do cabecalho nao for segura.
+5. O nome interno e comparado com a lista oficial da planilha-base.
+6. O codigo IBGE e obtido somente da planilha-base apos a correspondencia
+   unica de Municipio + UF. Ele nao e extraido nem inventado a partir do PDF.
+7. Se a identificacao nao for segura, nenhuma linha e preenchida.
+8. Divergencias entre nome externo e interno sao registradas no LOG_RREO.
+
+TESTE RECOMENDADO
+- Renomear externamente um PDF RREO para outro municipio.
+- Manter o conteudo interno original.
+- Executar Municipio unico para o municipio interno verdadeiro.
+- Confirmar que a linha preenchida e a do municipio interno.
+- Confirmar no LOG_RREO a mensagem NOME_ARQUIVO_DIVERGE_DO_CONTEUDO.
