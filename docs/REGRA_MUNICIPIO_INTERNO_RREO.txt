@@ -1,0 +1,10 @@
+REGRA OFICIAL DE IDENTIFICAÇÃO DO MUNICÍPIO — RREO
+
+1. Aplica-se somente ao RREO.
+2. O nome do arquivo é apenas referência para localizar/baixar o PDF.
+3. A linha final da planilha é definida pelo município identificado no conteúdo interno do PDF.
+4. A identificação usa município + UF e o cadastro da planilha-base.
+5. Se nome externo e conteúdo divergirem, prevalece o conteúdo.
+6. A divergência é registrada no LOG_RREO com o status NOME_ARQUIVO_DIVERGE_DO_CONTEUDO.
+7. Se o conteúdo não identificar um único município com segurança, nenhuma linha é preenchida.
+8. A regra do FNDE não muda: o código IBGE no nome continua sendo a chave principal.
