@@ -1,0 +1,21 @@
+CORRECAO DE COMPATIBILIDADE - LISTAGEM DE ESTADOS
+
+Erro corrigido:
+TypeError: list_states() got an unexpected keyword argument 'year'
+
+Causa:
+pages/1_Painel.py estava usando a interface nova de list_states(), mas o
+arquivo integrations/google_storage.py em execucao ainda tinha a interface
+antiga sem os parametros year, include_rreo e include_fnde.
+
+Arquivos que devem ser substituidos juntos:
+- integrations/google_storage.py
+- pages/1_Painel.py
+
+A nova versao de list_states aceita:
+- year
+- include_rreo
+- include_fnde
+
+O painel tambem possui fallback defensivo temporario para evitar queda durante
+uma implantacao em que um dos dois arquivos ainda esteja em cache.
