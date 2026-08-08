@@ -1,0 +1,1513 @@
+MEMORIAL TÉCNICO E FUNCIONAL — CALENDÁRIO MESSIANO
+
+Versão do memorial: 08/08/2026 Finalidade: servir como documento-mestre
+de referência para a geração, manutenção, validação e execução futura
+dos arquivos Python do aplicativo.
+
+=============================================================================== 1.
+OBJETIVO GERAL DO PROJETO
+===============================================================================
+
+O aplicativo deverá apresentar e permitir a navegação de um Calendário
+Messiano (Calendário M) associado ao Calendário Gregoriano (Calendário
+G), preservando a correspondência oficial G ↔ M registrada na base de
+dados do projeto.
+
+A interface deverá permitir: - visualizar Calendário G e Calendário M
+juntos; - visualizar somente o Calendário G; - visualizar somente o
+Calendário M; - navegar por toda a extensão temporal suportada; -
+exibir, opcionalmente, marcadores de fases da Lua; - exibir,
+opcionalmente, marcadores de estações do ano; - exibir, opcionalmente, a
+Páscoa — 15 de Rúben; - exibir, opcionalmente, Festas Bíblicas; -
+realizar pesquisa externa em modo/página separado; - manter a estrutura
+técnica de armazenamento oculta do usuário final.
+
+PRINCÍPIO CENTRAL: A interface do aplicativo NÃO deve recalcular ou
+substituir a correspondência oficial G ↔ M. Quando existir um registro
+oficial para uma data, o aplicativo deve ler e apresentar esse registro.
+
+===============================================================================
+2. EXTENSÃO TEMPORAL
+===============================================================================
+
+Intervalo principal planejado para a interface: -4000aC até 3000dC.
+
+A navegação deve ser adequada a milhares de anos, evitando depender
+apenas de botões mês anterior/mês seguinte.
+
+O aplicativo deve respeitar os registros oficiais disponíveis para G ↔ M
+em toda a extensão coberta pela base.
+
+===============================================================================
+3. CALENDÁRIO G E CALENDÁRIO M
+===============================================================================
+
+O Calendário G corresponde à referência gregoriana utilizada na base.
+
+O Calendário M corresponde ao calendário próprio do projeto.
+
+Regra fundamental: - a correspondência G ↔ M deve ser lida dos registros
+oficiais; - a escolha de visualização nunca deve apagar, alterar ou
+reconstruir a correspondência; - ocultar G ou M é apenas uma decisão de
+interface.
+
+No Calendário M: - Mês 01 = Rúben; - a regra de projeto adotada para a
+Páscoa é o dia 15 de Rúben; - portanto, para o projeto: M.15/01 = Páscoa
+— 15 de Rúben.
+
+===============================================================================
+4. MODOS DE EXIBIÇÃO DOS CALENDÁRIOS
+===============================================================================
+
+A tela Configurações deverá possuir exatamente os seguintes modos de
+exibição:
+
+1.  Calendário G + Calendário M
+    -   opção padrão;
+    -   mostra os dois calendários associados.
+2.  Somente Calendário G
+    -   oculta visualmente o Calendário M;
+    -   não altera a base G ↔ M.
+3.  Somente Calendário M
+    -   oculta visualmente o Calendário G;
+    -   não altera a base G ↔ M.
+
+Essas opções afetam SOMENTE a apresentação.
+
+===============================================================================
+5. MARCADORES OPCIONAIS NAS CONFIGURAÇÕES
+===============================================================================
+
+A tela Configurações deverá permitir ao usuário ativar/desativar, de
+forma independente:
+
+[ ] Fases da Lua [ ] Estações do Ano [ ] Páscoa — 15 de Rúben [ ] Festas
+Bíblicas
+
+Essas opções devem continuar funcionando independentemente do modo
+escolhido: - G + M; - somente G; - somente M.
+
+IMPORTANTE: A tela Configurações NÃO deve mostrar: - nome do bucket; -
+caminho de pastas; - nomes técnicos dos arquivos; - estrutura do Google
+Cloud; - detalhes internos de implementação.
+
+A estrutura técnica pertence ao código e não à interface do usuário.
+
+===============================================================================
+6. LEGENDA E FONTE NA INTERFACE
+===============================================================================
+
+A interface deverá mostrar apenas uma legenda discreta para os
+marcadores que estiverem habilitados.
+
+Texto genérico recomendado para a origem dos dados:
+
+“Fonte dos dados: registros oficiais do calendário.”
+
+Não exibir na interface caminhos internos, bucket, nomes técnicos ou
+estrutura do Cloud.
+
+===============================================================================
+7. ESTRUTURA TÉCNICA ATUAL NO GOOGLE CLOUD STORAGE
+===============================================================================
+
+Esta seção é INTERNA e existe somente para orientar
+desenvolvimento/manutenção. Ela NÃO deve ser apresentada ao usuário na
+interface.
+
+Bucket utilizado: calendario-messiano-dados
+
+Pasta-base: ARQUIVO_PARA_CALENDARIO_TXT/
+
+Estrutura planejada/implantada:
+
+calendario-messiano-dados/ └── ARQUIVO_PARA_CALENDARIO_TXT/ ├──
+fases_lua_completo/ │ └── fases_lua_completo.txt ├──
+marcos_estacoes_completo/ │ └── marcos_estacoes_completo.txt ├──
+pascoa_15_ruben_completo/ │ └── pascoa_15_ruben_completo.txt └──
+festas_biblicas_pre_cativeiro/ └── festas_biblicas_pre_cativeiro.txt
+
+Esses caminhos devem ser centralizados internamente na configuração
+Python, evitando espalhar strings de caminhos por diversas
+páginas/módulos.
+
+===============================================================================
+8. FASES DA LUA
+===============================================================================
+
+Arquivo: fases_lua_completo.txt
+
+Objetivo: fornecer registros fixos das quatro fases lunares principais
+para marcação na interface.
+
+Fases: - Lua Nova; - Quarto Crescente; - Lua Cheia; - Quarto Minguante.
+
+O arquivo foi preparado para cobrir: -4000aC até 3000dC.
+
+Metodologia registrada no próprio arquivo: - cálculo astronômico baseado
+no método de Jean Meeus para fases principais; - calendário gregoriano
+proléptico; - instante astronômico em JDE/TT; - épocas muito remotas
+possuem maior incerteza por extrapolação e pela questão TT/UT/Delta T.
+
+REGRA DE EXECUÇÃO: O cálculo astronômico foi utilizado para produzir o
+TXT fixo. O app em produção NÃO precisa recalcular as fases a cada
+navegação. Ele deve consultar os registros fixos do TXT armazenado no
+Cloud.
+
+===============================================================================
+9. APRESENTAÇÃO VISUAL DAS FASES DA LUA
+===============================================================================
+
+Os marcadores lunares deverão: - ser pequenos; - ter aparência
+vazada/contornada, conforme referência visual aprovada; - aparecer ao
+lado do número do dia; - ser discretos, mas claramente visíveis; -
+acompanhar dinamicamente a data correspondente; - mudar de posição na
+grade conforme o usuário percorre meses, anos e grandes períodos; - não
+ficar presos a posições fixas da tela.
+
+A marcação deve ser determinada pelo registro da data, não por posição
+visual fixa.
+
+Não é necessário colocar uma lua em todos os dias. O objetivo principal
+é destacar as transições/fases registradas no arquivo.
+
+===============================================================================
+10. ESTAÇÕES DO ANO
+===============================================================================
+
+Arquivo: marcos_estacoes_completo.txt
+
+Objetivo: marcar na interface os registros de transição das estações já
+existentes no arquivo.
+
+O arquivo contém registros de marcos como: - Outono/Primavera (HS/HN); -
+Inverno/Verão (HS/HN); - Primavera/Outono (HS/HN); - Verão/Inverno
+(HS/HN).
+
+REGRA: O app deve ler esses registros e marcar a data correspondente.
+Não deve recalcular equinócios ou solstícios durante a navegação normal
+da interface.
+
+O arquivo possui observação própria sobre metodologia/extrapolação; essa
+informação técnica pode permanecer no dado/documentação, sem poluir a
+interface principal.
+
+===============================================================================
+11. PÁSCOA — 15 DE RÚBEN
+===============================================================================
+
+Arquivo: pascoa_15_ruben_completo.txt
+
+Regra específica adotada pelo projeto: M.15/01 = dia 15 do Mês 1 = 15 de
+Rúben = Páscoa.
+
+O arquivo foi produzido a partir da correspondência oficial G ↔ M,
+selecionando as ocorrências de M.15/01.
+
+REGRA ESSENCIAL: A interface não deve recalcular G ↔ M para encontrar a
+Páscoa. Ela deve usar o registro fixo produzido a partir do calendário
+oficial.
+
+Observação de documentação: Esta é uma regra específica adotada no
+projeto para a marcação “Páscoa — 15 de Rúben”. Deve ser preservada como
+regra funcional do aplicativo.
+
+===============================================================================
+12. FESTAS BÍBLICAS — RECORTE PRÉ-CATIVEIRO BABILÔNICO
+===============================================================================
+
+Arquivo: festas_biblicas_pre_cativeiro.txt
+
+Objetivo: servir como catálogo estruturado para o Python consultar as
+festas/observâncias selecionadas para o calendário.
+
+Formato definido:
+TIPO|ID|MES|DIA_INICIO|DIA_FIM|NOME_EXIBICAO|STATUS|REFERENCIA|OBSERVACAO
+
+Tipos: - FIXA: marca um único dia; - INTERVALO: marca todos os dias
+entre início e fim; - REGRA: depende de regra relativa ainda não fixada.
+
+Status: - ATIVO: pode ser mostrado no calendário; - AGUARDA_REGRA: NÃO
+deve ser marcado até a regra ser definida.
+
+Registros planejados:
+
+1.  Páscoa ID: PASCOA Tipo: FIXA Mês M: 01 Dia: 15 Nome: Páscoa — 15 de
+    Rúben Status: ATIVO
+
+2.  Festa dos Pães Asmos ID: PAES_ASMOS Tipo: INTERVALO Mês M: 01 Dias:
+    15 a 21 Status: ATIVO
+
+3.  Primícias ID: PRIMICIAS Tipo: REGRA Status: AGUARDA_REGRA Motivo: a
+    regra relativa ao “dia seguinte ao sábado” ainda precisa de
+    definição operacional antes de gerar marcações fixas.
+
+4.  Festa das Semanas ID: SEMANAS Tipo: REGRA Status: AGUARDA_REGRA
+    Motivo: depende da contagem associada a Primícias e não deve receber
+    data inventada pelo app.
+
+5.  Dia das Trombetas ID: TROMBETAS Tipo: FIXA Mês M: 07 Dia: 01 Status:
+    ATIVO
+
+6.  Dia da Expiação ID: EXPIACAO Tipo: FIXA Mês M: 07 Dia: 10 Status:
+    ATIVO
+
+7.  Festa dos Tabernáculos ID: TABERNACULOS Tipo: INTERVALO Mês M: 07
+    Dias: 15 a 21 Status: ATIVO
+
+8.  Oitavo Dia — Assembleia Solene ID: ASSEMBLEIA_OITAVO_DIA Tipo: FIXA
+    Mês M: 07 Dia: 22 Status: ATIVO
+
+REGRA PARA A INTERFACE: Quando “Festas Bíblicas” estiver habilitada: -
+ler o catálogo; - apresentar somente STATUS=ATIVO; - ignorar visualmente
+STATUS=AGUARDA_REGRA; - usar NOME_EXIBICAO em legenda, tooltip, detalhe
+ou identificação apropriada; - não inventar datas ausentes.
+
+===============================================================================
+13. RELAÇÃO ENTRE PÁSCOA E FESTAS BÍBLICAS
+===============================================================================
+
+Há uma fonte específica: pascoa_15_ruben_completo.txt
+
+E há também a entrada PASCOA no catálogo de Festas Bíblicas.
+
+A implementação Python deverá evitar duplicação visual no mesmo dia
+quando: - “Páscoa — 15 de Rúben” estiver habilitada; - e “Festas
+Bíblicas” também estiver habilitada.
+
+O dado pode existir nas duas fontes por razões de organização, mas a
+interface deve consolidar a apresentação para não desenhar dois
+marcadores idênticos desnecessariamente.
+
+===============================================================================
+14. NAVEGAÇÃO TEMPORAL EM NÍVEIS
+===============================================================================
+
+A navegação deverá ser inspirada na mecânica observada no seletor de
+data do vídeo analisado, sem necessidade de copiar seu visual.
+
+Fluxo desejado:
+
+visão mensal ↓ seleção de anos ↓ décadas ↓ séculos ↓ grandes intervalos
+temporais
+
+Objetivo: permitir deslocamento eficiente dentro de -4000aC a 3000dC.
+
+A navegação por setas de mês anterior/próximo pode continuar existindo,
+mas não deve ser a única forma de atravessar o calendário.
+
+===============================================================================
+15. IR PARA O ANO
+===============================================================================
+
+Adicionar um recurso:
+
+“Ir para o ano”
+
+Objetivo: permitir que o usuário informe diretamente um ano e salte para
+ele sem percorrer manualmente milhares de meses.
+
+A entrada deve respeitar o intervalo suportado pelo app e a convenção
+temporal adotada na base oficial.
+
+===============================================================================
+16. AÇÃO “HOJE”
+===============================================================================
+
+Adicionar uma ação visível e rápida:
+
+“Hoje”
+
+Objetivo: de qualquer ponto do calendário, inclusive milhares de anos no
+passado/futuro, retornar rapidamente à data atual apresentada segundo os
+registros oficiais disponíveis.
+
+===============================================================================
+17. COMPORTAMENTO DOS MARCADORES DURANTE A NAVEGAÇÃO
+===============================================================================
+
+Ao mudar: - mês; - ano; - década; - século; - grande intervalo; - modo
+G + M / somente G / somente M;
+
+os marcadores habilitados devem acompanhar as datas correspondentes.
+
+Marcadores envolvidos: - Fases da Lua; - Estações do Ano; - Páscoa — 15
+de Rúben; - Festas Bíblicas.
+
+Nenhum marcador deve ser posicionado por coordenada fixa da tela.
+
+===============================================================================
+18. PÁGINA/MODO SEPARADO DE PESQUISA
+===============================================================================
+
+Adicionar uma página ou modo separado:
+
+“Pesquisa”
+
+Objetivo: permitir consulta externa na Web/Google sem misturar pesquisa
+externa com os registros oficiais do calendário.
+
+A pesquisa poderá apresentar: - campo de busca; - ação Pesquisar; -
+resultados; - título; - pequeno resumo/snippet quando disponível; -
+origem/fonte; - link para abrir o resultado.
+
+Exemplos de temas: - Cativeiro Babilônico; - Festa dos Tabernáculos; -
+Rúben; - temas históricos; - temas bíblicos; - assuntos relacionados às
+datas exibidas.
+
+===============================================================================
+19. REGRA DE SEGURANÇA DA PESQUISA EXTERNA
+===============================================================================
+
+A Pesquisa é SOMENTE informativa.
+
+Resultados externos NÃO podem alterar automaticamente: - Calendário M; -
+Calendário G; - correspondência G ↔ M; - fases da Lua; - estações do
+ano; - Páscoa — 15 de Rúben; - Festas Bíblicas; - arquivos oficiais
+armazenados no Cloud.
+
+Qualquer futura incorporação de informação externa aos registros
+oficiais deve exigir processo próprio e deliberado, separado da
+consulta.
+
+===============================================================================
+20. INTEGRAÇÃO DE PESQUISA WEB/GOOGLE
+===============================================================================
+
+Na geração dos arquivos Python, deverá ser verificada e utilizada uma
+solução/API de busca atual e adequada naquele momento.
+
+Credenciais, chaves e secrets: - não devem ser escritos diretamente na
+interface; - não devem ser exibidos ao usuário; - devem ser configurados
+por variável de ambiente/secret ou mecanismo seguro equivalente.
+
+A página de Pesquisa deve continuar funcionando como módulo separado do
+calendário.
+
+===============================================================================
+21. ARQUITETURA PYTHON RECOMENDADA
+===============================================================================
+
+A implementação deve evitar concentrar toda a lógica em uma única
+página.
+
+Separação conceitual recomendada:
+
+-   módulo de configuração interna das fontes;
+-   módulo de acesso ao Google Cloud Storage;
+-   módulo de leitura/parser dos TXT;
+-   módulo de consulta da correspondência oficial G ↔ M;
+-   módulo de marcadores do calendário;
+-   módulo de preferências/configurações do usuário;
+-   módulo/página de calendário;
+-   módulo/página de pesquisa externa;
+-   componentes auxiliares de navegação temporal.
+
+Os nomes exatos dos arquivos .py devem ser definidos de acordo com a
+estrutura real do repositório no momento da implementação, evitando
+criar módulos duplicados sem necessidade.
+
+===============================================================================
+22. CONFIGURAÇÃO INTERNA DAS FONTES
+===============================================================================
+
+Os caminhos técnicos devem existir em um único ponto interno do código.
+
+Exemplo conceitual:
+
+CALENDAR_STORAGE = { “bucket”: “calendario-messiano-dados”, “base_path”:
+“ARQUIVO_PARA_CALENDARIO_TXT”, “fases_lua”: …, “estacoes”: …, “pascoa”:
+…, “festas_biblicas”: …, }
+
+IMPORTANTE: Isso é apenas configuração interna. Não renderizar
+CALENDAR_STORAGE nem seus valores na interface.
+
+===============================================================================
+23. LEITURA EFICIENTE DOS ARQUIVOS
+===============================================================================
+
+Os arquivos, especialmente fases_lua_completo.txt, podem conter grande
+volume de registros.
+
+A implementação deverá evitar: - baixar e reler arquivos grandes a cada
+célula do calendário; - fazer uma chamada ao Cloud para cada dia; -
+recalcular índices a cada renderização sem necessidade.
+
+Estratégia esperada: - carregar a fonte de forma controlada; -
+parsear; - construir índices por data; - usar cache apropriado; -
+consultar em memória/cache durante a renderização; - invalidar/atualizar
+cache de forma controlada quando necessário.
+
+O objetivo é manter a navegação rápida.
+
+===============================================================================
+24. ÍNDICES DE CONSULTA
+===============================================================================
+
+Após a leitura dos TXT, o Python poderá organizar índices conceituais
+como:
+
+data_g -> fase_lua data_g -> marco_estacao data_g -> pascoa data_m ->
+festas_biblicas
+
+Quando necessário, usar a correspondência oficial G ↔ M já disponível
+para associar a célula visual ao registro.
+
+Não criar uma nova conversão paralela G ↔ M apenas para os marcadores.
+
+===============================================================================
+25. TRATAMENTO DE ERROS
+===============================================================================
+
+Se uma fonte opcional não puder ser carregada: - o calendário principal
+deve, sempre que possível, continuar funcionando; - o marcador daquela
+fonte pode ser temporariamente omitido; - registrar erro técnico em
+log; - não expor detalhes sensíveis do Cloud ao usuário.
+
+Mensagens visuais devem ser simples e compreensíveis.
+
+Exemplo: “Os dados de fases da Lua não estão disponíveis no momento.”
+
+Evitar mostrar: - bucket; - caminho interno; - stack trace; -
+credenciais; - nomes técnicos desnecessários.
+
+===============================================================================
+26. LOGS
+===============================================================================
+
+Os logs técnicos podem registrar internamente: - fonte consultada; -
+sucesso/falha de leitura; - quantidade de registros carregados; - tempo
+de carregamento; - cache; - erros de parsing.
+
+Os logs não devem vazar: - secrets; - chaves; - conteúdo de
+credenciais; - tokens.
+
+===============================================================================
+27. INTERFACE DO CALENDÁRIO
+===============================================================================
+
+Diretrizes: - calendário limpo; - marcadores pequenos; - legenda
+discreta; - evitar poluição visual; - informações técnicas fora da tela
+principal; - marcadores acompanhando as datas; - navegação rápida para
+períodos distantes; - “Hoje” acessível; - “Ir para o ano” acessível; -
+suporte aos três modos G/M.
+
+A mecânica de navegação pode ser inspirada no vídeo analisado, mas a
+identidade visual do aplicativo deve permanecer própria.
+
+===============================================================================
+28. PRIORIDADE DOS DADOS
+===============================================================================
+
+Ordem conceitual de confiança para execução do app:
+
+1.  correspondência oficial G ↔ M registrada no calendário/base;
+2.  arquivos oficiais/fixos do projeto armazenados no Cloud;
+3.  configurações de visualização;
+4.  pesquisa externa apenas como consulta informativa.
+
+A pesquisa externa nunca deve superar ou substituir automaticamente as
+fontes oficiais internas.
+
+===============================================================================
+29. PRINCÍPIO “DADO FIXO, INTERFACE DINÂMICA”
+===============================================================================
+
+O projeto deve seguir este princípio:
+
+DADOS: - ficam registrados em fontes oficiais/fixas; - são carregados e
+indexados.
+
+INTERFACE: - navega dinamicamente; - escolhe o período; - consulta o
+registro; - mostra o marcador correspondente.
+
+Isso evita que a interface invente ou recalcule dados históricos toda
+vez que o usuário navega.
+
+===============================================================================
+30. VALIDAÇÕES ANTES DE PUBLICAR ALTERAÇÕES
+===============================================================================
+
+Antes de colocar uma nova versão em produção, validar:
+
+-   carregamento da correspondência G ↔ M;
+-   modo G + M;
+-   modo somente G;
+-   modo somente M;
+-   Fases da Lua ativadas/desativadas;
+-   Estações ativadas/desativadas;
+-   Páscoa ativada/desativada;
+-   Festas Bíblicas ativadas/desativadas;
+-   ausência de registros AGUARDA_REGRA na interface;
+-   ausência de duplicação visual da Páscoa;
+-   navegação mês/ano;
+-   navegação por décadas;
+-   navegação por séculos;
+-   navegação por grandes intervalos;
+-   Ir para o ano;
+-   Hoje;
+-   extremos próximos de -4000aC e 3000dC;
+-   comportamento de marcadores nos extremos;
+-   cache e desempenho;
+-   ausência de caminhos do Cloud na interface;
+-   ausência de secrets na interface/log;
+-   Pesquisa externa;
+-   confirmação de que a Pesquisa não altera dados oficiais.
+
+===============================================================================
+31. O QUE NÃO DEVE SER FEITO
+===============================================================================
+
+Não: - recalcular G ↔ M na interface se a correspondência oficial já
+existe; - alterar registros oficiais apenas por resultado de pesquisa
+externa; - mostrar bucket/pastas/arquivos técnicos nas Configurações; -
+colocar secrets no código visível ou na tela; - inventar datas para
+Primícias; - inventar datas para Festa das Semanas; - mostrar registros
+AGUARDA_REGRA; - fixar ícones lunares em coordenadas visuais
+independentes da data; - obrigar o usuário a atravessar milhares de anos
+apenas com setas mensais; - duplicar o marcador de Páscoa quando duas
+fontes representarem o mesmo evento.
+
+===============================================================================
+32. ITENS JÁ DEFINIDOS E QUE DEVEM SER PRESERVADOS
+===============================================================================
+
+-   intervalo de interface: -4000aC a 3000dC;
+-   correspondência G ↔ M oficial preservada;
+-   Mês 1 do Calendário M: Rúben;
+-   Páscoa do projeto: 15 de Rúben;
+-   fases lunares em TXT fixo;
+-   ícones lunares pequenos e vazados;
+-   estações em TXT fixo;
+-   Páscoa em TXT fixo derivado da correspondência oficial;
+-   Festas Bíblicas em catálogo TXT;
+-   somente STATUS=ATIVO das Festas Bíblicas aparece;
+-   Primícias e Semanas aguardam regra;
+-   Configurações sem revelar estrutura Cloud;
+-   opções independentes de marcadores;
+-   G + M como modo padrão;
+-   somente G;
+-   somente M;
+-   navegação temporal em níveis;
+-   Ir para o ano;
+-   Hoje;
+-   página separada de Pesquisa;
+-   pesquisa externa somente informativa;
+-   fonte genérica na interface.
+
+===============================================================================
+33. TEXTO PADRÃO DE FONTE NA INTERFACE
+===============================================================================
+
+Usar preferencialmente:
+
+“Fonte dos dados: registros oficiais do calendário.”
+
+Evitar detalhar armazenamento na interface.
+
+===============================================================================
+34. RESUMO DA EXPERIÊNCIA FINAL DESEJADA
+===============================================================================
+
+Ao abrir o aplicativo, o usuário vê o calendário no modo padrão G + M.
+
+Ele pode: - navegar normalmente pelos meses; - subir para anos, décadas,
+séculos e grandes intervalos; - ir diretamente para um ano; - retornar
+para Hoje; - escolher mostrar somente G ou somente M; - ativar/desativar
+Lua, Estações, Páscoa e Festas Bíblicas; - ver marcadores pequenos nas
+datas correspondentes; - consultar a legenda; - usar uma página separada
+para pesquisa externa.
+
+Por trás da interface: - o app lê a correspondência oficial G ↔ M; - lê
+as fontes fixas no Cloud; - usa cache/índices; - posiciona os marcadores
+conforme as datas; - mantém detalhes técnicos ocultos; - não deixa a
+pesquisa externa modificar a base oficial.
+
+===============================================================================
+35. PENDÊNCIAS DELIBERADAS
+===============================================================================
+
+Permanecem sem regra de data fixa e NÃO devem ser inventadas:
+
+-   Primícias;
+-   Festa das Semanas.
+
+Quando essas regras forem definidas futuramente: 1. atualizar o arquivo
+festas_biblicas_pre_cativeiro.txt; 2. mudar STATUS para ATIVO quando
+aplicável; 3. validar a marcação no Calendário M; 4. manter
+compatibilidade com a configuração “Festas Bíblicas”.
+
+===============================================================================
+36. FUNÇÃO DESTE MEMORIAL
+===============================================================================
+
+Este memorial deve ser tratado como guia de implementação.
+
+Ao gerar ou alterar arquivos .py: - consultar estas regras; - preservar
+decisões já tomadas; - verificar a estrutura real do repositório antes
+de substituir arquivos; - fazer alterações cirúrgicas quando o app já
+estiver funcionando; - evitar regressões; - não mudar regras de
+calendário silenciosamente.
+
+Caso exista conflito entre uma implementação antiga e este memorial, o
+conflito deve ser identificado antes de modificar dados oficiais.
+
+===============================================================================
+37. ARQUITETURA GLOBAL DE IMPLANTAÇÃO
+===============================================================================
+
+A arquitetura operacional deverá separar claramente código, dados,
+execução e consulta externa.
+
+Fluxo conceitual:
+
+DESENVOLVIMENTO ↓ GitHub — código-fonte e arquivos de configuração não
+secretos ↓ Render — execução/deploy do aplicativo ↓ Google Cloud Storage
+— dados oficiais e TXT auxiliares ↓ Interface do aplicativo — consulta e
+apresentação
+
+Em paralelo:
+
+Página Pesquisa ↓ API/serviço externo de busca Web/Google ↓ resultados
+informativos ↓ NUNCA grava automaticamente na base oficial
+
+Responsabilidades:
+
+GitHub: - versionamento do código; - histórico de alterações; -
+revisão; - rollback; - origem do deploy.
+
+Render: - hospedar/executar o aplicativo; - instalar dependências; -
+receber variáveis de ambiente/secrets; - produzir logs de execução; -
+executar health checks; - fazer deploy a partir do repositório.
+
+Google Cloud Storage: - armazenar fontes oficiais/fixas de dados; -
+manter os TXT de marcações; - disponibilizar dados ao app por
+autenticação de serviço; - não depender de exposição pública dos
+objetos.
+
+===============================================================================
+38. GOOGLE CLOUD — ESTRUTURA DE DADOS
+===============================================================================
+
+Projeto/conta de serviço observada durante a configuração: - conta de
+serviço utilizada pelo app: calendario-messiano-render
+
+Bucket confirmado: - calendario-messiano-dados
+
+Pasta-base confirmada: - ARQUIVO_PARA_CALENDARIO_TXT/
+
+Estrutura confirmada/planejada:
+
+calendario-messiano-dados/ └── ARQUIVO_PARA_CALENDARIO_TXT/ ├──
+fases_lua_completo/ │ └── fases_lua_completo.txt ├──
+marcos_estacoes_completo/ │ └── marcos_estacoes_completo.txt ├──
+pascoa_15_ruben_completo/ │ └── pascoa_15_ruben_completo.txt └──
+festas_biblicas_pre_cativeiro/ └── festas_biblicas_pre_cativeiro.txt
+
+Documento de governança recomendado: - armazenar este Memorial Técnico
+em uma pasta separada de documentação; - o memorial NÃO é fonte de
+marcação do calendário; - o parser do calendário não deve varrer a pasta
+de documentação como se fosse dado.
+
+Sugestão de organização interna adicional:
+
+calendario-messiano-dados/ ├── ARQUIVO_PARA_CALENDARIO_TXT/ │ └──
+[fontes consumidas pelo app] └── DOCUMENTACAO/ └──
+MEMORIAL_TECNICO_CALENDARIO_MESSIANO_V2.txt
+
+Não mover ou renomear fontes já usadas pelo código sem atualizar a
+configuração interna e testar.
+
+===============================================================================
+39. GOOGLE CLOUD — PERMISSÕES
+===============================================================================
+
+A aplicação deve usar autenticação de serviço, sem tornar os arquivos
+públicos apenas para facilitar a leitura.
+
+Princípio de menor privilégio: - conceder somente as permissões
+necessárias; - leitura/listagem quando o app apenas consulta; - escrita
+somente quando houver funcionalidade que realmente necessite gravar.
+
+A conta de serviço deve conseguir acessar os objetos necessários no
+bucket.
+
+NÃO armazenar no GitHub: - JSON real da conta de serviço; - chave
+privada; - token; - senha; - secret.
+
+Se uma credencial for comprometida: 1. revogar/rotacionar; 2. atualizar
+o secret no ambiente de execução; 3. verificar logs; 4. nunca tentar
+“corrigir” apenas apagando do commit atual, pois o histórico pode
+preservar o segredo.
+
+===============================================================================
+40. GOOGLE CLOUD — POLÍTICA PARA NOMES E CAMINHOS
+===============================================================================
+
+Internamente, os caminhos podem ser conhecidos pelo código.
+Externamente, não devem aparecer na interface.
+
+Criar constantes/configuração centralizada para: - bucket; -
+pasta-base; - objeto de fases; - objeto de estações; - objeto de
+Páscoa; - objeto de Festas Bíblicas; - eventualmente versão/schema de
+cada fonte.
+
+Evitar strings duplicadas em páginas diferentes.
+
+Se um nome for alterado no Cloud: - alterar somente a configuração
+central; - validar leitura; - validar cache; - validar interface; - só
+então publicar.
+
+===============================================================================
+41. GOOGLE CLOUD — VERSIONAMENTO E INTEGRIDADE DOS DADOS
+===============================================================================
+
+Recomendação operacional: - não sobrescrever fontes oficiais sem guardar
+possibilidade de recuperação; - antes de substituir um TXT, conservar
+uma cópia/versionamento; - registrar data da atualização e motivo; -
+validar quantidade de registros e limites temporais; - comparar primeira
+e última linha relevante; - validar encoding UTF-8; - validar estrutura
+antes do deploy.
+
+Opcionalmente, manter metadados internos: - versão; - data de geração; -
+algoritmo/metodologia; - quantidade de registros; - hash/checksum.
+
+O app pode usar esses metadados para diagnóstico, mas não precisa
+mostrá-los ao usuário.
+
+===============================================================================
+42. GITHUB — FUNÇÃO NO PROJETO
+===============================================================================
+
+O GitHub deve ser a fonte versionada do CÓDIGO do aplicativo.
+
+O repositório exato do Calendário Messiano ainda deve ser confirmado no
+momento da implementação.
+
+Não assumir automaticamente que um repositório de outro projeto é o
+repositório deste calendário.
+
+O GitHub deve conter: - arquivos .py; - requirements.txt ou
+equivalente; - configuração de deploy permitida; - README; - módulos de
+integração; - testes/validadores; - arquivos de configuração SEM
+secrets; - documentação técnica que seja apropriada para versionamento.
+
+O GitHub NÃO deve conter: - chaves privadas; - JSON real de conta de
+serviço; - tokens de API; - senhas; - secrets de produção.
+
+===============================================================================
+43. GITHUB — ESTRUTURA RECOMENDADA DO REPOSITÓRIO
+===============================================================================
+
+A estrutura real deverá ser lida antes de qualquer alteração.
+
+Modelo conceitual, não obrigatório:
+
+/ ├── app.py ├── pages/ │ ├── [pagina_calendario].py │ ├──
+[pagina_configuracoes].py │ └── [pagina_pesquisa].py ├── modules/ │ ├──
+calendar_data.py │ ├── calendar_markers.py │ ├── calendar_navigation.py
+│ └── web_search.py ├── integrations/ │ └── google_storage.py ├──
+config/ │ └── calendar_sources.py ├── scripts/ │ └── validate_project.py
+├── requirements.txt ├── README.md └── [configuração de deploy, se
+utilizada]
+
+IMPORTANTE: Esses nomes são proposta arquitetural. Não criar todos
+automaticamente se o repositório existente já possuir módulos
+equivalentes.
+
+Regra: primeiro inspecionar; depois alterar cirurgicamente.
+
+===============================================================================
+44. GITHUB — FLUXO DE ALTERAÇÃO
+===============================================================================
+
+Fluxo recomendado:
+
+1.  Ler a versão atual do repositório.
+2.  Identificar os arquivos responsáveis pela tela afetada.
+3.  Identificar integrações existentes.
+4.  Evitar duplicar funções.
+5.  Implementar a menor alteração coerente.
+6.  Executar validações.
+7.  Commit com descrição objetiva.
+8.  Push.
+9.  Acompanhar deploy no Render.
+10. Testar produção.
+11. Se houver regressão, corrigir ou reverter.
+
+Evitar grandes substituições de arquivos funcionais sem necessidade.
+
+===============================================================================
+45. GITHUB — BRANCHES E ROLLBACK
+===============================================================================
+
+Para alterações maiores, é recomendável trabalhar em branch separada
+antes de promover para produção.
+
+Exemplos conceituais: - main: produção; -
+feature/calendario-marcadores; - feature/navegacao-temporal; -
+feature/pesquisa-web.
+
+A política real deve se adequar ao fluxo utilizado pelo projeto.
+
+Antes de mudanças críticas: - identificar o último commit estável; -
+garantir possibilidade de rollback; - não misturar várias mudanças
+independentes em um único commit gigante quando puder ser evitado.
+
+===============================================================================
+46. RENDER — FUNÇÃO NO PROJETO
+===============================================================================
+
+O Render deverá executar o aplicativo a partir do código versionado.
+
+Detalhes que precisam ser confirmados diretamente no Dashboard no
+momento da implementação: - nome exato do Web Service; - workspace; -
+plano/instância; - região; - branch ligada ao deploy; - auto-deploy; -
+build command; - start command; - variáveis de ambiente atuais; -
+domínio/URL; - health check configurado.
+
+Não inventar esses valores no código ou neste memorial.
+
+===============================================================================
+47. RENDER — PIPELINE DE DEPLOY
+===============================================================================
+
+Fluxo esperado:
+
+GitHub ↓ push/merge na branch configurada Render detecta alteração ↓
+Build ↓ instala dependências ↓ inicia aplicação ↓ health check ↓ serviço
+disponível
+
+Durante o deploy, acompanhar: - sucesso do clone; - instalação de
+requirements; - erros de import; - erros de secrets ausentes; - conexão
+com Cloud; - inicialização do framework; - health check.
+
+===============================================================================
+48. RENDER — BUILD E START COMMAND
+===============================================================================
+
+Os comandos exatos devem ser obtidos do projeto real.
+
+Para um app Streamlit, um start command normalmente aponta para o
+arquivo principal do app, mas o nome correto deve ser confirmado no
+repositório.
+
+Não substituir comandos que já funcionam sem motivo.
+
+Antes de alterar: - registrar o valor atual; - conferir compatibilidade
+com requirements; - conferir porta/host esperados pela plataforma; -
+testar.
+
+===============================================================================
+49. RENDER — VARIÁVEIS DE AMBIENTE E SECRETS
+===============================================================================
+
+Usar o Dashboard/Environment para valores sensíveis.
+
+Exemplos de categorias: - credencial do Google Cloud; - nome do bucket,
+se decidido por variável; - chave/API da pesquisa Web/Google; -
+configurações de ambiente; - outros secrets necessários.
+
+Este memorial pode registrar NOMES de variáveis quando confirmados.
+Nunca registrar VALORES secretos.
+
+Padrão recomendado: - secrets em ambiente; - código usa os.environ /
+mecanismo equivalente; - interface nunca imprime secret; - logs nunca
+imprimem secret.
+
+===============================================================================
+50. RENDER — HEALTH CHECK E DISPONIBILIDADE
+===============================================================================
+
+O health check deve confirmar que a aplicação iniciou.
+
+Um health check bem-sucedido não substitui teste funcional.
+
+Após deploy, validar também: - página principal; - calendário; - leitura
+G ↔ M; - leitura dos TXT; - configurações; - navegação; - Pesquisa; -
+comportamento mobile/desktop, quando aplicável.
+
+Se o app depender de uma fonte externa e ela estiver temporariamente
+indisponível, avaliar se o calendário pode continuar operacional em modo
+degradado.
+
+===============================================================================
+51. RENDER — RECURSOS E DESEMPENHO
+===============================================================================
+
+O plano/instância atual deve ser confirmado no Dashboard.
+
+Antes de aumentar máquina: - medir tempo de carregamento; - identificar
+releituras do Cloud; - usar cache; - evitar parsing repetitivo; - evitar
+carregar dados desnecessários; - verificar memória; - verificar CPU; -
+verificar logs.
+
+A otimização do código deve preceder aumentos de infraestrutura quando o
+gargalo for claramente de implementação.
+
+Arquivos grandes, como o de fases da Lua, devem ser carregados de modo
+eficiente.
+
+===============================================================================
+52. FLUXO COMPLETO DE INICIALIZAÇÃO DO APP
+===============================================================================
+
+Fluxo recomendado:
+
+1.  Aplicação inicia.
+2.  Carrega configuração interna.
+3.  Valida existência das variáveis obrigatórias.
+4.  Inicializa cliente do Cloud.
+5.  Obtém/carrega a base oficial G ↔ M conforme arquitetura real.
+6.  Carrega fontes opcionais necessárias.
+7.  Faz parsing.
+8.  Constrói índices.
+9.  Armazena em cache.
+10. Inicializa preferências da interface.
+11. Renderiza calendário.
+12. Aplica somente os marcadores habilitados.
+
+Falha de um marcador opcional não deve necessariamente derrubar todo o
+calendário.
+
+===============================================================================
+53. FLUXO DE RENDERIZAÇÃO DE UM MÊS
+===============================================================================
+
+Quando o usuário escolhe um mês/ano:
+
+1.  localizar os registros oficiais G ↔ M correspondentes;
+2.  montar a grade;
+3.  verificar modo de exibição;
+4.  consultar índice de Lua se habilitado;
+5.  consultar índice de estações se habilitado;
+6.  consultar Páscoa se habilitada;
+7.  consultar Festas Bíblicas se habilitadas;
+8.  consolidar eventos do mesmo dia;
+9.  renderizar marcadores;
+10. renderizar legenda;
+11. manter fonte genérica.
+
+Não consultar o Cloud individualmente para cada célula.
+
+===============================================================================
+54. CACHE
+===============================================================================
+
+O cache é parte importante da arquitetura.
+
+Cache recomendado para: - conteúdo dos TXT; - resultado do parsing; -
+índices por data; - eventualmente base G ↔ M, conforme tamanho e
+formato.
+
+A chave de cache deve permitir atualização quando a fonte mudar.
+
+Possibilidades: - TTL controlado; - geração/versão; - metadado do
+objeto; - hash; - botão administrativo de recarga, se futuramente
+necessário.
+
+Não criar um cache que impeça indefinidamente a atualização dos dados.
+
+===============================================================================
+55. PERFORMANCE DA INTERFACE
+===============================================================================
+
+Evitar: - rerenderizar milhares de anos de uma vez; - carregar todos os
+elementos visuais do intervalo completo; - criar widgets individuais
+excessivos; - baixar TXT repetidamente; - executar pesquisa externa
+durante renderização do calendário; - recalcular astronomia em cada
+navegação.
+
+Renderizar apenas o período necessário à tela atual.
+
+A navegação em níveis deve trabalhar com metadados/intervalos e só
+carregar os detalhes necessários ao descer para mês/dia.
+
+===============================================================================
+56. RESPONSIVIDADE E USABILIDADE
+===============================================================================
+
+A interface deve permanecer utilizável em diferentes larguras.
+
+Prioridades: - números dos dias legíveis; - marcadores pequenos; -
+tooltips/detalhes sem cobrir a grade; - controles de navegação
+acessíveis; - Configurações simples; - não expor painéis técnicos.
+
+Se a largura for reduzida: - reduzir elementos secundários; - preservar
+dia, marcador e navegação; - evitar textos longos dentro das células.
+
+===============================================================================
+57. ACESSIBILIDADE DOS MARCADORES
+===============================================================================
+
+Não depender apenas de cor.
+
+Para cada marcador, considerar: - símbolo; - tooltip/nome; - legenda; -
+contraste adequado.
+
+As luas vazadas devem continuar reconhecíveis em temas claro/escuro, se
+ambos forem suportados.
+
+===============================================================================
+58. CONSOLIDAÇÃO DE EVENTOS NO MESMO DIA
+===============================================================================
+
+Uma data pode ter mais de um evento.
+
+A interface deve suportar: - Lua + estação; - Lua + festa; - Páscoa +
+Pães Asmos; - outros cruzamentos.
+
+Evitar sobrepor ícones de forma ilegível.
+
+Estratégias: - pequenos marcadores lado a lado; - limite visual e
+indicador de mais eventos; - tooltip/detalhe ao clicar.
+
+A regra de Páscoa duplicada deve ser tratada especificamente.
+
+===============================================================================
+59. ESTADO DAS CONFIGURAÇÕES
+===============================================================================
+
+Preferências: - modo G+M / somente G / somente M; - Lua; - Estações; -
+Páscoa; - Festas Bíblicas.
+
+O método de persistência deve ser definido conforme a arquitetura real.
+
+No mínimo, a seleção deve permanecer consistente durante a sessão.
+
+Se houver persistência por usuário no futuro: - separar preferência de
+dado oficial; - nunca gravar preferências dentro dos TXT oficiais.
+
+===============================================================================
+60. PÁGINA PESQUISA — ARQUITETURA
+===============================================================================
+
+A Pesquisa deve ser desacoplada do calendário.
+
+Fluxo:
+
+usuário digita consulta ↓ validação ↓ API de busca ↓ normalização de
+resultados ↓ interface apresenta resultados
+
+Não executar busca sem ação do usuário, salvo futura decisão explícita.
+
+Implementar: - timeout; - tratamento de indisponibilidade; - limite de
+resultados; - proteção contra resposta vazia; - identificação da fonte.
+
+===============================================================================
+61. PESQUISA — PRIVACIDADE E SEGURANÇA
+===============================================================================
+
+Antes de enviar uma consulta a serviço externo: - enviar apenas o texto
+necessário à busca; - não anexar automaticamente dados internos; - não
+enviar secrets; - não enviar conteúdo completo do calendário sem
+necessidade.
+
+A tela deve deixar claro que se trata de consulta externa quando
+apropriado.
+
+===============================================================================
+62. DEPENDÊNCIAS PYTHON
+===============================================================================
+
+Manter requirements limpo.
+
+Adicionar somente bibliotecas realmente necessárias.
+
+Ao incluir nova dependência: - verificar manutenção; - compatibilidade
+com a versão do Python; - impacto no build; - impacto no tamanho; -
+licença quando relevante.
+
+Fixar versões quando necessário para estabilidade, sem congelar
+desnecessariamente bibliotecas obsoletas.
+
+===============================================================================
+63. VERSÃO DO PYTHON
+===============================================================================
+
+A versão real usada no Render deve ser confirmada antes de introduzir
+sintaxe/bibliotecas incompatíveis.
+
+Registrar a versão de runtime de forma explícita no projeto quando a
+plataforma/repositório permitir.
+
+Testar localmente/CI na mesma versão ou versão compatível.
+
+===============================================================================
+64. VALIDAÇÃO AUTOMÁTICA
+===============================================================================
+
+Criar ou ampliar script de validação para conferir:
+
+-   imports;
+-   sintaxe;
+-   configuração das fontes;
+-   parsing dos TXT;
+-   registros mínimos;
+-   intervalo temporal;
+-   IDs de Festas Bíblicas;
+-   status permitidos;
+-   ausência de duplicatas críticas;
+-   correspondência esperada de Páscoa;
+-   encoding.
+
+Comandos conceituais: - python -m compileall . - script de validação do
+projeto.
+
+Usar os comandos reais existentes no repositório.
+
+===============================================================================
+65. TESTES DE REGRESSÃO
+===============================================================================
+
+Criar amostras de datas conhecidas para impedir regressões.
+
+Testar pelo menos: - uma data a.C.; - uma data próxima ao ponto de
+transição de eras adotado pela base; - uma data contemporânea; - uma
+data futura; - extremos da faixa; - um dia de Lua; - um marco de
+estação; - 15 de Rúben; - Trombetas; - Expiação; - Tabernáculos; - dia
+sem marcador.
+
+O resultado esperado deve vir das fontes oficiais do projeto.
+
+===============================================================================
+66. OBSERVABILIDADE
+===============================================================================
+
+Logs devem permitir responder: - app iniciou? - Cloud autenticou? -
+quais fontes foram carregadas? - quantos registros? - cache foi usado? -
+quanto demorou? - houve erro de parsing? - Pesquisa externa falhou?
+
+Sem revelar secrets.
+
+Opcionalmente registrar métricas agregadas de desempenho, sem armazenar
+consultas pessoais desnecessariamente.
+
+===============================================================================
+67. BACKUP E RECUPERAÇÃO
+===============================================================================
+
+Antes de mudanças em dados oficiais: - manter cópia anterior; -
+registrar versão; - validar novo arquivo.
+
+Antes de mudanças grandes no código: - registrar commit estável; -
+garantir rollback.
+
+Em incidente: 1. identificar se é código, Render, credencial ou dado; 2.
+restaurar último estado estável quando necessário; 3. corrigir causa; 4.
+validar; 5. publicar novamente.
+
+===============================================================================
+68. SEPARAÇÃO ENTRE DESENVOLVIMENTO E PRODUÇÃO
+===============================================================================
+
+Quando possível: - testar alterações antes de produção; - evitar usar
+dados oficiais como área de testes destrutivos; - usar secrets separados
+se houver ambiente de staging; - não substituir arquivos de produção
+durante experimentos.
+
+Se só houver um ambiente, fazer mudanças menores, versionadas e
+reversíveis.
+
+===============================================================================
+69. SEGURANÇA DO REPOSITÓRIO
+===============================================================================
+
+Adicionar ao .gitignore tudo que possa conter: - .env; - credenciais; -
+chaves; - arquivos temporários; - caches locais; - secrets.
+
+Se usar arquivo de exemplo: .env.example
+
+Ele deve conter apenas nomes de variáveis e valores fictícios, nunca
+credenciais reais.
+
+===============================================================================
+70. DOCUMENTAÇÃO DO REPOSITÓRIO
+===============================================================================
+
+README recomendado:
+
+-   finalidade do app;
+-   arquitetura resumida;
+-   como executar localmente;
+-   dependências;
+-   variáveis necessárias, apenas nomes;
+-   como validar;
+-   como fazer deploy;
+-   como localizar este memorial;
+-   aviso para não alterar dados oficiais sem validação.
+
+Não duplicar no README todos os detalhes deste memorial; apontar para o
+memorial como documento aprofundado.
+
+===============================================================================
+71. MATRIZ DE RESPONSABILIDADE
+===============================================================================
+
+DADO OFICIAL G ↔ M: - origem: base oficial do projeto; - alteração:
+controlada; - interface: somente leitura/apresentação.
+
+LUA: - origem operacional: fases_lua_completo.txt; - interface:
+opcional.
+
+ESTAÇÕES: - origem operacional: marcos_estacoes_completo.txt; -
+interface: opcional.
+
+PÁSCOA: - origem operacional: pascoa_15_ruben_completo.txt; - interface:
+opcional.
+
+FESTAS: - origem operacional: festas_biblicas_pre_cativeiro.txt; -
+interface: opcional e somente ATIVO.
+
+PESQUISA: - origem: Web externa; - interface: página separada; -
+permissão para alterar dado oficial: NENHUMA automaticamente.
+
+===============================================================================
+72. CHECKLIST DO GOOGLE CLOUD
+===============================================================================
+
+[ ] bucket correto [ ] pasta-base correta [ ] arquivo Lua presente [ ]
+arquivo Estações presente [ ] arquivo Páscoa presente [ ] arquivo Festas
+presente [ ] encoding válido [ ] conta de serviço autorizada [ ] nenhum
+objeto precisa estar público sem necessidade [ ] backup/versionamento
+antes de substituições [ ] memorial em pasta de documentação separada,
+se adotado
+
+===============================================================================
+73. CHECKLIST DO GITHUB
+===============================================================================
+
+[ ] repositório correto confirmado [ ] branch de deploy confirmada [ ]
+estrutura atual inspecionada [ ] nenhum secret versionado [ ]
+requirements atualizado [ ] imports válidos [ ] validação executada [ ]
+commit objetivo [ ] rollback conhecido [ ] README coerente [ ]
+configuração interna centralizada
+
+===============================================================================
+74. CHECKLIST DO RENDER
+===============================================================================
+
+[ ] Web Service correto confirmado [ ] branch correta [ ] build command
+correto [ ] start command correto [ ] runtime Python compatível [ ]
+environment/secrets configurados [ ] health check funcionando [ ] logs
+sem erro [ ] conexão Cloud funcionando [ ] app testado após deploy [ ]
+plano/recursos avaliados por medição, não por suposição
+
+===============================================================================
+75. CHECKLIST DA INTERFACE
+===============================================================================
+
+[ ] G + M padrão [ ] somente G [ ] somente M [ ] Lua liga/desliga [ ]
+Estações liga/desliga [ ] Páscoa liga/desliga [ ] Festas liga/desliga [
+] Lua com ícones pequenos/vazados [ ] legenda discreta [ ] fonte
+genérica [ ] nenhuma estrutura Cloud visível [ ] navegação mensal [ ]
+anos [ ] décadas [ ] séculos [ ] grandes intervalos [ ] Ir para o ano [
+] Hoje [ ] eventos múltiplos legíveis [ ] Pesquisa separada
+
+===============================================================================
+76. DADOS A CONFIRMAR ANTES DA IMPLEMENTAÇÃO FINAL
+===============================================================================
+
+Confirmar diretamente nas plataformas:
+
+GitHub: - nome exato do repositório do Calendário Messiano; - branch de
+produção; - estrutura atual; - arquivos já existentes.
+
+Render: - nome do serviço; - workspace; - plano/instância; - região; -
+build command; - start command; - health check; - variáveis existentes.
+
+Google Cloud: - forma exata de autenticação utilizada pelo app; -
+permissões efetivas da conta de serviço; - política de
+versionamento/backup desejada.
+
+Pesquisa: - provedor/API escolhido no momento da implementação; - nome
+das variáveis de ambiente; - limites/custos aplicáveis.
+
+Não preencher esses campos por suposição.
+
+===============================================================================
+77. ORDEM RECOMENDADA PARA IMPLEMENTAÇÃO
+===============================================================================
+
+Fase 1 — Inspeção: - obter ZIP/repositório atual; - mapear
+páginas/módulos; - mapear configuração; - mapear deploy.
+
+Fase 2 — Camada de dados: - centralizar fontes; - Cloud; - parsers; -
+índices; - cache.
+
+Fase 3 — Configurações: - G+M/G/M; - Lua; - Estações; - Páscoa; -
+Festas.
+
+Fase 4 — Calendário: - marcadores; - eventos simultâneos; - legenda; -
+fonte.
+
+Fase 5 — Navegação: - anos; - décadas; - séculos; - grandes
+intervalos; - Ir para o ano; - Hoje.
+
+Fase 6 — Pesquisa: - página separada; - API; - segurança; - tratamento
+de erros.
+
+Fase 7 — Validação: - testes; - performance; - extremos temporais; -
+deploy; - produção.
+
+===============================================================================
+78. CRITÉRIOS DE ACEITAÇÃO
+===============================================================================
+
+Uma versão só deve ser considerada pronta quando:
+
+-   não altera a correspondência oficial G ↔ M;
+-   navega corretamente no intervalo;
+-   respeita os três modos de exibição;
+-   respeita todos os toggles;
+-   não mostra AGUARDA_REGRA;
+-   não duplica Páscoa visualmente;
+-   Lua acompanha as datas;
+-   fontes do Cloud são carregadas eficientemente;
+-   nenhuma estrutura técnica aparece para usuário comum;
+-   Pesquisa não altera dados;
+-   secrets não aparecem;
+-   deploy é reproduzível;
+-   logs permitem diagnóstico;
+-   existe caminho de rollback.
+
+===============================================================================
+79. REGRA PARA FUTURAS ALTERAÇÕES
+===============================================================================
+
+Toda nova funcionalidade deverá ser classificada antes de entrar no app:
+
+A)  altera dado oficial?
+B)  apenas apresenta dado?
+C)  é preferência visual?
+D)  é consulta externa?
+E)  é ferramenta administrativa?
+
+Se alterar dado oficial, exigir processo específico de validação. Se for
+apenas visual, não modificar as fontes. Se for consulta externa, manter
+isolada. Se for administrativa, não expor ao usuário comum sem
+necessidade.
+
+===============================================================================
+80. PRINCÍPIO DE MANUTENÇÃO CIRÚRGICA
+===============================================================================
+
+O aplicativo já funcional deve ser preservado.
+
+Ao alterar: - não reescrever arquivos inteiros sem necessidade; - não
+remover comportamento existente acidentalmente; - comparar
+antes/depois; - integrar com funções existentes; - evitar nomes
+duplicados; - manter compatibilidade com o deploy; - validar cada etapa.
+
+===============================================================================
+81. MAPA FINAL DO SISTEMA
+===============================================================================
+
+                    ┌──────────────────────┐
+                    │       GitHub         │
+                    │ código + histórico  │
+                    └──────────┬───────────┘
+                               │ deploy
+                               ▼
+                    ┌──────────────────────┐
+                    │       Render         │
+                    │ execução do app     │
+                    │ env/secrets/logs    │
+                    └───────┬───────┬──────┘
+                            │       │
+                    dados   │       │ pesquisa
+                            ▼       ▼
+              ┌────────────────┐  ┌─────────────────┐
+              │ Google Cloud   │  │ Web/Google API  │
+              │ dados oficiais │  │ consulta externa│
+              └───────┬────────┘  └────────┬────────┘
+                      │                    │
+                      ▼                    │
+              ┌─────────────────────────────────────┐
+              │              APP                    │
+              │ Calendário | Config. | Pesquisa     │
+              └─────────────────────────────────────┘
+
+A seta da Pesquisa NÃO retorna para escrita automática no Google Cloud.
+
+===============================================================================
+82. DOCUMENTOS E FONTES QUE DEVEM SER TRATADOS DIFERENTEMENTE
+===============================================================================
+
+FONTES DE EXECUÇÃO: - calendário/base oficial G ↔ M; -
+fases_lua_completo.txt; - marcos_estacoes_completo.txt; -
+pascoa_15_ruben_completo.txt; - festas_biblicas_pre_cativeiro.txt.
+
+DOCUMENTAÇÃO: - este memorial; - README; - notas de implantação.
+
+Não misturar documentação com parser de dados.
+
+===============================================================================
+83. CABEÇALHO RECOMENDADO PARA FUTURAS FONTES TXT
+===============================================================================
+
+Cada nova fonte TXT deveria, quando possível, documentar:
+
+-   nome;
+-   finalidade;
+-   intervalo;
+-   formato;
+-   metodologia/origem;
+-   versão;
+-   status;
+-   observações de incerteza;
+-   regra de uso pelo app.
+
+Isso permite auditoria futura sem depender da memória do desenvolvedor.
+
+===============================================================================
+84. POLÍTICA DE ALTERAÇÃO DOS TXT
+===============================================================================
+
+Antes de publicar um TXT novo:
+
+1.  gerar;
+2.  validar formato;
+3.  validar quantidade;
+4.  validar amostras;
+5.  comparar com versão anterior;
+6.  fazer backup;
+7.  enviar ao Cloud;
+8.  invalidar/atualizar cache;
+9.  testar interface;
+10. registrar alteração.
+
+===============================================================================
+85. PONTO DE CONTROLE ANTES DE GERAR OS .PY
+===============================================================================
+
+Antes de começar a geração final dos arquivos Python, usar este memorial
+como checklist e obter a versão MAIS RECENTE do projeto.
+
+Não gerar .py baseado apenas em versões antigas da conversa se houver um
+ZIP/repositório mais novo.
+
+Verificar especialmente: - página real do calendário; - página real de
+Configurações; - integração Cloud existente; - base oficial G ↔ M; -
+navegação atual; - estrutura Streamlit atual; - requirements; - Render.
+
+===============================================================================
+86. REGRA FINAL DE GOVERNANÇA
+===============================================================================
+
+O sistema deve privilegiar:
+
+1.  preservação dos registros oficiais;
+2.  rastreabilidade;
+3.  separação entre dados e interface;
+4.  segurança de credenciais;
+5.  desempenho;
+6.  simplicidade para o usuário;
+7.  capacidade de recuperação;
+8.  mudanças pequenas e verificáveis;
+9.  documentação;
+10. nenhuma alteração silenciosa de regras calendáricas.
+
+===============================================================================
+FIM DO MEMORIAL TÉCNICO — VERSÃO 2
+===============================================================================

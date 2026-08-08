@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: calendario-messiano
+    runtime: python
+    buildCommand: pip install -r requirements.txt && python -m scripts.validate_project && python -m scripts.importar_calendario
+    startCommand: gunicorn app:app --workers 2 --threads 4 --timeout 120
+    healthCheckPath: /api/saude
+    autoDeploy: true
+    envVars:
+      - key: GCS_BUCKET
+        value: calendario-messiano-dados
+      - key: GOOGLE_SERVICE_ACCOUNT_JSON
+        sync: false
+      - key: GOOGLE_CSE_API_KEY
+        sync: false
+      - key: GOOGLE_CSE_CX
+        sync: false

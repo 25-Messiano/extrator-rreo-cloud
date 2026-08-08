@@ -1,66 +1,63 @@
-# Extrator RREO Cloud
+# Calendário Messiano
 
-Aplicativo Streamlit para processar PDFs municipais do RREO armazenados no Google Cloud Storage, extrair a coluna **Receitas Realizadas Até o Bimestre (b)**, preencher a planilha-base e salvar o resultado no próprio Cloud Storage.
+Aplicativo Flask para navegação sincronizada do Calendário Gregoriano (G) e Messiano (M), usando a correspondência oficial armazenada no Google Cloud Storage.
 
-## Arquitetura
+## Princípio central
 
-- `app.py`: página inicial.
-- `pages/1_Painel.py`: processamento por município ou estado.
-- `pages/4_Arquivos_Cloud.py`: consulta de PDFs e resultados no bucket.
-- `integrations/google_storage.py`: única integração de armazenamento.
-- `integrations/gemini.py`: interpretação contextual das linhas da tabela.
-- `modules/rreo.py`: extração do texto e fallback local.
-- `data/RREO-TCM+FNDE PLANILHA BASE.xlsx`: planilha-base.
+A correspondência G ↔ M é lida da fonte oficial. A interface não recalcula nem corrige datas. Marcadores adicionais são carregados de fontes fixas e indexados no SQLite durante o build.
 
-## Variáveis obrigatórias
+## Funcionalidades
 
-- `GOOGLE_SERVICE_ACCOUNT_JSON`: JSON completo da conta de serviço. `GCP_KEY` também é aceito como nome alternativo.
-- `GOOGLE_STORAGE_BUCKET`: nome do bucket. Padrão: `maestro-rreo-arquivos`.
-- `GEMINI_API_KEY`: chave da Gemini API.
-- `GEMINI_MODEL`: padrão `gemini-3.6-flash`, com fallback para `gemini-3.5-flash`.
+- G + M, somente G ou somente M;
+- fases da Lua com marcadores pequenos;
+- estações do ano;
+- Páscoa — 15 de Rúben;
+- Festas Bíblicas somente com status `ATIVO`;
+- navegação por mês, ano, década, século e grandes intervalos;
+- “Ir para o ano” e “Hoje”;
+- página separada de Pesquisa;
+- preferências salvas no navegador;
+- estrutura do Cloud oculta do usuário final.
 
-A conta de serviço precisa de permissão para listar, ler, criar e atualizar objetos no bucket.
+## Cloud
 
-## Estrutura esperada no bucket
+O app usa por padrão o bucket `calendario-messiano-dados`. Os caminhos dos objetos ficam centralizados em `config/storage.py` e não aparecem na interface.
 
-```text
-ARQUIVO_DE_ESTADOS_RREO/
-├── PDF - DOS MUNICIPIOS/
-│   ├── AC/
-│   ├── BA/
-│   └── ...
-└── PLANILHAS_PROCESSADAS/
-    ├── AC/
-    ├── BA/
-    └── ...
-```
+## Credenciais
 
-## Execução local
+Configure uma das opções:
+
+- `GOOGLE_SERVICE_ACCOUNT_JSON` com o JSON completo da conta de serviço; ou
+- `GOOGLE_APPLICATION_CREDENTIALS` apontando para um arquivo secreto.
+
+Nunca versione credenciais.
+
+## Pesquisa Web/Google
+
+A página Pesquisa sempre oferece abertura da consulta no Google. A pesquisa integrada via JSON só é ativada quando `GOOGLE_CSE_API_KEY` e `GOOGLE_CSE_CX` existem. Em 2026, a Custom Search JSON API não está disponível para novos clientes; por isso o app mantém o modo externo como fallback seguro.
+
+## Validação local
 
 ```bash
-python -m venv .venv
-# Windows
-.venv\Scripts\activate
-# Linux/macOS
-source .venv/bin/activate
-
 pip install -r requirements.txt
-streamlit run app.py
+python -m scripts.validate_project
+python -m scripts.importar_calendario
+python app.py
 ```
 
-## Validação antes do deploy
+## Render
 
-```bash
-python -m compileall .
-python scripts/validate_project.py
-```
+O `render.yaml` instala dependências, valida o projeto, importa as fontes oficiais para SQLite e inicia Gunicorn. O health check usa `/api/saude`.
 
-## Deploy no Render
+## Segurança
 
-1. Crie um repositório chamado `extrator-rreo-cloud`.
-2. Envie todo o conteúdo deste pacote para a raiz do repositório.
-3. Crie um novo Blueprint no Render usando `render.yaml`.
-4. Cadastre `GOOGLE_SERVICE_ACCOUNT_JSON` e `GEMINI_API_KEY` como secrets.
-5. Aguarde o health check `/_stcore/health`.
+- nenhuma credencial na interface;
+- nenhuma estrutura técnica do Cloud nas Configurações;
+- Pesquisa externa nunca altera os registros oficiais;
+- fontes opcionais podem falhar sem expor caminhos internos ao usuário.
 
-O projeto não usa Google Drive, OAuth ou Refresh Token.
+## Relatórios em PDF
+
+O app possui uma página separada **Relatórios**, com geração e download direto de PDFs. Os relatórios usam a mesma base oficial do calendário e podem incluir Lua, Estações, Páscoa e Festas Bíblicas conforme o tipo escolhido. A geração é feita no servidor com ReportLab e possui limites para evitar documentos gigantes e sobrecarga no Render.
+
+Tipos disponíveis: Mensal, Anual, Correspondência G <-> M, Fases da Lua, Estações do Ano, Festas Bíblicas, Data Específica, Intervalo Personalizado e Auditoria das Fontes.

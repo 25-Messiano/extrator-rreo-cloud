@@ -1,0 +1,53 @@
+================================================================================
+ADENDO AO MEMORIAL TECNICO - RELATORIOS EM PDF
+================================================================================
+
+Nova area funcional: RELATORIOS.
+
+Objetivo:
+Permitir gerar e baixar PDFs baseados exclusivamente nos mesmos registros oficiais
+consumidos pela interface do Calendario Messiano.
+
+Tipos implantados:
+1. Relatorio Mensal do Calendario.
+2. Relatorio Anual.
+3. Correspondencia G <-> M.
+4. Fases da Lua.
+5. Estacoes do Ano.
+6. Festas Biblicas.
+7. Data Especifica.
+8. Intervalo Personalizado.
+9. Auditoria das Fontes.
+
+Regras de arquitetura:
+- PDF e interface usam a mesma camada SQLite.
+- Nenhuma data G <-> M e recalculada no PDF.
+- Mensal, Anual e Intervalo aceitam G + M, Somente G ou Somente M.
+- Marcadores podem ser incluidos/excluidos conforme o relatorio.
+- Festas Biblicas: somente STATUS=ATIVO.
+- AGUARDA_REGRA nao aparece.
+- A Pascoa duplicada e consolidada.
+- Intervalo detalhado: maximo de 5.000 dias por PDF.
+- Correspondencia: maximo de 10.000 dias por PDF.
+- Relatorios de Lua e Estacoes usam recorte anual para evitar documentos gigantes.
+- O app nao salva automaticamente o PDF no Cloud; o usuario solicita e baixa.
+- Nenhuma credencial, bucket, path ou secret aparece no PDF.
+- Rodape generico: Fonte dos dados: registros oficiais do calendario.
+
+Arquivos principais:
+- modules/reports.py
+- modules/database/consultas.py
+- app.py
+- templates/index.html
+- static/js/app.js
+- static/css/app.css
+- requirements.txt (ReportLab)
+
+Endpoint:
+POST /api/relatorios/pdf
+
+O endpoint retorna application/pdf como anexo para download.
+
+================================================================================
+FIM DO ADENDO
+================================================================================
