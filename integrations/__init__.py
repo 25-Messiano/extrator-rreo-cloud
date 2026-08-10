@@ -1,1 +1,0 @@
-"""Integrações externas do aplicativo."""
