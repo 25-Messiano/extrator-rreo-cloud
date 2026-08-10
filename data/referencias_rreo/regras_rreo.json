@@ -1,0 +1,30 @@
+{
+  "versao": 1,
+  "descricao": "Regras do extrator RREO para a coluna RECEITAS REALIZADAS Até o Bimestre (b).",
+  "codigos_ativos": [
+    "1.1",
+    "1.2",
+    "1.3",
+    "1.4",
+    "2.1",
+    "2.1.1",
+    "2.1.2",
+    "2.2",
+    "2.3",
+    "2.4",
+    "2.5",
+    "2.6",
+    "6.1.1",
+    "6.2",
+    "6.2.1"
+  ],
+  "coluna_origem": "RECEITAS REALIZADAS Até o Bimestre (b)",
+  "indice_valor_monetario_no_bloco": 2,
+  "interpretacao_indice": "Selecionar o segundo valor monetário encontrado no bloco da linha.",
+  "delimitador_linha": "Código seguido de hífen, travessão ou meia-risca.",
+  "fim_bloco": "Início do próximo código numérico hierárquico.",
+  "formato_monetario": "pt-BR",
+  "valor_ausente": null,
+  "usar_gemini_primeiro": true,
+  "fallback_local": true
+}

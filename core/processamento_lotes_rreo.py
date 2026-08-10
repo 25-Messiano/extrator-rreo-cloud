@@ -1,0 +1,14 @@
+from __future__ import annotations
+
+from typing import Any, Callable, TypeVar
+
+from core.processamento_lotes import execute_parallel
+from core.politica_operacoes import Fonte, PoliticaExecucao
+
+R = TypeVar("R")
+
+
+def executar_lote_rreo(politica: PoliticaExecucao, itens: list[dict[str, Any]], worker: Callable[[dict[str, Any]], R], max_workers: int):
+    if politica.fonte is not Fonte.RREO:
+        raise RuntimeError("Executor RREO recebeu política de outra fonte.")
+    return execute_parallel(itens, worker, max_workers)
