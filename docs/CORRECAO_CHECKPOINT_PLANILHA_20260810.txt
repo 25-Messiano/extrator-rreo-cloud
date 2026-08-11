@@ -1,0 +1,22 @@
+CORREÇÃO — CHECKPOINT ANTIGO X NOVA PLANILHA
+Data: 10/08/2026
+
+Sintoma observado:
+KeyError: a aba 'Sequência_PlanilhaCálculo (2)' não existe.
+Abas do arquivo carregado: BaseDadosCaracterística_C.INEP, LOG_RREO, __CONTROLE_LOTES.
+
+Diagnóstico:
+A planilha-base incluída no repositório contém corretamente a aba
+'Sequência_PlanilhaCálculo (2)'. O erro ocorria na retomada automática:
+um checkpoint antigo armazenado no Cloud era baixado e substituía a planilha
+nova antes de sua compatibilidade ser validada.
+
+Correções:
+1. Checkpoints novos usam versão de esquema PLANILHA_SEQUENCIA_V2 no job_id.
+2. Checkpoint é validado ANTES de substituir a planilha atual.
+3. Checkpoint sem a aba oficial é ignorado e registrado no log.
+4. Em incompatibilidade, a planilha-base oficial é restaurada e a execução
+   começa limpa, sem interromper o lote.
+5. config/planilha_base.json foi sincronizado com o arquivo e a aba oficiais.
+6. config/sistema.json foi sincronizado com NOME_EXTERNO_UF e backup_drive=false.
+7. validate_project.py agora valida a aba oficial e a proteção de versão dos checkpoints.
