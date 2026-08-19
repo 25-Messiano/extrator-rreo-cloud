@@ -1,6 +1,0 @@
-[
-  "tests/test_imports.py::test_imports",
-  "tests/test_processamento_nacional.py::test_configuracao_nacional_tem_timeout",
-  "tests/test_processamento_nacional.py::test_planilha_cobre_as_27_ufs_e_brasilia",
-  "tests/test_processamento_nacional.py::test_timeout_de_lote_nao_bloqueia_indefinidamente"
-]
