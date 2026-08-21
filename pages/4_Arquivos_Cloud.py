@@ -92,6 +92,41 @@ with link_cloud:
         use_container_width=True,
     )
 
+# ==========================================================
+# Links externos de consulta (somente informativos)
+# ==========================================================
+
+consulta_siop, consulta_fnde, consulta_tcm = st.columns(3)
+
+with consulta_siop:
+    st.markdown(
+        "**SIOP**  \n"
+        "[https://www.fnde.gov.br/siope/relatorioRREOMunicipal2006.do]"
+        "(https://www.fnde.gov.br/siope/relatorioRREOMunicipal2006.do)"
+    )
+
+with consulta_fnde:
+    st.markdown(
+        "**FNDE**  \n"
+        "[https://www.fnde.gov.br/sigefweb/index.php/liberacoes]"
+        "(https://www.fnde.gov.br/sigefweb/index.php/liberacoes)"
+    )
+
+with consulta_tcm:
+    st.markdown(
+        "**TCM**  \n"
+        "[https://e.tcm.ba.gov.br/epp/ConsultaPublica/listView.seam]"
+        "(https://e.tcm.ba.gov.br/epp/ConsultaPublica/listView.seam)"
+    )
+
+_, consulta_bb, _ = st.columns(3)
+with consulta_bb:
+    st.markdown(
+        "**BB - BANCO DO BRASIL**  \n"
+        "[https://demonstrativos.apps.bb.com.br/arrecadacao-federal]"
+        "(https://demonstrativos.apps.bb.com.br/arrecadacao-federal)"
+    )
+
 st.markdown("---")
 aba_pdfs, aba_resultados = st.tabs(
     [
