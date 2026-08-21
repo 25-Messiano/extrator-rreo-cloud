@@ -1,0 +1,141 @@
+{
+  "versao": 1,
+  "descricao": "Estados brasileiros e códigos IBGE das UFs.",
+  "estados": [
+    {
+      "uf": "AC",
+      "codigo_ibge_uf": "12",
+      "nome": "Acre"
+    },
+    {
+      "uf": "AL",
+      "codigo_ibge_uf": "27",
+      "nome": "Alagoas"
+    },
+    {
+      "uf": "AP",
+      "codigo_ibge_uf": "16",
+      "nome": "Amapá"
+    },
+    {
+      "uf": "AM",
+      "codigo_ibge_uf": "13",
+      "nome": "Amazonas"
+    },
+    {
+      "uf": "BA",
+      "codigo_ibge_uf": "29",
+      "nome": "Bahia"
+    },
+    {
+      "uf": "CE",
+      "codigo_ibge_uf": "23",
+      "nome": "Ceará"
+    },
+    {
+      "uf": "DF",
+      "codigo_ibge_uf": "53",
+      "nome": "Distrito Federal"
+    },
+    {
+      "uf": "ES",
+      "codigo_ibge_uf": "32",
+      "nome": "Espírito Santo"
+    },
+    {
+      "uf": "GO",
+      "codigo_ibge_uf": "52",
+      "nome": "Goiás"
+    },
+    {
+      "uf": "MA",
+      "codigo_ibge_uf": "21",
+      "nome": "Maranhão"
+    },
+    {
+      "uf": "MT",
+      "codigo_ibge_uf": "51",
+      "nome": "Mato Grosso"
+    },
+    {
+      "uf": "MS",
+      "codigo_ibge_uf": "50",
+      "nome": "Mato Grosso do Sul"
+    },
+    {
+      "uf": "MG",
+      "codigo_ibge_uf": "31",
+      "nome": "Minas Gerais"
+    },
+    {
+      "uf": "PA",
+      "codigo_ibge_uf": "15",
+      "nome": "Pará"
+    },
+    {
+      "uf": "PB",
+      "codigo_ibge_uf": "25",
+      "nome": "Paraíba"
+    },
+    {
+      "uf": "PR",
+      "codigo_ibge_uf": "41",
+      "nome": "Paraná"
+    },
+    {
+      "uf": "PE",
+      "codigo_ibge_uf": "26",
+      "nome": "Pernambuco"
+    },
+    {
+      "uf": "PI",
+      "codigo_ibge_uf": "22",
+      "nome": "Piauí"
+    },
+    {
+      "uf": "RJ",
+      "codigo_ibge_uf": "33",
+      "nome": "Rio de Janeiro"
+    },
+    {
+      "uf": "RN",
+      "codigo_ibge_uf": "24",
+      "nome": "Rio Grande do Norte"
+    },
+    {
+      "uf": "RS",
+      "codigo_ibge_uf": "43",
+      "nome": "Rio Grande do Sul"
+    },
+    {
+      "uf": "RO",
+      "codigo_ibge_uf": "11",
+      "nome": "Rondônia"
+    },
+    {
+      "uf": "RR",
+      "codigo_ibge_uf": "14",
+      "nome": "Roraima"
+    },
+    {
+      "uf": "SC",
+      "codigo_ibge_uf": "42",
+      "nome": "Santa Catarina"
+    },
+    {
+      "uf": "SP",
+      "codigo_ibge_uf": "35",
+      "nome": "São Paulo"
+    },
+    {
+      "uf": "SE",
+      "codigo_ibge_uf": "28",
+      "nome": "Sergipe"
+    },
+    {
+      "uf": "TO",
+      "codigo_ibge_uf": "17",
+      "nome": "Tocantins"
+    }
+  ]
+}

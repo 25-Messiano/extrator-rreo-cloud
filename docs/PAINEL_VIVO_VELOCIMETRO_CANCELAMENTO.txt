@@ -1,0 +1,7 @@
+PAINEL VIVO, VELOCÍMETRO E CANCELAMENTO
+
+- A seção 3 mostra atividade, município, etapa, método, progresso e velocímetro circular com ponteiro.
+- A velocidade é calculada pelos municípios concluídos e atualizada a cada conclusão.
+- O botão Cancelar solicita parada cooperativa; o sistema preserva o último checkpoint e o Excel parcial.
+- A seção 4 exibe os logs do sistema ao vivo.
+- O índice RREO do painel usa somente o nome externo e não chama Gemini para decidir município.
