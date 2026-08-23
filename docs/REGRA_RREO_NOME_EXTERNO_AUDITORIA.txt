@@ -1,0 +1,15 @@
+REGRA VIGENTE - IDENTIFICAÇÃO DE MUNICÍPIO NO RREO
+
+1. O nome externo do PDF é a chave operacional para localizar o município.
+2. O conteúdo interno é lido apenas para conferência e auditoria.
+3. Gemini não é chamado para decidir, trocar ou redirecionar município.
+4. Não é construído índice interno por leitura de todos os PDFs.
+5. Se não for possível confirmar o município interno, o PDF segue pelo nome externo.
+6. Se houver divergência interna inequívoca (confiança local >= 93%):
+   - o PDF RREO não é gravado na planilha;
+   - o município não é trocado;
+   - o lote não é interrompido;
+   - a divergência e a ação são registradas no LOG_RREO;
+   - em execução combinada, o FNDE pode continuar normalmente.
+7. A regra vale para Estado inteiro, Município único, Municípios selecionados,
+   Todos os Estados e Amostra.
