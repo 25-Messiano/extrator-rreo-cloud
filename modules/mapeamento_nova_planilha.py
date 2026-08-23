@@ -531,6 +531,39 @@ def gravar_dados_mapeados(
     return relatorio
 
 
+
+def limpar_campos_fonte(
+    worksheet: Worksheet,
+    linha_municipio: int,
+    fonte: str,
+    *,
+    preservar_formulas: bool = True,
+) -> list[str]:
+    """Limpa somente os campos autorizados de RREO ou FNDE na linha informada.
+
+    Usado pela Rodada de Correção antes de gravar uma extração nova. Campos de
+    outras fontes e fórmulas são preservados. Retorna as células efetivamente
+    limpas.
+    """
+    validar_worksheet(worksheet)
+    fonte_norm = str(fonte or "").strip().upper()
+    if fonte_norm not in {"RREO", "FNDE"}:
+        raise ValueError(f"Fonte inválida para limpeza: {fonte!r}")
+    if linha_municipio < 1:
+        raise ValueError("A linha do município deve ser maior ou igual a 1.")
+
+    limpas: list[str] = []
+    for campo in CAMPOS_DESTINO:
+        if campo.fonte != fonte_norm:
+            continue
+        celula = worksheet.cell(row=linha_municipio, column=campo.coluna)
+        if preservar_formulas and isinstance(celula.value, str) and celula.value.startswith("="):
+            continue
+        if celula.value is not None:
+            celula.value = None
+            limpas.append(celula.coordinate)
+    return limpas
+
 def preencher_resultados_nova_planilha(
     worksheet: Worksheet,
     linha_municipio: int,
@@ -641,6 +674,7 @@ __all__ = [
     "obter_aba_destino",
     "obter_celula_destino",
     "gravar_dados_mapeados",
+    "limpar_campos_fonte",
     "preencher_resultados_nova_planilha",
     "preencher_rreo_nova_planilha",
     "preencher_fnde_nova_planilha",

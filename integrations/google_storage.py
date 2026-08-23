@@ -514,7 +514,22 @@ def describe_state_files(uf: str, year: int | str = 2025) -> dict[str, Any]:
 MASTER_PREFIX = f"{RESULTADOS_PREFIX}MASTER/"
 MASTER_BACKUP_PREFIX = f"{RESULTADOS_PREFIX}BACKUPS_MASTER/"
 LOGS_PREFIX = f"{RESULTADOS_PREFIX}LOGS/"
+RODADAS_PREFIX = f"{RESULTADOS_PREFIX}RODADAS/"
 
+
+
+def round_blob_name(year: int | str, filename: str) -> str:
+    safe_name = Path(str(filename)).name
+    return f"{RODADAS_PREFIX}{int(year)}/{safe_name}"
+
+
+def upload_round_result(local_path: str | Path, year: int | str) -> dict[str, Any]:
+    source = Path(local_path)
+    return upload_file(
+        source,
+        round_blob_name(year, source.name),
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
 
 def master_blob_name(year: int | str) -> str:
     return f"{MASTER_PREFIX}RREO_FNDE_BRASIL_MASTER_{int(year)}.xlsx"

@@ -1,3 +1,15 @@
+# v1.2.7 — Tipos de Rodada (2026-08-23)
+
+- Novo seletor **Tipo de Rodada** no Painel Único:
+  - **Rodada Nova**: parte sempre da planilha-base limpa, cria arquivo independente e não sobrescreve o master.
+  - **Rodada de Correção**: força reprocessamento da seleção e, após leitura bem-sucedida, limpa os campos antigos da fonte (RREO/FNDE) antes de gravar os novos valores.
+  - **Rodada de Incrementação**: preserva o master e pula apenas o que já está concluído.
+- Incrementação reabre automaticamente município antes marcado `SEM_PDF` quando um PDF novo passa a existir no Cloud.
+- Rodadas Novas são salvas em `PLANILHAS_PROCESSADAS/RODADAS/<ano>/`, com nome único por data/hora.
+- Correção e Incrementação mantêm backup técnico do master antes da alteração.
+- Tipo da rodada incluído no histórico de jobs e na auditoria do Excel.
+- Testes adicionados para política de rodadas, limpeza seletiva de RREO/FNDE e novo PDF em incrementação.
+
 # v1.2.6 - Municípios oficiais e recuperação automática do app
 
 - Corrige estado visual obsoleto no seletor de municípios: o código IBGE passa a ser a chave oficial e o widget é versionado por ano/UF.

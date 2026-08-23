@@ -36,6 +36,8 @@ from integrations.google_storage import (
     backup_master,
     master_blob_name,
     upload_activity_log,
+    upload_round_result,
+    round_blob_name,
 )
 from modules.rreo import process as processar_rreo, identify_internal_municipality
 from modules.fnde import process as processar_fnde
@@ -47,6 +49,7 @@ from modules.mapeamento_nova_planilha import (
     obter_aba_destino,
     preencher_fnde_nova_planilha,
     preencher_rreo_nova_planilha,
+    limpar_campos_fonte,
     validar_estrutura_planilha,
 )
 from core.config_manager import load_json
@@ -70,6 +73,15 @@ from core.processamento_lotes_combinado import executar_lote_politica
 from core.monitor_execucao import ExecutionMonitor, render_gauge_html
 from core.controle_cancelamento import CancellationToken
 from core.relatorios_cloud_pdf import gerar_relatorio_cloud_pdf, UF_PARA_ESTADO
+from core.tipos_rodada import (
+    TipoRodada,
+    DESCRICOES as DESCRICOES_RODADA,
+    usa_master_existente,
+    forca_processamento,
+    limpa_fonte_antes_de_gravar,
+    atualiza_atividade_global,
+    incremental_ja_concluido,
+)
 
 
 st.markdown("""
@@ -1325,15 +1337,33 @@ context_signature = "|".join([
     str(ano),
     "TODOS" if todos_os_estados else uf,
     ",".join(sorted(context_codes)),
+    str(st.session_state.get("tipo_rodada", TipoRodada.INCREMENTACAO.value)),
 ])
 sincronizar_contexto_execucao(context_signature)
 
 activity_db = Database()
-forcar_reprocessamento = st.checkbox(
-    "Reprocessar municípios já concluídos",
-    value=False,
-    help="Desmarcado: o sistema pula automaticamente o que já está processado no ano selecionado. Marque somente para forçar uma nova leitura.",
-)
+st.markdown("**Tipo de Rodada**")
+tipo_rodada = TipoRodada(st.selectbox(
+    "Como os dados desta execução devem ser tratados?",
+    options=[item.value for item in TipoRodada],
+    index=2,
+    key="tipo_rodada",
+    help=(
+        "Nova: começa da planilha-base limpa. Correção: substitui os campos da seleção. "
+        "Incrementação: preserva o existente e processa somente o que falta."
+    ),
+))
+st.caption(DESCRICOES_RODADA[tipo_rodada])
+if tipo_rodada is TipoRodada.NOVA:
+    st.warning(
+        "Rodada Nova: será criado um Excel independente a partir da base oficial. "
+        "A planilha mestre atual não será apagada nem sobrescrita."
+    )
+elif tipo_rodada is TipoRodada.CORRECAO:
+    st.info(
+        "Rodada de Correção: os municípios selecionados serão reprocessados. "
+        "Após leitura bem-sucedida de cada fonte, os valores antigos dessa fonte serão limpos e substituídos."
+    )
 try:
     resumo_atividade = activity_db.state_activity_summary(ano, uf)
     total_registrado = sum(resumo_atividade.values())
@@ -1348,7 +1378,7 @@ try:
     if modo == "Município único" and municipio_selecionado:
         atividade_mun = activity_db.get_activity_map(ano, [municipio_selecionado["codigo_ibge"]]).get(municipio_selecionado["codigo_ibge"])
         if atividade_mun and _activity_terminal(atividade_mun, PROCESSAR_RREO, PROCESSAR_FNDE):
-            st.info(f"Município já processado: {municipio_selecionado['nome']}/{uf}. Será pulado, salvo se você marcar reprocessamento.")
+            st.info(f"Município já processado: {municipio_selecionado['nome']}/{uf}. Na Incrementação ele será pulado; use Rodada de Correção para substituir os dados.")
 except Exception as activity_error:
     st.caption(f"Registro de atividade temporariamente indisponível: {activity_error}")
 
@@ -1435,7 +1465,7 @@ with mid:
     activity_slot.code(monitor.recent_text(16),language=None)
     quantidade_selecionada=(len(municipios) if todos_os_estados or modo=="Estado inteiro" else len(municipios_selecionados))
     st.write("**Resumo antes de iniciar**")
-    st.caption(f"Estado: {'TODOS' if todos_os_estados else uf} | Modo: {modo} | Municípios selecionados: {quantidade_selecionada} | Operação: {operacao} | RREO: {'SIM' if PROCESSAR_RREO else 'NÃO'} | FNDE: {'SIM' if PROCESSAR_FNDE else 'NÃO'}")
+    st.caption(f"Estado: {'TODOS' if todos_os_estados else uf} | Modo: {modo} | Tipo: {tipo_rodada.value} | Municípios selecionados: {quantidade_selecionada} | Operação: {operacao} | RREO: {'SIM' if PROCESSAR_RREO else 'NÃO'} | FNDE: {'SIM' if PROCESSAR_FNDE else 'NÃO'}")
     cproc,ccancel=st.columns(2)
     with cproc:
         latest_job = activity_db.latest_job(ano)
@@ -1573,27 +1603,46 @@ if executar:
         monitor.update(stage="Preparando planilha e fila",method="Python")
         monitor.event("INFO","Índices leves construídos pelos nomes externos")
 
-        # Uma única planilha mestre por ano. Cada rodada atualiza o mesmo arquivo,
-        # seja município, estado ou Brasil inteiro. O master no Cloud também atua
-        # como checkpoint durável entre sessões/reinícios do Render.
-        caminho_saida = pasta_temporaria / f"RREO_FNDE_BRASIL_MASTER_{ano}.xlsx"
-        master_existia = False
-        try:
-            baixado = download_master(ano, caminho_saida)
-            master_existia = bool(baixado)
-        except Exception as master_download_error:
-            logs.append(
-                f"{datetime.now().strftime('%H:%M:%S')}  Master não pôde ser baixado; "
-                f"usando base local: {master_download_error}"
+        # Política da planilha por tipo de rodada.
+        # - NOVA: parte sempre da base oficial limpa e gera arquivo independente;
+        # - CORREÇÃO/INCREMENTAÇÃO: trabalham sobre o master atual.
+        if tipo_rodada is TipoRodada.NOVA:
+            operacao_slug = normalizar_texto(operacao).replace(" ", "_").upper()
+            stamp_rodada = datetime.now().strftime("%Y%m%d_%H%M%S")
+            caminho_saida = pasta_temporaria / (
+                f"{operacao_slug}_{uf_saida}_{ano}_RODADA_NOVA_{stamp_rodada}.xlsx"
             )
-        if not master_existia:
             shutil.copy2(PLANILHA_BASE, caminho_saida)
+            resultado_blob = round_blob_name(ano, caminho_saida.name)
+            logs.append(
+                f"{datetime.now().strftime('%H:%M:%S')}  Rodada Nova: base oficial limpa preparada; "
+                "master existente preservado."
+            )
         else:
+            caminho_saida = pasta_temporaria / f"RREO_FNDE_BRASIL_MASTER_{ano}.xlsx"
+            master_existia = False
             try:
-                backup_master(caminho_saida, ano, f"antes_{uf_saida}_{operacao}")
-                logs.append(f"{datetime.now().strftime('%H:%M:%S')}  Backup técnico do master criado.")
-            except Exception as backup_error:
-                logs.append(f"{datetime.now().strftime('%H:%M:%S')}  Backup do master falhou: {backup_error}")
+                baixado = download_master(ano, caminho_saida)
+                master_existia = bool(baixado)
+            except Exception as master_download_error:
+                logs.append(
+                    f"{datetime.now().strftime('%H:%M:%S')}  Master não pôde ser baixado; "
+                    f"usando base local: {master_download_error}"
+                )
+            if not master_existia:
+                shutil.copy2(PLANILHA_BASE, caminho_saida)
+            else:
+                try:
+                    backup_master(caminho_saida, ano, f"antes_{tipo_rodada.value}_{uf_saida}_{operacao}")
+                    logs.append(f"{datetime.now().strftime('%H:%M:%S')}  Backup técnico do master criado.")
+                except Exception as backup_error:
+                    logs.append(f"{datetime.now().strftime('%H:%M:%S')}  Backup do master falhou: {backup_error}")
+            resultado_blob = master_blob_name(ano)
+
+        def _persistir_resultado_atual() -> dict[str, Any]:
+            if tipo_rodada is TipoRodada.NOVA:
+                return upload_round_result(caminho_saida, ano)
+            return upload_master(caminho_saida, ano)
 
         workbook = load_workbook(caminho_saida)
         worksheet = escolher_aba_principal(workbook)
@@ -1628,6 +1677,7 @@ if executar:
             "Avisos": 0,
             "Upload Drive": "PENDENTE",
             "Operação": operacao,
+            "Tipo de rodada": tipo_rodada.value,
             "RREO habilitado": "SIM" if PROCESSAR_RREO else "NÃO",
             "FNDE habilitado": "SIM" if PROCESSAR_FNDE else "NÃO",
             "Códigos RREO ativos": ", ".join(CODIGOS_RREO) if PROCESSAR_RREO else "",
@@ -1659,22 +1709,29 @@ if executar:
                 })
 
         job_id = _job_id(
-            operacao,
+            f"{tipo_rodada.value} - {operacao}",
             ano,
             uf_saida,
             modo_execucao,
             [item["codigo_ibge"] for item in fila],
         )
         checkpoint_state_folder = f"CHECKPOINTS/{job_id}"
+        operacao_registro = f"{tipo_rodada.value} | {operacao}"
 
         # O registro persistente é a autoridade para saber o que já foi concluído.
         # O Excel mestre é o checkpoint de dados; portanto não substituímos o master
         # por checkpoints antigos de rodadas específicas.
         activity_map = activity_db.get_activity_map(ano, [item["codigo_ibge"] for item in fila])
-        if not forcar_reprocessamento:
+        if tipo_rodada is TipoRodada.INCREMENTACAO:
             processed_ibge.update(
                 item["codigo_ibge"] for item in fila
-                if _activity_terminal(activity_map.get(item["codigo_ibge"]), PROCESSAR_RREO, PROCESSAR_FNDE)
+                if incremental_ja_concluido(
+                    activity_map.get(item["codigo_ibge"]),
+                    PROCESSAR_RREO,
+                    PROCESSAR_FNDE,
+                    bool(item.get("arquivo_rreo")),
+                    bool(item.get("arquivo_fnde")),
+                )
             )
         if processed_ibge:
             logs.append(
@@ -1683,10 +1740,10 @@ if executar:
             )
 
         activity_db.upsert_job(
-            job_id=job_id, ano=ano, escopo=uf_saida, operacao=operacao,
+            job_id=job_id, ano=ano, escopo=uf_saida, operacao=operacao_registro,
             status="EM_ANDAMENTO", total=len(fila), concluidos=len(processed_ibge),
-            erros=0, lote_atual=0, master_blob=master_blob_name(ano),
-            mensagem="Execução iniciada; usando Excel mestre único.",
+            erros=0, lote_atual=0, master_blob=resultado_blob,
+            mensagem=f"Execução iniciada; {tipo_rodada.value}.",
         )
 
         fila_pendente = [item for item in fila if item["codigo_ibge"] not in processed_ibge]
@@ -1777,6 +1834,11 @@ if executar:
                                 # nem destino: o nome externo continua sendo a regra oficial.
                                 pass
 
+                        # Na Rodada de Correção, uma leitura RREO bem-sucedida
+                        # substitui integralmente os campos RREO antigos da linha.
+                        if limpa_fonte_antes_de_gravar(tipo_rodada) and rreo_values and not rreo_data.get("error"):
+                            limpar_campos_fonte(worksheet, municipio_encontrado["row"], "RREO")
+
                         # REGRA OFICIAL: o nome externo manda. A leitura interna serve
                         # somente para auditoria e jamais impede o preenchimento.
                         rreo_count = preencher_resultados(
@@ -1803,6 +1865,8 @@ if executar:
                         fnde_result_obj = fnde_data.get("result")
                         if fnde_data.get("error"):
                             erros_municipio.append(fnde_data["error"])
+                        if limpa_fonte_antes_de_gravar(tipo_rodada) and fnde_values and not fnde_data.get("error"):
+                            limpar_campos_fonte(worksheet, municipio_encontrado["row"], "FNDE")
                         fnde_count = _preencher_fnde(
                             worksheet, municipio_encontrado["row"], fnde_values
                         )
@@ -1939,33 +2003,34 @@ if executar:
                 "atualizado_em": timestamp(),
             })
             workbook.save(caminho_saida)
-            _save_partial_result(caminho_saida, "Excel mestre atualizado localmente; sincronizando com o Cloud...")
+            _save_partial_result(caminho_saida, f"{tipo_rodada.value}: arquivo atualizado localmente; sincronizando com o Cloud...")
 
             master_sync_ok = False
             try:
-                master_result = upload_master(caminho_saida, ano)
+                master_result = _persistir_resultado_atual()
                 master_sync_ok = True
                 st.session_state["last_result"]["cloud"] = master_result["blob_name"]
             except Exception as master_upload_error:
                 logs.append(
                     f"{datetime.now().strftime('%H:%M:%S')}  "
-                    f"Master local salvo; upload do master falhou: {master_upload_error}"
+                    f"Arquivo local salvo; upload da rodada falhou: {master_upload_error}"
                 )
 
             # Só marca a atividade como concluída depois que o mesmo lote está
             # persistido no Excel mestre do Cloud. Se o upload falhar, a próxima
             # rodada reprocessa o lote em vez de pular dados que não foram salvos.
             if master_sync_ok:
-                for activity_item in activity_updates_batch:
-                    activity_db.upsert_municipio_activity(**activity_item)
+                if atualiza_atividade_global(tipo_rodada):
+                    for activity_item in activity_updates_batch:
+                        activity_db.upsert_municipio_activity(**activity_item)
                 activity_db.upsert_job(
-                    job_id=job_id, ano=ano, escopo=uf_saida, operacao=operacao,
+                    job_id=job_id, ano=ano, escopo=uf_saida, operacao=operacao_registro,
                     status="EM_ANDAMENTO", total=total, concluidos=len(processed_ibge),
                     erros=state["errors"], lote_atual=numero_lote,
                     uf_atual=lote[-1]["uf"] if lote else "",
                     municipio_atual=lote[-1]["municipio"]["nome"] if lote else "",
-                    master_blob=master_blob_name(ano),
-                    mensagem=f"Lote {numero_lote} persistido no Excel mestre.",
+                    master_blob=resultado_blob,
+                    mensagem=f"Lote {numero_lote} persistido; {tipo_rodada.value}.",
                 )
 
             if SALVAR_CHECKPOINT_CLOUD:
@@ -1973,34 +2038,34 @@ if executar:
                 shutil.copy2(caminho_saida, checkpoint_path)
                 try:
                     checkpoint_cloud = upload_result(checkpoint_path, checkpoint_state_folder)
-                    st.session_state["last_result"]["cloud"] = master_blob_name(ano)
+                    st.session_state["last_result"]["cloud"] = resultado_blob
                 except Exception as checkpoint_error:
                     logs.append(
                         f"{datetime.now().strftime('%H:%M:%S')}  "
                         f"Checkpoint técnico não enviado: {checkpoint_error}"
                     )
-            monitor.event("INFO",f"Lote {numero_lote} salvo no Excel mestre")
+            monitor.event("INFO",f"Lote {numero_lote} salvo; {tipo_rodada.value}")
             if cancelado:
                 break
 
         if cancelado:
             workbook.save(caminho_saida)
             try:
-                upload_master(caminho_saida, ano)
+                _persistir_resultado_atual()
             except Exception:
                 pass
             workbook.close()
             activity_db.upsert_job(
-                job_id=job_id, ano=ano, escopo=uf_saida, operacao=operacao,
+                job_id=job_id, ano=ano, escopo=uf_saida, operacao=operacao_registro,
                 status="PAUSADO", total=total, concluidos=len(processed_ibge),
                 erros=state["errors"], lote_atual=numero_lote if 'numero_lote' in locals() else 0,
-                master_blob=master_blob_name(ano), mensagem="Execução pausada; pode ser retomada sem perder o master.",
+                master_blob=resultado_blob, mensagem=f"Execução pausada; {tipo_rodada.value}.",
             )
-            _save_partial_result(caminho_saida,"Processo pausado; Excel mestre parcial preservado.")
+            _save_partial_result(caminho_saida,f"Processo pausado; arquivo de {tipo_rodada.value} preservado.")
             state["status"]="Pausado"
             state["current"]="Cancelado pelo usuário"
-            monitor.update(status="Pausado",current="Processo pausado",stage="Excel mestre salvo",method="-")
-            monitor.event("WARNING","Processo pausado com segurança; Excel mestre parcial disponível")
+            monitor.update(status="Pausado",current="Processo pausado",stage="Arquivo da rodada salvo",method="-")
+            monitor.event("WARNING",f"Processo pausado com segurança; arquivo de {tipo_rodada.value} disponível")
             st.warning("Processo pausado. Ao executar novamente, os municípios já processados serão pulados automaticamente.")
             st.rerun()
 
@@ -2039,18 +2104,18 @@ if executar:
             write_audit(workbook, metrics)
 
         workbook.save(caminho_saida)
-        _save_partial_result(caminho_saida, "Arquivo final salvo localmente; enviando ao Cloud...")
+        _save_partial_result(caminho_saida, f"Arquivo final de {tipo_rodada.value} salvo localmente; enviando ao Cloud...")
 
         cloud_message = "UPLOAD_FALHOU - download local disponível"
         try:
-            resultado_cloud = upload_master(caminho_saida, ano)
+            resultado_cloud = _persistir_resultado_atual()
             metrics["Upload Drive"] = "OK"
             cloud_message = resultado_cloud["blob_name"]
         except Exception as upload_error:
             metrics["Upload Drive"] = "FALHOU"
             logs.append(
                 f"{datetime.now().strftime('%H:%M:%S')}  "
-                f"Upload final do Excel mestre falhou; download local preservado: {upload_error}"
+                f"Upload final da rodada falhou; download local preservado: {upload_error}"
             )
 
         # Atualiza a auditoria com o resultado real do upload e salva novamente.
@@ -2058,12 +2123,12 @@ if executar:
             write_audit(workbook, metrics)
         workbook.save(caminho_saida)
         if metrics["Upload Drive"] == "OK":
-            # A auditoria alterou o arquivo; sincroniza a versão final no mesmo master.
+            # A auditoria alterou o arquivo; sincroniza a versão final no mesmo destino da rodada.
             try:
-                resultado_cloud = upload_master(caminho_saida, ano)
+                resultado_cloud = _persistir_resultado_atual()
                 cloud_message = resultado_cloud["blob_name"]
             except Exception as upload_error:
-                logs.append(f"Reenvio final do master falhou: {upload_error}")
+                logs.append(f"Reenvio final da rodada falhou: {upload_error}")
         workbook.close()
         _save_partial_result(caminho_saida, cloud_message)
 
@@ -2076,10 +2141,10 @@ if executar:
             logs.append(f"Log de atividade não pôde ser exportado: {log_export_error}")
 
         activity_db.upsert_job(
-            job_id=job_id, ano=ano, escopo=uf_saida, operacao=operacao,
+            job_id=job_id, ano=ano, escopo=uf_saida, operacao=operacao_registro,
             status="CONCLUIDO", total=total, concluidos=len(processed_ibge),
             erros=state["errors"], lote_atual=numero_lote if 'numero_lote' in locals() else 0,
-            master_blob=master_blob_name(ano), mensagem="Execução concluída; Excel mestre atualizado.",
+            master_blob=resultado_blob, mensagem=f"Execução concluída; {tipo_rodada.value}.",
         )
 
         monitor.update(status="Concluído",current="Finalizado",stage="Resultado disponível",method="-")
@@ -2118,11 +2183,11 @@ if executar:
         try:
             if "job_id" in locals():
                 activity_db.upsert_job(
-                    job_id=job_id, ano=ano, escopo=locals().get("uf_saida", uf), operacao=operacao,
+                    job_id=job_id, ano=ano, escopo=locals().get("uf_saida", uf), operacao=locals().get("operacao_registro", f"{locals().get('tipo_rodada', TipoRodada.INCREMENTACAO).value} | {operacao}"),
                     status="FALHA", total=locals().get("total", 0),
                     concluidos=len(locals().get("processed_ibge", set())),
                     erros=state.get("errors", 0), lote_atual=locals().get("numero_lote", 0),
-                    master_blob=master_blob_name(ano), mensagem=str(error),
+                    master_blob=resultado_blob, mensagem=str(error),
                 )
         except Exception:
             pass
