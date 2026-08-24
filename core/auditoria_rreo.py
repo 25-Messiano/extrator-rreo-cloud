@@ -12,7 +12,7 @@ RREO_LOG_HEADERS = [
     "Município no conteúdo", "Divergência de município", "Ação adotada",
     "Origem da identificação", "Confiança da identificação",
     "Campos RREO preenchidos", "Códigos encontrados", "Códigos ausentes",
-    "Status", "Método de extração", "Status do upload", "Tentativas de upload",
+    "Status", "Método de extração", "Validação dupla", "Método de validação", "Divergências de valores", "Status do upload", "Tentativas de upload",
     "Pasta de destino", "Erro resumido", "Observações",
 ]
 

@@ -1,0 +1,39 @@
+VALIDACAO DUPLA E RECURSOS ADAPTATIVOS - 24/08/2026
+
+OBJETIVO
+Evitar que um valor extraido incorretamente seja tratado como dado oficial, sem tornar a identificacao de municipio excessivamente rigida.
+
+FLUXO OFICIAL
+PDF -> extracao inicial -> segunda leitura da fonte -> comparacao -> gravacao somente dos campos confirmados.
+
+RREO
+- Extracao principal por texto estruturado.
+- Segunda leitura do mesmo PDF com parametros de extracao diferentes.
+- Cada codigo e comparado em centavos.
+- Havendo divergencia, somente os codigos divergentes passam por leitura estruturada de desempate.
+- Campo divergente nao e liberado como validado.
+
+FNDE
+- Extracao principal por OCR/Gemini Vision conforme disponibilidade.
+- Verificacao usa preferencialmente um canal diferente do canal principal.
+- Se OCR e Gemini divergirem, e feita leitura de desempate quando possivel.
+- Somente PNAE, PNATE, PDDE e QSE confirmados sao liberados.
+
+MUNICIPIO
+- O nome externo do arquivo continua sendo a referencia operacional principal para RREO.
+- Diferencas de acento, grafia, abreviacao, nome interno ou ausencia de IBGE nao bloqueiam automaticamente.
+- Similaridade por nome foi tornada mais tolerante.
+- Apenas ambiguidades reais devem impedir associacao automatica.
+
+RECURSOS
+O aplicativo detecta a capacidade de CPU e escolhe automaticamente um perfil.
+Em 4 CPUs, o perfil inicial e:
+- RREO: ate 3 workers leves;
+- FNDE: ate 2 workers pesados;
+- validacao: 1 canal reservado conceitualmente para rechecagem;
+- Gemini: 1 chamada concorrente por padrao.
+
+Os workers representam limites de concorrencia, e nao CPUs fisicamente exclusivas. O sistema operacional redistribui CPU quando uma fila esta ociosa.
+
+REGRA DE SEGURANCA
+Dado nao confirmado nao deve ser inventado, substituido por valor parecido ou reaproveitado de outro municipio. Divergencias ficam registradas nos logs e o municipio permanece com status de erro/pendencia para correcao.

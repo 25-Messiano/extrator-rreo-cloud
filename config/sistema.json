@@ -25,7 +25,7 @@
   "gerar_log_fnde": true,
   "processamento_em_lotes": true,
   "tamanho_lote": 10,
-  "workers_rreo": 4,
+  "workers_rreo": 3,
   "workers_fnde": 2,
   "gemini_concorrencia": 1,
   "checkpoint_cada": 10,
@@ -40,5 +40,13 @@
   "timeout_lote_segundos": 420,
   "otimizacao_automatica": true,
   "usar_excel_mestre": true,
-  "pular_processados": true
+  "pular_processados": true,
+  "workers_verificacao": 1,
+  "validacao_dupla_obrigatoria": true,
+  "validacao_reler_fonte": true,
+  "validacao_tolerancia_centavos": 0.01,
+  "validacao_bloquear_divergencia_valor": true,
+  "identificacao_municipio_tolerante": true,
+  "identificacao_similaridade_minima": 0.82,
+  "identificacao_margem_ambiguidade": 0.03
 }

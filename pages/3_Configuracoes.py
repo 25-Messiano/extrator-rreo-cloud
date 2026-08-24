@@ -92,7 +92,8 @@ with st.form("config_form"):
     st.info(
         f"Perfil ativo: {runtime.profile_name} | CPUs detectadas: {runtime.detected_cpus} | "
         f"Lote: {runtime.batch_size} | RREO: {runtime.rreo_workers} | "
-        f"FNDE/OCR: {runtime.fnde_workers} | Gemini: {runtime.gemini_concurrency}"
+        f"FNDE/OCR: {runtime.fnde_workers} | Verificação: {runtime.verification_workers} | "
+        f"Gemini: {runtime.gemini_concurrency}"
     )
     l1, l2, l3 = st.columns(3)
     system["processamento_em_lotes"] = l1.checkbox(
@@ -105,7 +106,7 @@ with st.form("config_form"):
         "Salvar checkpoints no Cloud", value=system.get("salvar_checkpoint_cloud", True)
     )
 
-    m1, m2, m3 = st.columns(3)
+    m1, m2, m3, m4 = st.columns(4)
     system["tamanho_lote"] = m1.number_input(
         "Municípios por lote", min_value=1, max_value=50,
         value=int(system.get("tamanho_lote", 10)), step=1,
@@ -115,8 +116,12 @@ with st.form("config_form"):
         value=int(system.get("workers_rreo", 4)), step=1,
     )
     system["workers_fnde"] = m3.number_input(
-        "FNDE/OCR simultâneos", min_value=1, max_value=4,
+        "FNDE/OCR simultâneos", min_value=1, max_value=8,
         value=int(system.get("workers_fnde", 2)), step=1,
+    )
+    system["workers_verificacao"] = m4.number_input(
+        "Verificações simultâneas", min_value=1, max_value=8,
+        value=int(system.get("workers_verificacao", 1)), step=1,
     )
 
     n1, n2, n3 = st.columns(3)

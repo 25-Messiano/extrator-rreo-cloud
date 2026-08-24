@@ -39,8 +39,8 @@ from integrations.google_storage import (
     upload_round_result,
     round_blob_name,
 )
-from modules.rreo import process as processar_rreo, identify_internal_municipality
-from modules.fnde import process as processar_fnde
+from modules.rreo import process as processar_rreo, identify_internal_municipality, verify_values as verificar_rreo
+from modules.fnde import process as processar_fnde, verify_values as verificar_fnde
 from modules.mapeamento_nova_planilha import (
     ABA_DESTINO,
     CAMPOS_FNDE_AUTORIZADOS,
@@ -660,45 +660,88 @@ def _latest_checkpoint(job_id: str) -> dict[str, Any] | None:
 def _rreo_worker_payload(payload: dict[str, Any], temp_root: Path) -> dict[str, Any]:
     arquivo = payload.get("arquivo_rreo")
     if not arquivo:
-        return {"values": {}, "text": "", "error": "PDF RREO não encontrado"}
+        return {"values": {}, "text": "", "error": "PDF RREO não encontrado", "verification_ok": False}
     folder = temp_root / "rreo" / payload["codigo_ibge"]
     folder.mkdir(parents=True, exist_ok=True)
-    values, text = processar_um_pdf(arquivo, folder)
-    municipio_interno, confianca, origem, modelo, tentativas = identify_internal_municipality(
-        texto_pdf=text,
-        municipios=payload["trabalho"]["municipios"],
-        uf_esperada=payload["uf"],
-        usar_gemini=False,
-    )
-    return {
-        "values": values,
-        "text": text,
-        "municipio_interno": municipio_interno,
-        "confianca_municipio": confianca,
-        "origem_municipio": origem,
-        "modelo_municipio": modelo,
-        "tentativas_municipio": tentativas,
-        # A conferência interna é somente auditoria. Nunca bloqueia nem muda
-        # o município escolhido pelo nome externo do arquivo.
-        "error": "",
-    }
+    caminho = folder / arquivo["name"]
+    download_pdf(arquivo["blob_name"], caminho)
+    try:
+        values, text = processar_rreo(caminho, CODIGOS_RREO)
+        municipio_interno, confianca, origem, modelo, tentativas = identify_internal_municipality(
+            texto_pdf=text,
+            municipios=payload["trabalho"]["municipios"],
+            uf_esperada=payload["uf"],
+            usar_gemini=False,
+        )
+        verificacao = verificar_rreo(
+            caminho,
+            values,
+            CODIGOS_RREO,
+            tolerance=float(SISTEMA_CONFIG.get("validacao_tolerancia_centavos", 0.01)),
+        ) if SISTEMA_CONFIG.get("validacao_dupla_obrigatoria", True) else {
+            "ok": True, "confirmed": values, "divergences": {}, "method": "DESATIVADA"
+        }
+        divergencias = verificacao.get("divergences", {})
+        erro = ""
+        if divergencias and SISTEMA_CONFIG.get("validacao_bloquear_divergencia_valor", True):
+            erro = "RREO com divergência na verificação: " + "; ".join(
+                f"{codigo} extração={dados.get('extracao')} verificação={dados.get('verificacao')}"
+                for codigo, dados in divergencias.items()
+            )
+        return {
+            "values": verificacao.get("confirmed", values),
+            "values_extracted": values,
+            "text": text,
+            "municipio_interno": municipio_interno,
+            "confianca_municipio": confianca,
+            "origem_municipio": origem,
+            "modelo_municipio": modelo,
+            "tentativas_municipio": tentativas,
+            # A identificação interna é tolerante e serve somente para auditoria.
+            "verification_ok": bool(verificacao.get("ok")),
+            "verification_method": verificacao.get("method", ""),
+            "verification_divergences": divergencias,
+            "error": erro,
+        }
+    finally:
+        caminho.unlink(missing_ok=True)
 
 
 def _fnde_worker_payload(payload: dict[str, Any], temp_root: Path) -> dict[str, Any]:
     arquivo = payload.get("arquivo_fnde")
     if not arquivo:
-        return {"values": {}, "warnings": [], "result": None, "error": "PDF FNDE não encontrado"}
+        return {"values": {}, "warnings": [], "result": None, "error": "PDF FNDE não encontrado", "verification_ok": False}
     folder = temp_root / "fnde" / payload["codigo_ibge"]
     folder.mkdir(parents=True, exist_ok=True)
     caminho = folder / arquivo["name"]
     download_pdf(arquivo["blob_name"], caminho)
     try:
         values, _, result = processar_fnde(caminho, enviar_imagens=True)
+        verificacao = verificar_fnde(
+            caminho,
+            values,
+            original_method=getattr(result, "metodo", ""),
+            tolerance=float(SISTEMA_CONFIG.get("validacao_tolerancia_centavos", 0.01)),
+        ) if SISTEMA_CONFIG.get("validacao_dupla_obrigatoria", True) else {
+            "ok": True, "confirmed": values, "divergences": {}, "warnings": [], "method": "DESATIVADA"
+        }
+        warnings = [*list(result.avisos), *list(verificacao.get("warnings", []))]
+        divergencias = verificacao.get("divergences", {})
+        erro = ""
+        if divergencias and SISTEMA_CONFIG.get("validacao_bloquear_divergencia_valor", True):
+            erro = "FNDE com divergência na verificação: " + "; ".join(
+                f"{programa} extração={dados.get('extracao')} verificação={dados.get('verificacao')}"
+                for programa, dados in divergencias.items()
+            )
         return {
-            "values": values,
-            "warnings": list(result.avisos),
+            "values": verificacao.get("confirmed", values),
+            "values_extracted": values,
+            "warnings": warnings,
             "result": result,
-            "error": "",
+            "verification_ok": bool(verificacao.get("ok")),
+            "verification_method": verificacao.get("method", ""),
+            "verification_divergences": divergencias,
+            "error": erro,
         }
     finally:
         caminho.unlink(missing_ok=True)
@@ -731,6 +774,8 @@ def _source_status(enabled: bool, arquivo: dict[str, Any] | None, count: int, er
     if error:
         return "ERRO"
     if payload and payload.get("error"):
+        return "ERRO"
+    if payload and SISTEMA_CONFIG.get("validacao_dupla_obrigatoria", True) and not payload.get("verification_ok", False):
         return "ERRO"
     return "OK" if count > 0 else "ERRO"
 
@@ -1817,6 +1862,8 @@ if executar:
                         erros_municipio.append(f"RREO: {type(rreo_error).__name__}: {rreo_error}")
                     elif rreo_data:
                         rreo_values = rreo_data.get("values", {})
+                        if rreo_data.get("error"):
+                            erros_municipio.append(str(rreo_data["error"]))
                         municipio_interno = rreo_data.get("municipio_interno")
                         origem_auditoria = rreo_data.get("origem_municipio", "")
                         confianca_auditoria = float(rreo_data.get("confianca_municipio", 0.0) or 0.0)
@@ -1901,10 +1948,13 @@ if executar:
                         "Campos RREO preenchidos": rreo_count,
                         "Códigos encontrados": ", ".join(found_codes),
                         "Códigos ausentes": ", ".join(missing_codes),
-                        "Status": "OK" if rreo_count else ("ERRO" if rreo_error else "PARCIAL"),
+                        "Status": "OK" if (rreo_count and rreo_data and rreo_data.get("verification_ok")) else ("ERRO" if (rreo_error or (rreo_data and rreo_data.get("error"))) else "PARCIAL"),
                         "Erro resumido": "; ".join(erros_municipio),
                         "Observações": divergencia_nome_rreo,
                         "Método de extração": f"PARALELO_LIMITADO + {origem_municipio_rreo}",
+                        "Validação dupla": "OK" if (rreo_data and rreo_data.get("verification_ok")) else "PENDENTE/DIVERGENTE",
+                        "Método de validação": rreo_data.get("verification_method", "") if rreo_data else "",
+                        "Divergências de valores": str(rreo_data.get("verification_divergences", {})) if rreo_data else "",
                     })
 
                 if GERAR_LOG_FNDE and PROCESSAR_FNDE:
@@ -1921,12 +1971,15 @@ if executar:
                         "Programas encontrados": ", ".join(found_fnde),
                         "Programas ausentes": ", ".join(missing_fnde),
                         "Valores extraídos": "; ".join(f"{k}={v:.2f}" for k, v in fnde_values.items()),
-                        "Status": "OK" if fnde_count else ("ERRO" if fnde_error else "PARCIAL"),
+                        "Status": "OK" if (fnde_count and fnde_data and fnde_data.get("verification_ok")) else ("ERRO" if (fnde_error or (fnde_data and fnde_data.get("error"))) else "PARCIAL"),
                         "Avisos": "; ".join(fnde_warnings),
                         "Erro resumido": "; ".join(erros_municipio),
-                        "Método": getattr(fnde_result_obj, "metodo", "") if fnde_result_obj else "",
+                        "Método de extração": getattr(fnde_result_obj, "metodo", "") if fnde_result_obj else "",
                         "Modelo Gemini": getattr(fnde_result_obj, "modelo", "") if fnde_result_obj else "",
-                        "Tentativas": getattr(fnde_result_obj, "tentativas", 0) if fnde_result_obj else 0,
+                        "Tentativas Gemini": getattr(fnde_result_obj, "tentativas", 0) if fnde_result_obj else 0,
+                        "Validação dupla": "OK" if (fnde_data and fnde_data.get("verification_ok")) else "PENDENTE/DIVERGENTE",
+                        "Método de validação": fnde_data.get("verification_method", "") if fnde_data else "",
+                        "Divergências de valores": str(fnde_data.get("verification_divergences", {})) if fnde_data else "",
                     })
 
                 previous_activity = activity_map.get(codigo_ibge, {})

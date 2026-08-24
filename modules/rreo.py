@@ -119,3 +119,66 @@ def process(pdf_path: str | Path, codigos: Iterable[str] | None = None) -> tuple
         except Exception:
             pass
     return values, text
+
+
+def extract_text_verification(pdf_path: str | Path) -> str:
+    """Segunda leitura do PDF com parametros ligeiramente diferentes.
+
+    O objetivo e reduzir o risco de aceitar silenciosamente um valor deslocado
+    por uma unica parametrizacao de extracao de texto.
+    """
+    path = Path(pdf_path)
+    if not path.exists():
+        raise FileNotFoundError(f"PDF nao encontrado: {path}")
+    pages: list[str] = []
+    with pdfplumber.open(path) as pdf:
+        for number, page in enumerate(pdf.pages, start=1):
+            text = page.extract_text(x_tolerance=1, y_tolerance=2, layout=True) or ""
+            pages.append(f"\n===== PAGINA {number} =====\n{text}")
+    return "\n".join(pages).strip()
+
+
+def verify_values(
+    pdf_path: str | Path,
+    expected: dict[str, float | None],
+    codigos: Iterable[str] | None = None,
+    tolerance: float = 0.01,
+) -> dict[str, Any]:
+    """Rele a fonte e compara cada codigo RREO antes da gravacao final."""
+    codes = validar_codigos_rreo(codigos or DEFAULT_CODES)
+    verification_text = extract_text_verification(pdf_path)
+    second = extract_codes(verification_text, codes)
+    divergences: dict[str, dict[str, float | None]] = {}
+    confirmed: dict[str, float | None] = {}
+
+    for code in codes:
+        first_value = expected.get(code)
+        second_value = second.get(code)
+        if first_value is None and second_value is None:
+            confirmed[code] = None
+            continue
+        if first_value is not None and second_value is not None and abs(float(first_value) - float(second_value)) <= tolerance:
+            confirmed[code] = round(float(first_value), 2)
+            continue
+        divergences[code] = {"extracao": first_value, "verificacao": second_value}
+
+    # Somente as divergencias sao submetidas a uma terceira leitura estruturada.
+    if divergences:
+        try:
+            adjudicated = extract_rreo_values(texto_pdf=verification_text, codigos=list(divergences))
+        except Exception:
+            adjudicated = {}
+        for code in list(divergences):
+            first_value = expected.get(code)
+            third_value = adjudicated.get(code)
+            if first_value is not None and third_value is not None and abs(float(first_value) - float(third_value)) <= tolerance:
+                confirmed[code] = round(float(first_value), 2)
+                divergences.pop(code, None)
+
+    return {
+        "ok": not divergences,
+        "confirmed": confirmed,
+        "divergences": divergences,
+        "method": "SEGUNDA_LEITURA_PDFPLUMBER + GEMINI_APENAS_DIVERGENCIAS",
+        "verification_text": verification_text,
+    }

@@ -420,6 +420,125 @@ def extrair_com_gemini(
     return result, ""
 
 
+
+def _gemini_from_images(
+    path: Path,
+    images: list[tuple[int, bytes]],
+    code_name: str,
+    municipality_name: str,
+    uf_name: str,
+    model: str | None = None,
+) -> tuple[dict[str, float], list[str], str, int]:
+    """Leitura visual direta usada como canal independente de verificacao."""
+    from google.genai import types
+
+    content: list[Any] = [_prompt(path.name, code_name, municipality_name, uf_name)]
+    for page_number, data in images:
+        content.append(types.Part.from_text(text=f"Pagina {page_number}:"))
+        content.append(types.Part.from_bytes(data=data, mime_type="image/jpeg"))
+    raw, model_used, attempts = generate_structured(
+        contents=content,
+        schema=_schema(),
+        model=model,
+        max_attempts=int(os.getenv("FNDE_GEMINI_MAX_TENTATIVAS", "3")),
+    )
+    occurrences, warnings = _validate_occurrences(raw.get("ocorrencias", []) or [])
+    warnings.extend(str(v) for v in raw.get("avisos", []) or [] if str(v).strip())
+    return _totals(occurrences), warnings, model_used, attempts
+
+
+def verify_values(
+    caminho_pdf: str | Path,
+    expected: dict[str, float],
+    original_method: str = "",
+    model: str | None = None,
+    tolerance: float = 0.01,
+) -> dict[str, Any]:
+    """Confere os quatro valores FNDE por um segundo canal de leitura.
+
+    Se a extracao principal foi OCR, a verificacao prioriza Gemini Vision.
+    Se a principal foi Gemini, a verificacao prioriza OCR local. Havendo
+    divergencia ou leitura incompleta, Gemini Vision atua como desempate.
+    """
+    path = Path(caminho_pdf)
+    code_name, municipality_name, uf_name = extrair_identificacao_nome_pdf(path)
+    images = renderizar_paginas_png(path)
+    warnings: list[str] = []
+    method_upper = str(original_method or "").upper()
+
+    second: dict[str, float] = {program: 0.0 for program in COLUNAS_FNDE}
+    verification_method = ""
+    model_used = ""
+    attempts = 0
+
+    prefer_gemini = "OCR" in method_upper and "GEMINI" not in method_upper
+    if prefer_gemini:
+        try:
+            second, gemini_warnings, model_used, attempts = _gemini_from_images(
+                path, images, code_name, municipality_name, uf_name, model=model
+            )
+            warnings.extend(gemini_warnings)
+            verification_method = "GEMINI_VISION_VERIFICACAO"
+        except Exception as exc:
+            warnings.append(f"Gemini de verificacao falhou: {type(exc).__name__}: {exc}")
+            ocr_text = _ocr_text(images)
+            occ, ocr_warnings = _extract_from_ocr(ocr_text)
+            warnings.extend(ocr_warnings)
+            second = _totals(occ)
+            verification_method = "OCR_LOCAL_VERIFICACAO_FALLBACK"
+    else:
+        try:
+            ocr_text = _ocr_text(images)
+            occ, ocr_warnings = _extract_from_ocr(ocr_text)
+            warnings.extend(ocr_warnings)
+            second = _totals(occ)
+            verification_method = "OCR_LOCAL_VERIFICACAO"
+        except Exception as exc:
+            warnings.append(f"OCR de verificacao falhou: {type(exc).__name__}: {exc}")
+            second, gemini_warnings, model_used, attempts = _gemini_from_images(
+                path, images, code_name, municipality_name, uf_name, model=model
+            )
+            warnings.extend(gemini_warnings)
+            verification_method = "GEMINI_VISION_VERIFICACAO_FALLBACK"
+
+    divergences: dict[str, dict[str, float]] = {}
+    confirmed: dict[str, float] = {}
+    for program in COLUNAS_FNDE:
+        first_value = round(float(expected.get(program, 0.0) or 0.0), 2)
+        second_value = round(float(second.get(program, 0.0) or 0.0), 2)
+        if abs(first_value - second_value) <= tolerance:
+            confirmed[program] = first_value
+        else:
+            divergences[program] = {"extracao": first_value, "verificacao": second_value}
+
+    # Se o segundo canal foi OCR e divergiu, usa Gemini somente para desempatar.
+    if divergences and not verification_method.startswith("GEMINI"):
+        try:
+            third, gemini_warnings, model_used, extra_attempts = _gemini_from_images(
+                path, images, code_name, municipality_name, uf_name, model=model
+            )
+            attempts += extra_attempts
+            warnings.extend(gemini_warnings)
+            for program in list(divergences):
+                first_value = round(float(expected.get(program, 0.0) or 0.0), 2)
+                third_value = round(float(third.get(program, 0.0) or 0.0), 2)
+                if abs(first_value - third_value) <= tolerance:
+                    confirmed[program] = first_value
+                    divergences.pop(program, None)
+            verification_method += " + GEMINI_DESEMPATE"
+        except Exception as exc:
+            warnings.append(f"Gemini de desempate falhou: {type(exc).__name__}: {exc}")
+
+    return {
+        "ok": not divergences,
+        "confirmed": confirmed,
+        "divergences": divergences,
+        "warnings": warnings,
+        "method": verification_method,
+        "model": model_used,
+        "attempts": attempts,
+    }
+
 def process(
     caminho_pdf: str | Path,
     model: str | None = None,

@@ -52,10 +52,11 @@ def test_perfil_automatico_4_cpus():
     from core.recursos_execucao import recommended_profile
 
     profile = recommended_profile(4)
-    assert profile.batch_size == 12
-    assert profile.rreo_workers == 6
-    assert profile.fnde_workers == 3
-    assert profile.gemini_concurrency == 2
+    assert profile.batch_size == 8
+    assert profile.rreo_workers == 3
+    assert profile.fnde_workers == 2
+    assert profile.verification_workers == 1
+    assert profile.gemini_concurrency == 1
 
 
 def test_batch_settings_automatico_usa_perfil_detectado(monkeypatch):
@@ -64,8 +65,8 @@ def test_batch_settings_automatico_usa_perfil_detectado(monkeypatch):
     monkeypatch.setattr(lotes, "detect_cpu_capacity", lambda: 4)
     settings = lotes.BatchSettings.from_mapping({"otimizacao_automatica": True})
     assert settings.detected_cpus == 4
-    assert settings.profile_name == "Desempenho 4 CPUs"
-    assert (settings.batch_size, settings.rreo_workers, settings.fnde_workers, settings.gemini_concurrency) == (12, 6, 3, 2)
+    assert settings.profile_name == "Confiavel 4 CPUs"
+    assert (settings.batch_size, settings.rreo_workers, settings.fnde_workers, settings.verification_workers, settings.gemini_concurrency) == (8, 3, 2, 1, 1)
 
 
 def test_batch_settings_manual_preserva_configuracao(monkeypatch):

@@ -11,7 +11,7 @@ FNDE_LOG_HEADERS = [
     "Estado/Lote", "Linha da planilha", "Campos FNDE preenchidos",
     "Programas encontrados", "Programas ausentes", "Valores extraídos",
     "Método de extração", "Modelo Gemini", "Tentativas Gemini", "Status",
-    "Status do upload", "Tentativas de upload", "Pasta de destino",
+    "Validação dupla", "Método de validação", "Divergências de valores", "Status do upload", "Tentativas de upload", "Pasta de destino",
     "Erro resumido", "Avisos",
 ]
 

@@ -11,6 +11,7 @@ class RuntimeProfile:
     batch_size: int
     rreo_workers: int
     fnde_workers: int
+    verification_workers: int
     gemini_concurrency: int
     name: str
 
@@ -26,7 +27,7 @@ def _positive_int(value: str | None) -> int | None:
 
 
 def _cgroup_cpu_count() -> int | None:
-    """Lê a cota de CPU de containers Linux/cgroup v2 quando disponível."""
+    """Le a cota de CPU de containers Linux/cgroup v2 quando disponivel."""
     path = Path("/sys/fs/cgroup/cpu.max")
     try:
         quota_raw, period_raw = path.read_text(encoding="utf-8").strip().split()[:2]
@@ -36,18 +37,18 @@ def _cgroup_cpu_count() -> int | None:
         period = int(period_raw)
         if quota <= 0 or period <= 0:
             return None
-        # Arredondamento para cima evita tratar 1.5 CPU como apenas 1.
         return max(1, (quota + period - 1) // period)
     except (OSError, ValueError, IndexError):
         return None
 
 
 def detect_cpu_capacity() -> int:
-    """Detecta a capacidade de CPU disponível no Render/container.
+    """Detecta a capacidade de CPU disponivel no Render/container.
 
-    APP_CPU_COUNT permite sobrescrever manualmente. No Render, WEB_CONCURRENCY
-    é definido a partir da quantidade de CPUs da instância e por isso é uma
-    referência melhor do que os.cpu_count() em alguns hosts compartilhados.
+    APP_CPU_COUNT permite sobrescrever manualmente. WEB_CONCURRENCY e usado
+    apenas como indicio de capacidade quando o Render o fornece. A distribuicao
+    real dos workers e recalculada pelo perfil abaixo, portanto mudar de plano
+    nao exige editar codigo.
     """
     for candidate in (
         _positive_int(os.getenv("APP_CPU_COUNT")),
@@ -61,14 +62,30 @@ def detect_cpu_capacity() -> int:
 
 
 def recommended_profile(cpu_count: int | None = None) -> RuntimeProfile:
+    """Perfil proporcional com prioridade para confiabilidade.
+
+    RREO possui mais campos e recebe mais workers leves. FNDE possui apenas
+    quatro campos, mas leitura de imagem/OCR e mais cara. Uma parcela da
+    capacidade fica reservada para a segunda leitura/validacao. Os numeros sao
+    limites de concorrencia, nao CPUs exclusivas; as filas podem compartilhar o
+    tempo de CPU quando a outra fonte estiver ociosa.
+    """
     cpus = max(1, int(cpu_count or detect_cpu_capacity()))
 
     if cpus <= 1:
-        return RuntimeProfile(cpus, 6, 2, 1, 1, "Econômico 1 CPU")
+        return RuntimeProfile(cpus, 4, 1, 1, 1, 1, "Seguro 1 CPU")
     if cpus == 2:
-        return RuntimeProfile(cpus, 10, 4, 2, 1, "Equilibrado 2 CPUs")
+        return RuntimeProfile(cpus, 6, 2, 1, 1, 1, "Seguro 2 CPUs")
     if cpus <= 4:
-        return RuntimeProfile(cpus, 12, 6, 3, 2, "Desempenho 4 CPUs")
+        # Pro Plus 4 CPUs: volume maior no RREO, FNDE mais pesado e um canal
+        # dedicado a rechecagem. Threads sao limitadas para nao saturar OCR.
+        return RuntimeProfile(cpus, 8, 3, 2, 1, 1, "Confiavel 4 CPUs")
     if cpus <= 8:
-        return RuntimeProfile(cpus, 16, 8, 4, 2, "Alto desempenho 8 CPUs")
-    return RuntimeProfile(cpus, 20, 8, 4, 2, "Alto desempenho 8+ CPUs")
+        return RuntimeProfile(cpus, 12, 5, 3, 2, 2, "Confiavel 8 CPUs")
+
+    # Escala proporcional sem explosao de threads em instancias grandes.
+    rreo = min(10, max(6, round(cpus * 0.55)))
+    fnde = min(6, max(3, round(cpus * 0.30)))
+    verification = min(4, max(2, round(cpus * 0.20)))
+    gemini = min(3, max(1, round(cpus * 0.15)))
+    return RuntimeProfile(cpus, min(20, max(12, cpus * 2)), rreo, fnde, verification, gemini, "Confiavel 8+ CPUs")

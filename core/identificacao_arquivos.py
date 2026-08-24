@@ -5,7 +5,7 @@ from __future__ import annotations
 A associacao e deliberadamente conservadora e segue esta prioridade:
 1. codigo IBGE municipal de 7 digitos;
 2. nome oficial normalizado dentro da UF;
-3. similaridade alta dentro da mesma UF, com bloqueio de ambiguidades.
+3. similaridade tolerante dentro da mesma UF, bloqueando somente ambiguidades reais.
 
 O modulo tambem identifica a UF em nomes de arquivo, nomes de pasta e caminhos
 completos do Cloud. Isso permite estruturas como ``31_Minas Gerais_MG_2025``
@@ -190,8 +190,8 @@ def identificar_municipio(
     municipios: Iterable[Any],
     uf: str = "",
     *,
-    limite_similaridade: float = 0.88,
-    margem_ambiguidade: float = 0.04,
+    limite_similaridade: float = 0.82,
+    margem_ambiguidade: float = 0.03,
 ) -> ResultadoIdentificacao:
     """Associa arquivo a municipio oficial usando regras em camadas."""
     todos = list(municipios)

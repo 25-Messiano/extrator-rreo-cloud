@@ -21,6 +21,7 @@ class BatchSettings:
     batch_size: int = 10
     rreo_workers: int = 4
     fnde_workers: int = 2
+    verification_workers: int = 1
     gemini_concurrency: int = 1
     ui_update_interval: int = 5
     checkpoint_every: int = 10
@@ -47,19 +48,22 @@ class BatchSettings:
             batch_size = profile.batch_size
             rreo_workers = profile.rreo_workers
             fnde_workers = profile.fnde_workers
+            verification_workers = profile.verification_workers
             gemini_concurrency = profile.gemini_concurrency
             profile_name = profile.name
         else:
             batch_size = positive("tamanho_lote", 10, 50)
             rreo_workers = positive("workers_rreo", 4, 8)
             fnde_workers = positive("workers_fnde", 2, 4)
-            gemini_concurrency = positive("gemini_concorrencia", 1, 2)
+            verification_workers = positive("workers_verificacao", 1, 8)
+            gemini_concurrency = positive("gemini_concorrencia", 1, 3)
             profile_name = "Manual"
 
         return cls(
             batch_size=batch_size,
             rreo_workers=rreo_workers,
             fnde_workers=fnde_workers,
+            verification_workers=verification_workers,
             gemini_concurrency=gemini_concurrency,
             ui_update_interval=positive("atualizar_tela_cada", 5, 50),
             checkpoint_every=positive("checkpoint_cada", 10, 100),

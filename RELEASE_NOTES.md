@@ -83,3 +83,11 @@
 - Cache de fallback por ano para não repetir varredura nacional por UF.
 - Healthcheck Docker compatível com PORT do Render.
 - Teste explícito de Raposos/MG e pastas com UF+ano.
+
+## 2026-08-24 - Validação dupla e recursos adaptativos
+- Segunda leitura obrigatória antes de considerar valores RREO/FNDE validados.
+- Divergências de valores são bloqueadas e registradas; somente campos confirmados são gravados.
+- FNDE usa canal de verificação alternativo (OCR/Gemini) e desempate quando necessário.
+- RREO relê o PDF com parâmetros independentes e usa desempate apenas nas divergências.
+- Perfil de workers agora se adapta à quantidade de CPUs do plano Render.
+- Identificação de municípios ficou mais tolerante; diferenças de grafia/acentuação não devem bloquear processamento sem ambiguidade real.
