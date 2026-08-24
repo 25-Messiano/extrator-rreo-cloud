@@ -1,3 +1,15 @@
+# v1.2.8 — Identidade oficial e deduplicação segura (2026-08-24)
+
+- A **planilha-base passa a ser a autoridade absoluta** para nome, UF e código IBGE do município de destino.
+- O nome do PDF no Cloud serve somente para localizar/auditar o arquivo e nunca pode renomear município nem trocar o IBGE oficial da planilha.
+- Se o PDF tiver **nome correto e IBGE errado**, o app associa pelo nome oficial da base, preserva o IBGE correto e registra `IBGE_ARQUIVO_DIVERGENTE`.
+- Códigos digitados com 8 algarismos por engano no filename também são removidos da comparação do nome (ex.: `22708907_Satuba`).
+- A busca por UF no Cloud considera primeiro a pasta estadual, evitando que um IBGE errado no filename esconda um PDF existente.
+- Duplicatas do mesmo município são removidas da fila: cópia binária vira `DUPLICADO_IDENTICO`; arquivos diferentes viram `DUPLICADO_CONFLITANTE`.
+- Duplicatas **não são apagadas fisicamente do Cloud** nesta rotina; apenas um candidato é processado e todos os demais ficam auditados.
+- Logs RREO/FNDE passam a registrar IBGE presente no arquivo, divergência com a base, método/confiança da associação e duplicados ignorados.
+- Testes cobrem Satuba/AL com IBGE errado, código de 8 dígitos, duplicatas idênticas/conflitantes e fallback por pasta de UF.
+
 # v1.2.7 — Tipos de Rodada (2026-08-23)
 
 - Novo seletor **Tipo de Rodada** no Painel Único:

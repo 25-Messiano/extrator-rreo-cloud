@@ -13,12 +13,20 @@ FNDE_LOG_HEADERS = [
     "Método de extração", "Modelo Gemini", "Tentativas Gemini", "Status",
     "Validação dupla", "Método de validação", "Divergências de valores", "Status do upload", "Tentativas de upload", "Pasta de destino",
     "Erro resumido", "Avisos",
+    # Campos novos sempre no final para preservar compatibilidade com logs antigos.
+    "Código IBGE no arquivo", "IBGE do arquivo divergente",
+    "Método de identificação do arquivo", "Confiança da identificação",
+    "Duplicados ignorados", "Duplicado conflitante",
 ]
 
 
 def _sheet(workbook: Workbook):
     if FNDE_LOG_SHEET in workbook.sheetnames:
         ws = workbook[FNDE_LOG_SHEET]
+        existentes = [str(cell.value or "") for cell in ws[1]]
+        if existentes != FNDE_LOG_HEADERS:
+            for col, header in enumerate(FNDE_LOG_HEADERS, start=1):
+                ws.cell(row=1, column=col, value=header)
     else:
         ws = workbook.create_sheet(FNDE_LOG_SHEET)
         ws.append(FNDE_LOG_HEADERS)

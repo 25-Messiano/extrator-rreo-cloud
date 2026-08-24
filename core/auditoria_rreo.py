@@ -14,12 +14,20 @@ RREO_LOG_HEADERS = [
     "Campos RREO preenchidos", "Códigos encontrados", "Códigos ausentes",
     "Status", "Método de extração", "Validação dupla", "Método de validação", "Divergências de valores", "Status do upload", "Tentativas de upload",
     "Pasta de destino", "Erro resumido", "Observações",
+    # Campos novos sempre no final para preservar compatibilidade com logs antigos.
+    "Código IBGE no arquivo", "IBGE do arquivo divergente",
+    "Método de identificação do arquivo", "Confiança da identificação do arquivo",
+    "Duplicados ignorados", "Duplicado conflitante",
 ]
 
 
 def _sheet(workbook: Workbook):
     if RREO_LOG_SHEET in workbook.sheetnames:
         ws = workbook[RREO_LOG_SHEET]
+        existentes = [str(cell.value or "") for cell in ws[1]]
+        if existentes != RREO_LOG_HEADERS:
+            for col, header in enumerate(RREO_LOG_HEADERS, start=1):
+                ws.cell(row=1, column=col, value=header)
     else:
         ws = workbook.create_sheet(RREO_LOG_SHEET)
         ws.append(RREO_LOG_HEADERS)

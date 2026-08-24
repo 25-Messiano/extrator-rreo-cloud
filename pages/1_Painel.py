@@ -726,6 +726,22 @@ def _fnde_worker_payload(payload: dict[str, Any], temp_root: Path) -> dict[str, 
             "ok": True, "confirmed": values, "divergences": {}, "warnings": [], "method": "DESATIVADA"
         }
         warnings = [*list(result.avisos), *list(verificacao.get("warnings", []))]
+        if arquivo.get("ibge_arquivo_divergente"):
+            warnings.append(
+                "IBGE_ARQUIVO_DIVERGENTE: "
+                f"arquivo={arquivo.get('codigo_ibge_arquivo') or 'ausente'}; "
+                f"base={payload.get('codigo_ibge')}; identidade oficial preservada pela planilha-base"
+            )
+        if arquivo.get("duplicados_ignorados"):
+            warnings.append(
+                f"DUPLICADOS_IGNORADOS={len(arquivo.get('duplicados_ignorados') or [])}; "
+                "somente um PDF foi enviado ao processamento"
+            )
+        if arquivo.get("duplicado_conflitante"):
+            warnings.append(
+                "DUPLICADO_CONFLITANTE: arquivos diferentes para o mesmo município; "
+                "candidato mais confiável/recente selecionado e conflito registrado"
+            )
         divergencias = verificacao.get("divergences", {})
         erro = ""
         if divergencias and SISTEMA_CONFIG.get("validacao_bloquear_divergencia_valor", True):
@@ -1955,6 +1971,15 @@ if executar:
                         "Validação dupla": "OK" if (rreo_data and rreo_data.get("verification_ok")) else "PENDENTE/DIVERGENTE",
                         "Método de validação": rreo_data.get("verification_method", "") if rreo_data else "",
                         "Divergências de valores": str(rreo_data.get("verification_divergences", {})) if rreo_data else "",
+                        "Código IBGE no arquivo": arquivo_rreo.get("codigo_ibge_arquivo", "") if arquivo_rreo else "",
+                        "IBGE do arquivo divergente": "SIM" if (arquivo_rreo and arquivo_rreo.get("ibge_arquivo_divergente")) else "NÃO",
+                        "Método de identificação do arquivo": arquivo_rreo.get("metodo_identificacao", "") if arquivo_rreo else "",
+                        "Confiança da identificação do arquivo": f"{float(arquivo_rreo.get('confianca_identificacao') or 0.0):.2%}" if arquivo_rreo else "",
+                        "Duplicados ignorados": "; ".join(
+                            str(reg.get("ignorado") or "")
+                            for reg in (arquivo_rreo.get("duplicados_ignorados") or [])
+                        ) if arquivo_rreo else "",
+                        "Duplicado conflitante": "SIM" if (arquivo_rreo and arquivo_rreo.get("duplicado_conflitante")) else "NÃO",
                     })
 
                 if GERAR_LOG_FNDE and PROCESSAR_FNDE:
@@ -1980,6 +2005,15 @@ if executar:
                         "Validação dupla": "OK" if (fnde_data and fnde_data.get("verification_ok")) else "PENDENTE/DIVERGENTE",
                         "Método de validação": fnde_data.get("verification_method", "") if fnde_data else "",
                         "Divergências de valores": str(fnde_data.get("verification_divergences", {})) if fnde_data else "",
+                        "Código IBGE no arquivo": arquivo_fnde.get("codigo_ibge_arquivo", "") if arquivo_fnde else "",
+                        "IBGE do arquivo divergente": "SIM" if (arquivo_fnde and arquivo_fnde.get("ibge_arquivo_divergente")) else "NÃO",
+                        "Método de identificação do arquivo": arquivo_fnde.get("metodo_identificacao", "") if arquivo_fnde else "",
+                        "Confiança da identificação": f"{float(arquivo_fnde.get('confianca_identificacao') or 0.0):.2%}" if arquivo_fnde else "",
+                        "Duplicados ignorados": "; ".join(
+                            str(reg.get("ignorado") or "")
+                            for reg in (arquivo_fnde.get("duplicados_ignorados") or [])
+                        ) if arquivo_fnde else "",
+                        "Duplicado conflitante": "SIM" if (arquivo_fnde and arquivo_fnde.get("duplicado_conflitante")) else "NÃO",
                     })
 
                 previous_activity = activity_map.get(codigo_ibge, {})

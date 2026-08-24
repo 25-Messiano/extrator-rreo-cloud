@@ -213,6 +213,9 @@ def _list_pdfs_under_prefix(prefix: str) -> list[dict[str, Any]]:
                     "blob_name": blob.name,
                     "size": blob.size or 0,
                     "updated": blob.updated,
+                    "md5_hash": getattr(blob, "md5_hash", None),
+                    "crc32c": getattr(blob, "crc32c", None),
+                    "generation": getattr(blob, "generation", None),
                 }
             )
     return sorted(files, key=lambda item: item["name"])
@@ -243,15 +246,29 @@ def _list_year_pdfs_cached(module: str, year: int | str) -> list[dict[str, Any]]
     return files
 
 def _arquivo_pertence_uf(item: dict[str, Any], uf: str) -> bool:
-    """Confere UF usando IBGE, filename e caminho completo do blob."""
+    """Confere UF sem deixar um IBGE errado no filename ocultar o arquivo.
+
+    O caminho/pasta estadual do Cloud e considerado antes do codigo embutido
+    no nome. Isso e importante quando o nome do municipio esta correto mas o
+    codigo digitado no arquivo esta errado.
+    """
     target = str(uf or "").upper().strip()
     if not target:
         return False
     nome = str(item.get("name") or "")
     blob_name = str(item.get("blob_name") or "")
+
+    # A pasta pai normalmente identifica a UF sem depender do filename.
+    parent = str(Path(blob_name).parent) if blob_name else ""
+    if parent and identificar_uf(parent) == target:
+        return True
+
+    # Depois usa o codigo oficial de 7 digitos quando ele for coerente.
     codigo = codigo_ibge_no_texto(nome) or codigo_ibge_no_texto(blob_name)
     if codigo and uf_do_codigo_ibge(codigo) == target:
         return True
+
+    # Ultimo recurso para estruturas antigas que trazem somente a UF no nome.
     return identificar_uf(nome) == target or identificar_uf(blob_name) == target
 
 

@@ -20,10 +20,11 @@ FNDE
 - Somente PNAE, PNATE, PDDE e QSE confirmados sao liberados.
 
 MUNICIPIO
-- O nome externo do arquivo continua sendo a referencia operacional principal para RREO.
+- A planilha-base e a autoridade para nome, UF e codigo IBGE oficiais.
+- O nome externo do arquivo serve para localizar/auditar o PDF, mas nunca pode alterar a identidade oficial da linha de destino.
+- Se o nome do arquivo estiver correto e o IBGE digitado estiver errado, a associacao pode ocorrer pelo nome oficial e a divergencia fica no log.
 - Diferencas de acento, grafia, abreviacao, nome interno ou ausencia de IBGE nao bloqueiam automaticamente.
-- Similaridade por nome foi tornada mais tolerante.
-- Apenas ambiguidades reais devem impedir associacao automatica.
+- Similaridade por nome e tolerante; apenas ambiguidades reais devem impedir associacao automatica.
 
 RECURSOS
 O aplicativo detecta a capacidade de CPU e escolhe automaticamente um perfil.

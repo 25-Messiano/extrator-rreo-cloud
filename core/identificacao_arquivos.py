@@ -47,6 +47,7 @@ UF_IBGE_PREFIX = {
 }
 
 IBGE_RE = re.compile(r"(?<!\d)(\d{7})(?!\d)")
+CODIGO_CANDIDATO_RE = re.compile(r"(?<!\d)(\d{7,8})(?!\d)")
 ANO_RE = re.compile(r"\b(?:19|20)\d{2}\b")
 
 RUIDO = {
@@ -92,6 +93,16 @@ def normalizar_codigo_ibge(valor: Any) -> str:
 def codigo_ibge_no_texto(valor: Any) -> str:
     match = IBGE_RE.search(str(valor or ""))
     return normalizar_codigo_ibge(match.group(1)) if match else ""
+
+
+def codigo_candidato_no_texto(valor: Any) -> str:
+    """Retorna o token de 7/8 digitos presente no nome, mesmo se estiver errado.
+
+    A planilha-base continua sendo a autoridade do codigo oficial. Este valor
+    serve somente para diagnosticar divergencias no nome do arquivo.
+    """
+    match = CODIGO_CANDIDATO_RE.search(str(valor or ""))
+    return match.group(1) if match else ""
 
 
 def uf_do_codigo_ibge(codigo: Any) -> str:
@@ -140,7 +151,10 @@ def _nome_base(valor: Any, uf: str = "") -> str:
     if not texto:
         return ""
 
-    texto = IBGE_RE.sub(" ", texto)
+    # Remove inclusive codigos digitados com 8 algarismos por engano. Isso
+    # permite identificar o municipio pelo nome oficial mesmo quando o codigo
+    # do filename esta incorreto.
+    texto = CODIGO_CANDIDATO_RE.sub(" ", texto)
     texto = ANO_RE.sub(" ", texto)
     uf_norm = str(uf or "").upper().strip()
     tokens: list[str] = []
@@ -193,42 +207,60 @@ def identificar_municipio(
     limite_similaridade: float = 0.82,
     margem_ambiguidade: float = 0.03,
 ) -> ResultadoIdentificacao:
-    """Associa arquivo a municipio oficial usando regras em camadas."""
+    """Associa arquivo ao cadastro oficial sem deixar filename alterar a base.
+
+    Regras:
+    - a planilha-base e a autoridade para nome/UF/IBGE de destino;
+    - nome oficial exato dentro da UF vence um IBGE divergente no filename;
+    - IBGE correto continua sendo um forte fallback quando o nome e incompleto;
+    - similaridade so e aceita quando nao houver ambiguidade real.
+    """
     todos = list(municipios)
-    codigo = codigo_ibge_no_texto(nome_arquivo)
-
-    # O codigo IBGE, quando existe, e soberano e tambem define a UF.
-    if codigo:
-        por_codigo = [m for m in todos if normalizar_codigo_ibge(_campo(m, "codigo_ibge")) == codigo]
-        if len(por_codigo) == 1:
-            m = por_codigo[0]
-            return ResultadoIdentificacao(
-                codigo_ibge=codigo,
-                municipio=str(_campo(m, "nome", "")),
-                uf=str(_campo(m, "uf", "")).upper(),
-                metodo="IBGE",
-                confianca=1.0,
-                nome_normalizado=normalizar_texto(_campo(m, "nome", "")),
-            )
-
+    codigo_arquivo = codigo_ibge_no_texto(nome_arquivo)
     uf_detectada = identificar_uf(nome_arquivo, uf)
     candidatos = _municipios_da_uf(todos, uf_detectada) if uf_detectada else todos
     nome_base = nome_municipio_do_arquivo(nome_arquivo, uf_detectada)
+
+    # 1) O nome oficial exato e a melhor protecao contra codigo digitado errado
+    # no Cloud. A identidade devolvida e sempre a da planilha-base.
+    if nome_base and candidatos:
+        exatos = [m for m in candidatos if normalizar_texto(_campo(m, "nome", "")) == nome_base]
+        if len(exatos) == 1:
+            m = exatos[0]
+            code_oficial = normalizar_codigo_ibge(_campo(m, "codigo_ibge"))
+            codigo_diverge = bool(codigo_arquivo and codigo_arquivo != code_oficial)
+            return ResultadoIdentificacao(
+                codigo_ibge=code_oficial,
+                municipio=str(_campo(m, "nome", "")),
+                uf=str(_campo(m, "uf", uf_detectada)).upper(),
+                metodo="NOME_OFICIAL_IBGE_ARQUIVO_DIVERGENTE" if codigo_diverge else ("IBGE" if codigo_arquivo else "NOME_NORMALIZADO"),
+                confianca=1.0,
+                nome_normalizado=nome_base,
+            )
+
+    # 2) Se o codigo do arquivo coincide com a base, ele pode localizar o
+    # municipio mesmo que o restante do filename esteja abreviado/incompleto.
+    if codigo_arquivo:
+        por_codigo = [m for m in todos if normalizar_codigo_ibge(_campo(m, "codigo_ibge")) == codigo_arquivo]
+        if len(por_codigo) == 1:
+            m = por_codigo[0]
+            # Com UF esperada explicita, nunca deixa um codigo de outro estado
+            # sequestrar a associacao de um arquivo armazenado naquela UF.
+            uf_m = str(_campo(m, "uf", "")).upper().strip()
+            if not uf or uf_m == str(uf).upper().strip():
+                return ResultadoIdentificacao(
+                    codigo_ibge=codigo_arquivo,
+                    municipio=str(_campo(m, "nome", "")),
+                    uf=uf_m,
+                    metodo="IBGE",
+                    confianca=0.98 if nome_base else 0.95,
+                    nome_normalizado=normalizar_texto(_campo(m, "nome", "")),
+                )
+
     if not nome_base or not candidatos:
         return ResultadoIdentificacao(uf=uf_detectada, nome_normalizado=nome_base)
 
-    exatos = [m for m in candidatos if normalizar_texto(_campo(m, "nome", "")) == nome_base]
-    if len(exatos) == 1:
-        m = exatos[0]
-        return ResultadoIdentificacao(
-            codigo_ibge=normalizar_codigo_ibge(_campo(m, "codigo_ibge")),
-            municipio=str(_campo(m, "nome", "")),
-            uf=str(_campo(m, "uf", uf_detectada)).upper(),
-            metodo="NOME_NORMALIZADO",
-            confianca=1.0,
-            nome_normalizado=nome_base,
-        )
-
+    # 3) Fallback tolerante por nome, apenas quando houver vencedor claro.
     pontuados = sorted(
         ((similaridade(nome_base, _campo(m, "nome", "")), m) for m in candidatos),
         key=lambda pair: pair[0],
@@ -252,11 +284,14 @@ def identificar_municipio(
             nome_normalizado=nome_base,
         )
 
+    code_oficial = normalizar_codigo_ibge(_campo(melhor, "codigo_ibge"))
+    codigo_diverge = bool(codigo_arquivo and codigo_arquivo != code_oficial)
     return ResultadoIdentificacao(
-        codigo_ibge=normalizar_codigo_ibge(_campo(melhor, "codigo_ibge")),
+        codigo_ibge=code_oficial,
         municipio=str(_campo(melhor, "nome", "")),
         uf=str(_campo(melhor, "uf", uf_detectada)).upper(),
-        metodo="SIMILARIDADE",
+        metodo="SIMILARIDADE_IBGE_ARQUIVO_DIVERGENTE" if codigo_diverge else "SIMILARIDADE",
         confianca=melhor_nota,
         nome_normalizado=nome_base,
     )
+
