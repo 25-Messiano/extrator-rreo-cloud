@@ -1,8 +1,0 @@
-ARQUITETURA GLOBAL V2
-
-RREO: chave primária = município escrito dentro do PDF + UF.
-FNDE: chave primária = código IBGE de 7 dígitos no nome externo.
-Municípios: planilha-base fornece IBGE, nome, UF e linha.
-Fusão: core/indice_processamento.py combina as fontes sem mudar suas chaves próprias.
-Painel: não constrói o índice interno RREO ao abrir a página; somente ao iniciar uma operação RREO.
-Threads extraem; somente a thread principal escreve no Excel.
