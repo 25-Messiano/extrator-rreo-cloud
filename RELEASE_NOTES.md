@@ -1,3 +1,13 @@
+# v1.3.1 — RREO exclusivo APPDOWELEVER, sem fallback antigo
+
+- Origem RREO única: `appdowelever-arquivos/01_Arquivo_dos_Estados_RREO_e_FNDE/4_APPDOWELEVER/RREO/{ANO}/{ESTADO}/B{N}/`.
+- Removido todo fallback RREO para bucket/prefixos antigos.
+- Loga `gs://bucket/prefixo` exato antes de processar cada estado.
+- Quando não houver PDF na fonte oficial, registra `PDF NÃO ENCONTRADO NA FONTE APPDOWELEVER`.
+- Falhas de permissão/conexão na fonte oficial deixam de ser mascaradas por fallback.
+- A remoção das varreduras recursivas antigas reduz I/O e acelera a listagem do RREO.
+- Mantidos JSON sequencial por estado, proteção de RAM e Estados selecionados.
+
 # v1.3.0 — Estados selecionados + JSON sequencial
 
 - Nova abrangência **Estados selecionados** no Painel Único.

@@ -9,6 +9,12 @@ services:
         value: production
       - key: GOOGLE_STORAGE_BUCKET
         value: maestro-rreo-arquivos
+      - key: RREO_SOURCE_BUCKET
+        value: appdowelever-arquivos
+      - key: RREO_SOURCE_BASE_PREFIX
+        value: 01_Arquivo_dos_Estados_RREO_e_FNDE/4_APPDOWELEVER/RREO/
+      - key: RREO_SOURCE_ENABLED
+        value: "true"
       - key: GOOGLE_SERVICE_ACCOUNT_JSON
         sync: false
       - key: GEMINI_API_KEY
