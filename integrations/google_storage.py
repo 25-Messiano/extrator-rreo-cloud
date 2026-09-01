@@ -21,6 +21,16 @@ BUCKET_NAME = os.getenv(
     "maestro-rreo-arquivos",
 ).strip()
 
+RREO_SOURCE_BUCKET = os.getenv(
+    "RREO_SOURCE_BUCKET",
+    "appdowelever-arquivos",
+).strip()
+RREO_SOURCE_BASE_PREFIX = os.getenv(
+    "RREO_SOURCE_BASE_PREFIX",
+    "01_Arquivo_dos_Estados_RREO_e_FNDE/4_APPDOWELEVER",
+).strip().strip("/") + "/"
+RREO_SOURCE_ENABLED = os.getenv("RREO_SOURCE_ENABLED", "true").strip().lower() not in {"0", "false", "nao", "não", "off"}
+
 BASE_ARQUIVOS_PREFIX = "01_Arquivo_dos_Estados_RREO_e_FNDE/"
 RREO_ROOT_PREFIX = f"{BASE_ARQUIVOS_PREFIX}01_RREO/"
 FNDE_ROOT_PREFIX = f"{BASE_ARQUIVOS_PREFIX}02_FNDE/"
@@ -88,10 +98,10 @@ def get_storage_client():
     )
 
 
-def _list_subfolders(prefix: str) -> list[str]:
+def _list_subfolders_from_bucket(bucket_name: str, prefix: str) -> list[str]:
     client = get_storage_client()
     iterator = client.list_blobs(
-        BUCKET_NAME,
+        bucket_name,
         prefix=prefix,
         delimiter="/",
         timeout=float(os.getenv("GCS_TIMEOUT_SECONDS", "120")),
@@ -102,6 +112,10 @@ def _list_subfolders(prefix: str) -> list[str]:
         for item in iterator.prefixes
         if item.rstrip("/").split("/")[-1]
     )
+
+
+def _list_subfolders(prefix: str) -> list[str]:
+    return _list_subfolders_from_bucket(BUCKET_NAME, prefix)
 
 
 def _uf_from_state_folder(folder: str) -> str:
@@ -120,7 +134,36 @@ def _year_prefix(module: str, year: int | str) -> str:
     return f"{RREO_ROOT_PREFIX}RREO_{year_text}/"
 
 
+def _appdowelever_year_prefix(year: int | str) -> str:
+    return f"{RREO_SOURCE_BASE_PREFIX}{int(year)}/"
+
+
+def list_appdowelever_rreo_state_folders(year: int | str = 2025) -> list[str]:
+    if not RREO_SOURCE_ENABLED:
+        return []
+    try:
+        return _list_subfolders_from_bucket(RREO_SOURCE_BUCKET, _appdowelever_year_prefix(year))
+    except Exception:
+        return []
+
+
+def find_appdowelever_rreo_folder(uf: str, year: int | str = 2025) -> str | None:
+    return _find_state_folder(list_appdowelever_rreo_state_folders(year), uf)
+
+
+def _normalized_bimester(bimestre: int | str | None) -> str:
+    raw = str(bimestre or os.getenv("RREO_BIMESTRE", "6")).strip().upper()
+    raw = raw[1:] if raw.startswith("B") else raw
+    try:
+        number = int(raw)
+    except ValueError:
+        number = 6
+    return f"B{min(6, max(1, number))}"
+
 def list_rreo_state_folders(year: int | str = 2025) -> list[str]:
+    source_folders = list_appdowelever_rreo_state_folders(year)
+    if source_folders:
+        return source_folders
     folders = _list_subfolders(_year_prefix("RREO", year))
     if folders:
         return folders
@@ -199,11 +242,11 @@ def list_states(
     return [by_uf[uf] for uf in sorted(by_uf)]
 
 
-def _list_pdfs_under_prefix(prefix: str) -> list[dict[str, Any]]:
+def _list_pdfs_under_prefix_from_bucket(bucket_name: str, prefix: str) -> list[dict[str, Any]]:
     client = get_storage_client()
     files: list[dict[str, Any]] = []
     for blob in client.list_blobs(
-        BUCKET_NAME, prefix=prefix,
+        bucket_name, prefix=prefix,
         timeout=float(os.getenv("GCS_TIMEOUT_SECONDS", "120")),
     ):
         if blob.name.lower().endswith(".pdf"):
@@ -220,6 +263,9 @@ def _list_pdfs_under_prefix(prefix: str) -> list[dict[str, Any]]:
             )
     return sorted(files, key=lambda item: item["name"])
 
+
+def _list_pdfs_under_prefix(prefix: str) -> list[dict[str, Any]]:
+    return _list_pdfs_under_prefix_from_bucket(BUCKET_NAME, prefix)
 
 
 _YEAR_LISTING_CACHE: dict[tuple[str, str], tuple[float, list[dict[str, Any]]]] = {}
@@ -272,7 +318,29 @@ def _arquivo_pertence_uf(item: dict[str, Any], uf: str) -> bool:
     return identificar_uf(nome) == target or identificar_uf(blob_name) == target
 
 
-def list_rreo_pdfs_by_uf(uf: str, year: int | str = 2025) -> list[dict[str, Any]]:
+def list_appdowelever_rreo_pdfs_by_uf(
+    uf: str,
+    year: int | str = 2025,
+    bimestre: int | str | None = None,
+) -> list[dict[str, Any]]:
+    """Lê RREO diretamente do bucket do APPDOWELEVER: ano/estado/Bn/."""
+    if not RREO_SOURCE_ENABLED:
+        return []
+    target = str(uf or "").upper().strip()
+    try:
+        folder = find_appdowelever_rreo_folder(target, year)
+        if not folder:
+            return []
+        bim = _normalized_bimester(bimestre)
+        prefix = f"{_appdowelever_year_prefix(year)}{folder}/{bim}/"
+        return _list_pdfs_under_prefix_from_bucket(RREO_SOURCE_BUCKET, prefix)
+    except Exception:
+        # A nova fonte é preferencial, não exclusiva. Se credencial/permissão
+        # ainda não estiver disponível, o fluxo antigo continua funcionando.
+        return []
+
+
+def list_rreo_pdfs_by_uf(uf: str, year: int | str = 2025, bimestre: int | str | None = None) -> list[dict[str, Any]]:
     """Lista RREO por UF sem depender rigidamente do nome da pasta.
 
     Primeiro usa a pasta estadual resolvida. Se a pasta nao existir ou estiver
@@ -280,6 +348,13 @@ def list_rreo_pdfs_by_uf(uf: str, year: int | str = 2025) -> list[dict[str, Any]
     caminho/filename. A estrutura legada fica como ultimo recurso.
     """
     target = str(uf or "").upper().strip()
+
+    # Fonte principal nova: APPDOWELEVER. Se ainda não houver arquivos para
+    # a UF/bimestre, mantém fallback integral para o acervo antigo.
+    source_files = list_appdowelever_rreo_pdfs_by_uf(target, year, bimestre)
+    if source_files:
+        return source_files
+
     folder = find_rreo_folder(target, year)
     if folder:
         prefix = f"{_year_prefix('RREO', year)}{folder}/"
@@ -356,7 +431,13 @@ def download_file(
     destination: str | Path,
 ) -> Path:
     client = get_storage_client()
-    bucket = client.bucket(BUCKET_NAME)
+    source_prefix = RREO_SOURCE_BASE_PREFIX
+    bucket_name = (
+        RREO_SOURCE_BUCKET
+        if RREO_SOURCE_ENABLED and str(blob_name).startswith(source_prefix)
+        else BUCKET_NAME
+    )
+    bucket = client.bucket(bucket_name)
     blob = bucket.blob(blob_name)
 
     target = Path(destination)
@@ -473,6 +554,18 @@ def list_results(
         ),
         reverse=True,
     )
+
+
+def upload_text(text: str, blob_name: str, content_type: str = "text/plain; charset=utf-8") -> dict[str, Any]:
+    client = get_storage_client()
+    bucket = client.bucket(BUCKET_NAME)
+    blob = bucket.blob(blob_name)
+    blob.upload_from_string(
+        str(text).encode("utf-8"),
+        content_type=content_type,
+        timeout=float(os.getenv("GCS_TIMEOUT_SECONDS", "120")),
+    )
+    return {"name": Path(blob_name).name, "blob_name": blob.name, "size": len(str(text).encode("utf-8"))}
 
 
 def download_bytes(

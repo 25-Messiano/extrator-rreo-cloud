@@ -103,3 +103,16 @@
 - RREO relê o PDF com parâmetros independentes e usa desempate apenas nas divergências.
 - Perfil de workers agora se adapta à quantidade de CPUs do plano Render.
 - Identificação de municípios ficou mais tolerante; diferenças de grafia/acentuação não devem bloquear processamento sem ambiguidade real.
+
+## v1.2.8 - Novo acervo APPDOWELEVER + JSON nacional por estado
+
+- RREO passa a procurar primeiro no bucket `appdowelever-arquivos`.
+- Prefixo configurável: `01_Arquivo_dos_Estados_RREO_e_FNDE/4_APPDOWELEVER/`.
+- Estrutura de leitura: `ANO/PASTA_DO_ESTADO/B1..B6/PDF`.
+- Painel ganhou seleção explícita de bimestre RREO.
+- Fallback integral para o acervo antigo quando a nova fonte não estiver disponível.
+- Execução `Todos os Estados` agora agenda lotes estritamente por UF; um estado não divide lote com o seguinte.
+- Ao terminar cada UF, grava JSON persistente com dados/IBGE/arquivos/erros no Cloud.
+- Em retomada nacional, estados concluídos são reconstruídos dos JSONs antes de continuar.
+- Durante execução nacional, o Excel fica local/parcial; o Excel consolidado é publicado no Cloud somente no final.
+- O ID do trabalho nacional inclui o bimestre para impedir reaproveitamento de checkpoint de outro período.

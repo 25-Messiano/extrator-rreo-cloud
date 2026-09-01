@@ -82,6 +82,12 @@ from core.tipos_rodada import (
     atualiza_atividade_global,
     incremental_ja_concluido,
 )
+from core.checkpoint_json_nacional import (
+    apply_state_checkpoint,
+    load_state_checkpoint,
+    save_national_status,
+    save_state_checkpoint,
+)
 
 
 st.markdown("""
@@ -932,10 +938,11 @@ def carregar_estados_cloud(
 def carregar_pdfs_estado(
     estado_cloud: str,
     year: int,
+    bimestre: int = 6,
 ) -> list[dict[str, Any]]:
     try:
         uf_cloud = extrair_uf(estado_cloud) or str(estado_cloud or "").upper().strip()
-        return list_rreo_pdfs_by_uf(uf_cloud, year=year)
+        return list_rreo_pdfs_by_uf(uf_cloud, year=year, bimestre=bimestre)
     except TypeError as error:
         if "unexpected keyword argument" not in str(error):
             raise
@@ -1133,6 +1140,18 @@ ano = st.selectbox(
     on_change=limpar_processamento_anterior,
 )
 
+bimestre_rreo = 6
+if PROCESSAR_RREO:
+    bimestre_rreo = st.selectbox(
+        "Bimestre RREO",
+        options=[1, 2, 3, 4, 5, 6],
+        index=5,
+        format_func=lambda value: f"B{value}",
+        key="bimestre_rreo_widget",
+        on_change=limpar_processamento_anterior,
+        help="No novo acervo APPDOWELEVER, o RREO é lido em Ano → Estado → Bimestre.",
+    )
+
 if st.button(
     "🔄 Atualizar arquivos do Cloud",
     help="Limpa o cache de listagem para detectar imediatamente PDFs enviados agora ao bucket.",
@@ -1305,7 +1324,7 @@ try:
     municipios=carregar_municipios(worksheet_consulta,uf)
     workbook_consulta.close()
     arquivos_pdf = (
-        carregar_pdfs_estado(uf, ano)
+        carregar_pdfs_estado(uf, ano, bimestre_rreo)
         if PROCESSAR_RREO
         else []
     )
@@ -1602,7 +1621,7 @@ if executar:
                     pasta_fnde = find_fnde_folder(uf_item, ano) if PROCESSAR_FNDE else None
                     estado_item = pasta_rreo or pasta_fnde or uf_item
                     try:
-                        arquivos_item = carregar_pdfs_estado(uf_item, ano) if PROCESSAR_RREO else []
+                        arquivos_item = carregar_pdfs_estado(uf_item, ano, bimestre_rreo) if PROCESSAR_RREO else []
                     except Exception as error_estado:
                         arquivos_item = []
                         logs.append(
@@ -1670,8 +1689,9 @@ if executar:
         if tipo_rodada is TipoRodada.NOVA:
             operacao_slug = normalizar_texto(operacao).replace(" ", "_").upper()
             stamp_rodada = datetime.now().strftime("%Y%m%d_%H%M%S")
+            sufixo_bimestre = f"_B{bimestre_rreo}" if PROCESSAR_RREO else ""
             caminho_saida = pasta_temporaria / (
-                f"{operacao_slug}_{uf_saida}_{ano}_RODADA_NOVA_{stamp_rodada}.xlsx"
+                f"{operacao_slug}_{uf_saida}_{ano}{sufixo_bimestre}_RODADA_NOVA_{stamp_rodada}.xlsx"
             )
             shutil.copy2(PLANILHA_BASE, caminho_saida)
             resultado_blob = round_blob_name(ano, caminho_saida.name)
@@ -1700,7 +1720,11 @@ if executar:
                     logs.append(f"{datetime.now().strftime('%H:%M:%S')}  Backup do master falhou: {backup_error}")
             resultado_blob = master_blob_name(ano)
 
-        def _persistir_resultado_atual() -> dict[str, Any]:
+        def _persistir_resultado_atual(final: bool = False) -> dict[str, Any]:
+            # Na execução nacional, o checkpoint durável é JSON por estado.
+            # O Excel consolidado só é publicado quando o Brasil inteiro termina.
+            if todos_os_estados and not final:
+                return {"blob_name": "JSON_ESTADUAL_ATIVO; EXCEL_AGUARDANDO_FINAL"}
             if tipo_rodada is TipoRodada.NOVA:
                 return upload_round_result(caminho_saida, ano)
             return upload_master(caminho_saida, ano)
@@ -1769,8 +1793,9 @@ if executar:
                     "arquivo_fnde": trabalho.get("indice_fnde", {}).get(codigo),
                 })
 
+        job_operacao = f"{tipo_rodada.value} - {operacao}" + (f" - B{bimestre_rreo}" if PROCESSAR_RREO else "")
         job_id = _job_id(
-            f"{tipo_rodada.value} - {operacao}",
+            job_operacao,
             ano,
             uf_saida,
             modo_execucao,
@@ -1778,6 +1803,30 @@ if executar:
         )
         checkpoint_state_folder = f"CHECKPOINTS/{job_id}"
         operacao_registro = f"{tipo_rodada.value} | {operacao}"
+
+        # Retomada nacional: cada UF concluída é reidratada do JSON persistido
+        # antes de montar a fila pendente. Isso permite reiniciar o Render sem
+        # depender de um Excel parcial no Cloud.
+        estados_restaurados_json: set[str] = set()
+        if todos_os_estados:
+            for uf_checkpoint in TODAS_UFS:
+                checkpoint_uf = load_state_checkpoint(ano, job_id, uf_checkpoint)
+                if not checkpoint_uf or str(checkpoint_uf.get("status") or "").upper() != "CONCLUIDO":
+                    continue
+                restored = apply_state_checkpoint(
+                    worksheet,
+                    checkpoint_uf,
+                    preencher_rreo=lambda ws, row, values: preencher_resultados(ws, row, values, colunas_codigos),
+                    preencher_fnde=lambda ws, row, values: _preencher_fnde(ws, row, values),
+                )
+                processed_ibge.update(restored)
+                estados_restaurados_json.add(uf_checkpoint)
+            if estados_restaurados_json:
+                workbook.save(caminho_saida)
+                logs.append(
+                    f"{datetime.now().strftime('%H:%M:%S')}  "
+                    f"Retomada JSON: {len(estados_restaurados_json)} estado(s) já concluído(s) restaurado(s)."
+                )
 
         # O registro persistente é a autoridade para saber o que já foi concluído.
         # O Excel mestre é o checkpoint de dados; portanto não substituímos o master
@@ -1814,7 +1863,28 @@ if executar:
         state["progress"] = processados / total if total else 1.0
 
         cancelado=False
-        for numero_lote, lote in enumerate(chunks(fila_pendente, LOT_SETTINGS.batch_size), start=1):
+        json_registros_estado: dict[str, list[dict[str, Any]]] = {uf_item: [] for uf_item in TODAS_UFS}
+
+        # Execução nacional estritamente sequencial por UF. Nenhum lote mistura
+        # municípios de estados diferentes; a UF seguinte só entra após a
+        # anterior terminar e ter seu JSON persistido.
+        lotes_planejados: list[tuple[int, str, list[dict[str, Any]], bool]] = []
+        numero_global = 0
+        if todos_os_estados:
+            for uf_planejada in TODAS_UFS:
+                itens_uf = [item for item in fila_pendente if item["uf"] == uf_planejada]
+                partes_uf = list(chunks(itens_uf, LOT_SETTINGS.batch_size))
+                for posicao_uf, lote_uf in enumerate(partes_uf):
+                    numero_global += 1
+                    lotes_planejados.append((numero_global, uf_planejada, lote_uf, posicao_uf == len(partes_uf) - 1))
+                # Estado já concluído/restaurado: não cria lotes novos.
+        else:
+            partes = list(chunks(fila_pendente, LOT_SETTINGS.batch_size))
+            for posicao, lote_local in enumerate(partes):
+                numero_global += 1
+                lotes_planejados.append((numero_global, uf_saida, lote_local, posicao == len(partes) - 1))
+
+        for numero_lote, uf_lote, lote, ultimo_lote_do_estado in lotes_planejados:
             activity_updates_batch: list[dict[str, Any]] = []
             if cancel_token.requested:
                 cancelado=True
@@ -1943,6 +2013,19 @@ if executar:
                 metrics["Campos preenchidos"] += filled
                 metrics["Campos vazios"] += max(expected - filled, 0)
                 metrics["Avisos"] += len(fnde_warnings)
+
+                if todos_os_estados:
+                    json_registros_estado.setdefault(uf_item, []).append({
+                        "codigo_ibge": codigo_ibge,
+                        "municipio": municipio_encontrado["nome"],
+                        "uf": uf_item,
+                        "row": municipio_encontrado["row"],
+                        "rreo_values": rreo_values,
+                        "fnde_values": fnde_values,
+                        "arquivo_rreo": arquivo_rreo["blob_name"] if arquivo_rreo else "",
+                        "arquivo_fnde": arquivo_fnde["blob_name"] if arquivo_fnde else "",
+                        "erros": list(erros_municipio),
+                    })
 
                 if GERAR_LOG_RREO and PROCESSAR_RREO:
                     found_codes = [c for c, v in rreo_values.items() if v is not None]
@@ -2120,7 +2203,7 @@ if executar:
                     mensagem=f"Lote {numero_lote} persistido; {tipo_rodada.value}.",
                 )
 
-            if SALVAR_CHECKPOINT_CLOUD:
+            if SALVAR_CHECKPOINT_CLOUD and not todos_os_estados:
                 checkpoint_path = pasta_temporaria / checkpoint_filename(job_id, processados)
                 shutil.copy2(caminho_saida, checkpoint_path)
                 try:
@@ -2131,6 +2214,32 @@ if executar:
                         f"{datetime.now().strftime('%H:%M:%S')}  "
                         f"Checkpoint técnico não enviado: {checkpoint_error}"
                     )
+
+            if todos_os_estados and ultimo_lote_do_estado:
+                registros_uf = json_registros_estado.get(uf_lote, [])
+                save_state_checkpoint(ano, job_id, uf_lote, {
+                    "status": "CONCLUIDO",
+                    "ano": ano,
+                    "bimestre_rreo": bimestre_rreo,
+                    "tipo_rodada": tipo_rodada.value,
+                    "operacao": operacao,
+                    "municipios": registros_uf,
+                    "quantidade": len(registros_uf),
+                })
+                save_national_status(ano, job_id, {
+                    "status": "EM_ANDAMENTO",
+                    "estado_concluido": uf_lote,
+                    "estados_concluidos": [
+                        uf_status for uf_status in TODAS_UFS
+                        if uf_status in estados_restaurados_json or uf_status == uf_lote
+                        or bool(json_registros_estado.get(uf_status))
+                    ],
+                    "processados": processados,
+                    "total": total,
+                })
+                estados_restaurados_json.add(uf_lote)
+                monitor.event("OK", f"{uf_lote} concluído; JSON persistido. Próximo estado liberado.")
+
             monitor.event("INFO",f"Lote {numero_lote} salvo; {tipo_rodada.value}")
             if cancelado:
                 break
@@ -2195,7 +2304,7 @@ if executar:
 
         cloud_message = "UPLOAD_FALHOU - download local disponível"
         try:
-            resultado_cloud = _persistir_resultado_atual()
+            resultado_cloud = _persistir_resultado_atual(final=True)
             metrics["Upload Drive"] = "OK"
             cloud_message = resultado_cloud["blob_name"]
         except Exception as upload_error:
@@ -2212,10 +2321,21 @@ if executar:
         if metrics["Upload Drive"] == "OK":
             # A auditoria alterou o arquivo; sincroniza a versão final no mesmo destino da rodada.
             try:
-                resultado_cloud = _persistir_resultado_atual()
+                resultado_cloud = _persistir_resultado_atual(final=True)
                 cloud_message = resultado_cloud["blob_name"]
             except Exception as upload_error:
                 logs.append(f"Reenvio final da rodada falhou: {upload_error}")
+        if todos_os_estados:
+            try:
+                save_national_status(ano, job_id, {
+                    "status": "CONCLUIDO",
+                    "estados_concluidos": list(TODAS_UFS),
+                    "processados": total,
+                    "total": total,
+                    "excel_final": cloud_message,
+                })
+            except Exception as status_json_error:
+                logs.append(f"Status JSON final não pôde ser salvo: {status_json_error}")
         workbook.close()
         _save_partial_result(caminho_saida, cloud_message)
 

@@ -48,5 +48,12 @@
   "validacao_bloquear_divergencia_valor": true,
   "identificacao_municipio_tolerante": true,
   "identificacao_similaridade_minima": 0.82,
-  "identificacao_margem_ambiguidade": 0.03
+  "identificacao_margem_ambiguidade": 0.03,
+  "rreo_source_bucket": "appdowelever-arquivos",
+  "rreo_source_base_prefix": "01_Arquivo_dos_Estados_RREO_e_FNDE/4_APPDOWELEVER/",
+  "rreo_source_enabled": true,
+  "rreo_bimestre_padrao": 6,
+  "processamento_nacional_sequencial_por_estado": true,
+  "checkpoint_json_por_estado": true,
+  "excel_nacional_somente_ao_final": true
 }
