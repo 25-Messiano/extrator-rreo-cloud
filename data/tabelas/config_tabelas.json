@@ -1,0 +1,22 @@
+{
+  "versao": 1,
+  "descricao": "Configuração de leitura das tabelas locais.",
+  "municipios_ibge": {
+    "arquivo": "data/tabelas/municipios_ibge.txt",
+    "formato": "texto_delimitado",
+    "encoding": "utf-16",
+    "delimitador": "\\t",
+    "possui_cabecalho": true,
+    "colunas_esperadas": [
+      "numero_geral",
+      "numero_municipio_no_estado",
+      "codigo_ibge",
+      "ente_federado"
+    ],
+    "separador_municipio_uf": "/",
+    "codigo_municipio_digitos": 7,
+    "codigo_uf_digitos": 2,
+    "observacao": "O arquivo TXT pode permanecer como está; não é obrigatório convertê-lo para CSV."
+  },
+  "quantidade_municipios_detectados": 5570
+}

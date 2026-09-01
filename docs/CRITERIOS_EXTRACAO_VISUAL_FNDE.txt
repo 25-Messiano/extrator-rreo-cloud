@@ -1,0 +1,14 @@
+CRITÉRIOS DE EXTRAÇÃO VISUAL FNDE
+
+1. Todos os PDFs FNDE são tratados como documentos visuais, mesmo quando houver camada textual.
+2. Método principal: renderizar cada página em imagem e enviar ao Gemini Vision.
+3. Método de fallback: OCR local Tesseract em português e inglês.
+4. O Python valida o resultado usando aliases_programas.json e palavras_excluir.json.
+5. PNAE, PNATE, PDDE e QSE são blocos independentes.
+6. PDDE aceita somente o bloco PROGRAMA DINHEIRO DIRETO NA ESCOLA.
+7. ANTIGO PDDE ESTRUTURA e demais programas excluídos nunca entram no PDDE.
+8. Usar o Valor Total do cabeçalho do bloco. As linhas de esfera servem apenas para conferência.
+9. Salvar LOG_FNDE com método, modelo, tentativas, programas, valores, avisos e erros.
+10. Salvar progresso incremental e checkpoint conforme config/sistema.json.
+11. Descartar imagens e textos temporários após cada PDF.
+12. Se Gemini Vision e OCR falharem, não preencher; registrar erro e continuar o lote.
