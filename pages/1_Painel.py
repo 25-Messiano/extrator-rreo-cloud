@@ -1052,6 +1052,7 @@ abrangencias = [
     "Estado inteiro",
     "Município único",
     "Municípios selecionados",
+    "Estados selecionados",
     "Todos os Estados",
     "Amostra",
 ]
@@ -1101,6 +1102,9 @@ politica_execucao = politica_da_execucao(execucao_escolhida)
 PROCESSAR_RREO = politica_execucao.usar_rreo
 PROCESSAR_FNDE = politica_execucao.usar_fnde
 todos_os_estados = politica_execucao.abrangencia.value == "Todos os Estados"
+estados_selecionados_modo = politica_execucao.abrangencia.value == "Estados selecionados"
+execucao_multi_estado = todos_os_estados or estados_selecionados_modo
+ufs_selecionadas: list[str] = []
 
 st.caption(
     f"Execução selecionada: {execucao_escolhida}. "
@@ -1188,13 +1192,13 @@ except Exception as error:
     st.error("Não foi possível listar os estados do Cloud Storage.")
     st.exception(error)
     st.stop()
-if not estados_cloud and not todos_os_estados:
+if not estados_cloud and not execucao_multi_estado:
     st.warning("Nenhuma pasta de estado foi encontrada para a operação e o ano selecionados.")
     st.stop()
-if todos_os_estados and not estados_cloud:
+if execucao_multi_estado and not estados_cloud:
     st.warning(
-        "Nenhuma pasta foi listada no Cloud para o ano, mas a execução nacional "
-        "continuará pelas 27 UFs oficiais e registrará as fontes ausentes."
+        "Nenhuma pasta foi listada no Cloud para o ano, mas a execução multiestado "
+        "continuará pelas UFs escolhidas e registrará as fontes ausentes."
     )
 
 st.markdown('<div class="section-card"><div class="section-title"><span class="section-num">1.</span>Estado e Municípios</div>',unsafe_allow_html=True)
@@ -1214,6 +1218,17 @@ with c2:
             key="estado_cloud_widget",
             on_change=limpar_processamento_anterior,
         )
+    elif estados_selecionados_modo:
+        ufs_selecionadas = st.multiselect(
+            "Estados (UF)",
+            options=list(TODAS_UFS),
+            format_func=lambda codigo: f"{UF_PARA_ESTADO.get(codigo, codigo)} - {codigo}",
+            default=[],
+            key=f"estados_selecionados_widget_{ano}",
+            on_change=limpar_processamento_anterior,
+            help="Marque 2, 3 ou quantos estados desejar. Eles serão processados um por vez.",
+        )
+        estado_cloud = ufs_selecionadas[0] if ufs_selecionadas else (estados_cloud[0] if estados_cloud else TODAS_UFS[0])
     else:
         estado_cloud=st.selectbox(
             "Estado (UF)",
@@ -1224,6 +1239,7 @@ with c2:
 uf=extrair_uf(estado_cloud) or (estado_cloud if estado_cloud in CODIGOS_UF else "")
 if not uf:
     uf=st.selectbox("UF",sorted(CODIGOS_UF))
+ufs_execucao = list(TODAS_UFS) if todos_os_estados else (list(ufs_selecionadas) if estados_selecionados_modo else [uf])
 
 # ------------------------------------------------------------------
 # RELATÓRIOS PDF DE INVENTÁRIO DO CLOUD
@@ -1366,6 +1382,9 @@ selection_note="Todos os municípios do estado."
 with c3:
     if todos_os_estados:
         st.selectbox("Município", ["Todos os municípios de todos os estados"], disabled=True)
+    elif estados_selecionados_modo:
+        st.selectbox("Município", ["Todos os municípios dos estados selecionados"], disabled=True)
+        selection_note = f"{len(ufs_selecionadas)} estado(s) selecionado(s): {', '.join(ufs_selecionadas) if ufs_selecionadas else 'nenhum'}."
     elif modo=="Município único":
         municipio_selecionado=st.selectbox(
             "Município",
@@ -1432,7 +1451,7 @@ context_codes = [m["codigo_ibge"] for m in municipios_selecionados]
 context_signature = "|".join([
     execucao_escolhida,
     str(ano),
-    "TODOS" if todos_os_estados else uf,
+    "TODOS" if todos_os_estados else ("ESTADOS:" + ",".join(sorted(ufs_selecionadas)) if estados_selecionados_modo else uf),
     ",".join(sorted(context_codes)),
     str(st.session_state.get("tipo_rodada", TipoRodada.INCREMENTACAO.value)),
 ])
@@ -1462,7 +1481,7 @@ elif tipo_rodada is TipoRodada.CORRECAO:
         "Após leitura bem-sucedida de cada fonte, os valores antigos dessa fonte serão limpos e substituídos."
     )
 try:
-    resumo_atividade = activity_db.state_activity_summary(ano, uf)
+    resumo_atividade = {} if execucao_multi_estado else activity_db.state_activity_summary(ano, uf)
     total_registrado = sum(resumo_atividade.values())
     if total_registrado:
         if resumo_atividade.get("PROCESSADO", 0) >= len(municipios):
@@ -1481,7 +1500,7 @@ except Exception as activity_error:
 
 st.markdown('</div>',unsafe_allow_html=True)
 
-if modo=="Município único" and not todos_os_estados:
+if modo=="Município único" and not execucao_multi_estado:
     arquivo_selecionado,nota_pdf=_arquivo_rreo_por_indice_interno(municipio_selecionado, indice_rreo_atual)
     nomes=[a["name"] for a in arquivos_pdf]
     if nomes:
@@ -1489,14 +1508,16 @@ if modo=="Município único" and not todos_os_estados:
         nome_escolhido=st.selectbox("PDF confirmado",nomes,index=indice)
         arquivo_selecionado=next(a for a in arquivos_pdf if a["name"]==nome_escolhido)
     arquivos_selecionados=[arquivo_selecionado] if arquivo_selecionado else []
-elif not todos_os_estados and modo in {"Municípios selecionados","Amostra"}:
+elif not execucao_multi_estado and modo in {"Municípios selecionados","Amostra"}:
     arquivos_selecionados=[]
     for municipio_item in municipios_selecionados:
         arquivo_item,_=_arquivo_rreo_por_indice_interno(municipio_item, indice_rreo_atual)
         if arquivo_item and arquivo_item not in arquivos_selecionados:
             arquivos_selecionados.append(arquivo_item)
 
-if not todos_os_estados and not municipios_selecionados:
+if estados_selecionados_modo and not ufs_selecionadas:
+    st.warning("Selecione pelo menos um estado antes de processar.")
+elif not execucao_multi_estado and not municipios_selecionados:
     st.warning("Selecione pelo menos um município antes de processar.")
 
 monitor = st.session_state.get("execution_monitor")
@@ -1512,8 +1533,8 @@ left,mid,right=st.columns([1.55,1.05,1.0])
 with left:
     st.markdown('<div class="section-card"><div class="section-title"><span class="section-num">2.</span>Arquivos Encontrados</div>',unsafe_allow_html=True)
     a,b,c,d=st.columns(4)
-    arquivos_resumo=arquivos_pdf if todos_os_estados or modo=="Estado inteiro" else arquivos_selecionados
-    municipios_resumo=municipios if todos_os_estados or modo=="Estado inteiro" else municipios_selecionados
+    arquivos_resumo=arquivos_pdf if execucao_multi_estado or modo=="Estado inteiro" else arquivos_selecionados
+    municipios_resumo=municipios if execucao_multi_estado or modo=="Estado inteiro" else municipios_selecionados
     codigos_resumo={m["codigo_ibge"] for m in municipios_resumo}
     fnde_resumo=[item for code,item in indice_fnde_atual.items() if code in codigos_resumo]
     total_size=(
@@ -1521,12 +1542,16 @@ with left:
         + sum(int(x.get("size") or 0) for x in fnde_resumo if x)
     )
     total_pdfs=(len(arquivos_resumo) if PROCESSAR_RREO else 0) + (len(fnde_resumo) if PROCESSAR_FNDE else 0)
-    with a: st.markdown(f'<div class="mini-stat"><div class="mini-label">Municípios selecionados</div><div class="mini-value">{len(municipios_resumo)}</div></div>',unsafe_allow_html=True)
+    with a:
+        if estados_selecionados_modo:
+            st.markdown(f'<div class="mini-stat"><div class="mini-label">Estados selecionados</div><div class="mini-value">{len(ufs_selecionadas)}</div></div>',unsafe_allow_html=True)
+        else:
+            st.markdown(f'<div class="mini-stat"><div class="mini-label">Municípios selecionados</div><div class="mini-value">{len(municipios_resumo)}</div></div>',unsafe_allow_html=True)
     with b: st.markdown(f'<div class="mini-stat"><div class="mini-label">PDFs localizados</div><div class="mini-value">{total_pdfs}</div></div>',unsafe_allow_html=True)
     with c: st.markdown(f'<div class="mini-stat"><div class="mini-label">Tamanho Total</div><div class="mini-value">{total_size/1024/1024:.1f} MB</div></div>',unsafe_allow_html=True)
     with d: st.markdown(f'<div class="mini-stat"><div class="mini-label">Ano</div><div class="mini-value">{ano}</div></div>',unsafe_allow_html=True)
     preview=[]
-    lista_preview=municipios if todos_os_estados or modo=="Estado inteiro" else municipios_selecionados
+    lista_preview=municipios if execucao_multi_estado or modo=="Estado inteiro" else municipios_selecionados
     for mun in lista_preview[:100]:
         arq,nota=_arquivo_rreo_por_indice_interno(mun, indice_rreo_atual)
         arq_fnde=indice_fnde_atual.get(mun["codigo_ibge"])
@@ -1538,7 +1563,14 @@ with left:
             "Correspondência RREO":f"{nota*100:.0f}%" if arq else "-",
         })
     st.dataframe(pd.DataFrame(preview),use_container_width=True,hide_index=True,height=330)
-    st.caption(f"Exibindo {min(100,len(preview))} de {len(lista_preview)} município(s) selecionado(s).")
+    if estados_selecionados_modo:
+        st.caption(
+            f"Prévia do primeiro estado selecionado ({uf}): "
+            f"{min(100, len(preview))} de {len(lista_preview)} município(s). "
+            "Os demais estados serão carregados somente durante a execução para reduzir uso de memória."
+        )
+    else:
+        st.caption(f"Exibindo {min(100,len(preview))} de {len(lista_preview)} município(s) selecionado(s).")
     st.info(selection_note)
     st.markdown('</div>',unsafe_allow_html=True)
 
@@ -1560,15 +1592,16 @@ with mid:
     z.metric("Erros",monitor.errors or state["errors"])
     activity_slot=st.empty()
     activity_slot.code(monitor.recent_text(16),language=None)
-    quantidade_selecionada=(len(municipios) if todos_os_estados or modo=="Estado inteiro" else len(municipios_selecionados))
+    quantidade_selecionada=(len(ufs_selecionadas) if estados_selecionados_modo else (len(municipios) if todos_os_estados or modo=="Estado inteiro" else len(municipios_selecionados)))
     st.write("**Resumo antes de iniciar**")
-    st.caption(f"Estado: {'TODOS' if todos_os_estados else uf} | Modo: {modo} | Tipo: {tipo_rodada.value} | Municípios selecionados: {quantidade_selecionada} | Operação: {operacao} | RREO: {'SIM' if PROCESSAR_RREO else 'NÃO'} | FNDE: {'SIM' if PROCESSAR_FNDE else 'NÃO'}")
+    unidade_selecao = "Estados selecionados" if estados_selecionados_modo else "Municípios selecionados"
+    st.caption(f"Estado(s): {'TODOS' if todos_os_estados else (', '.join(ufs_selecionadas) if estados_selecionados_modo else uf)} | Modo: {modo} | Tipo: {tipo_rodada.value} | {unidade_selecao}: {quantidade_selecionada} | Operação: {operacao} | RREO: {'SIM' if PROCESSAR_RREO else 'NÃO'} | FNDE: {'SIM' if PROCESSAR_FNDE else 'NÃO'}")
     cproc,ccancel=st.columns(2)
     with cproc:
         latest_job = activity_db.latest_job(ano)
         continuar_disponivel = bool(latest_job and latest_job.get("status") in {"EM_ANDAMENTO", "PAUSADO", "FALHA"})
         rotulo_execucao = "▶ Continuar / atualizar" if continuar_disponivel else "▶ Processar agora"
-        executar=st.button(rotulo_execucao,type="primary",use_container_width=True,disabled=(not todos_os_estados and not municipios_selecionados))
+        executar=st.button(rotulo_execucao,type="primary",use_container_width=True,disabled=((estados_selecionados_modo and not ufs_selecionadas) or (not execucao_multi_estado and not municipios_selecionados)))
     with ccancel:
         cancelar=st.button("⏸ Pausar processo",use_container_width=True,disabled=monitor.status not in {"Em andamento","Cancelamento solicitado"})
     if cancelar:
@@ -1611,7 +1644,7 @@ if executar:
     cancel_token.clear()
     monitor.reset(0)
     monitor.event("INFO",f"Política ativa: RREO={'SIM' if PROCESSAR_RREO else 'NÃO'} | FNDE={'SIM' if PROCESSAR_FNDE else 'NÃO'}")
-    monitor.event("INFO",f"Modo: {modo} | Estado: {'TODOS' if todos_os_estados else uf}")
+    monitor.event("INFO",f"Modo: {modo} | Estado(s): {'TODOS' if todos_os_estados else (','.join(ufs_selecionadas) if estados_selecionados_modo else uf)}")
     pasta_temporaria = Path(
         tempfile.mkdtemp(prefix="rreo_cloud_")
     )
@@ -1622,9 +1655,9 @@ if executar:
         # A diferença entre eles é apenas a lista de trabalhos montada abaixo.
         trabalhos: list[dict[str, Any]] = []
 
-        if todos_os_estados:
-            modo_execucao = "Todos os Estados"
-            uf_saida = "BRASIL"
+        if execucao_multi_estado:
+            modo_execucao = modo
+            uf_saida = "BRASIL" if todos_os_estados else "SELECIONADOS_" + "-".join(ufs_execucao)
             municipio_saida = None
 
             workbook_nacional = load_workbook(
@@ -1640,7 +1673,7 @@ if executar:
                 # Execução nacional é dirigida pelas 27 UFs oficiais da matriz,
                 # não pela existência de pastas no Cloud. Assim nenhum estado é
                 # omitido silenciosamente quando RREO ou FNDE estiver ausente.
-                for uf_item in TODAS_UFS:
+                for uf_item in ufs_execucao:
                     pasta_rreo = find_rreo_folder(uf_item, ano) if PROCESSAR_RREO else None
                     pasta_fnde = find_fnde_folder(uf_item, ano) if PROCESSAR_FNDE else None
                     estado_item = pasta_rreo or pasta_fnde or uf_item
@@ -1748,7 +1781,7 @@ if executar:
         def _persistir_resultado_atual(final: bool = False) -> dict[str, Any]:
             # Na execução nacional, o checkpoint durável é JSON por estado.
             # O Excel consolidado só é publicado quando o Brasil inteiro termina.
-            if todos_os_estados and not final:
+            if execucao_multi_estado and not final:
                 return {"blob_name": "JSON_ESTADUAL_ATIVO; EXCEL_AGUARDANDO_FINAL"}
             if tipo_rodada is TipoRodada.NOVA:
                 return upload_round_result(caminho_saida, ano)
@@ -1762,7 +1795,7 @@ if executar:
         # O Excel passa a existir como resultado parcial imediatamente. Se um
         # PDF ou serviço externo falhar depois, o usuário ainda terá o arquivo.
         workbook.save(caminho_saida)
-        _save_partial_result(caminho_saida, "Planilha-base preparada; processamento em andamento.", include_bytes=not todos_os_estados)
+        _save_partial_result(caminho_saida, "Planilha-base preparada; processamento em andamento.", include_bytes=not execucao_multi_estado)
 
         total = sum(len(trabalho["municipios"]) for trabalho in trabalhos)
 
@@ -1836,8 +1869,8 @@ if executar:
         # antes de montar a fila pendente. Isso permite reiniciar o Render sem
         # depender de um Excel parcial no Cloud.
         estados_restaurados_json: set[str] = set()
-        if todos_os_estados:
-            for uf_checkpoint in TODAS_UFS:
+        if execucao_multi_estado:
+            for uf_checkpoint in ufs_execucao:
                 checkpoint_uf = load_state_checkpoint(ano, job_id, uf_checkpoint)
                 if not checkpoint_uf or str(checkpoint_uf.get("status") or "").upper() != "CONCLUIDO":
                     continue
@@ -1899,8 +1932,8 @@ if executar:
         def _iter_lotes_planejados():
             """Gera lotes sob demanda para não manter o Brasil inteiro duplicado em RAM."""
             numero_global = 0
-            if todos_os_estados:
-                for uf_planejada in TODAS_UFS:
+            if execucao_multi_estado:
+                for uf_planejada in ufs_execucao:
                     itens_uf = [item for item in fila_pendente if item["uf"] == uf_planejada]
                     quantidade_lotes = (len(itens_uf) + LOT_SETTINGS.batch_size - 1) // LOT_SETTINGS.batch_size
                     for posicao_uf, lote_uf in enumerate(chunks(itens_uf, LOT_SETTINGS.batch_size)):
@@ -2044,7 +2077,7 @@ if executar:
                 metrics["Campos vazios"] += max(expected - filled, 0)
                 metrics["Avisos"] += len(fnde_warnings)
 
-                if todos_os_estados:
+                if execucao_multi_estado:
                     json_registros_estado.setdefault(uf_item, []).append({
                         "codigo_ibge": codigo_ibge,
                         "municipio": municipio_encontrado["nome"],
@@ -2203,7 +2236,7 @@ if executar:
                 "atualizado_em": timestamp(),
             })
             workbook.save(caminho_saida)
-            _save_partial_result(caminho_saida, f"{tipo_rodada.value}: arquivo atualizado localmente; sincronizando com o Cloud...", include_bytes=not todos_os_estados)
+            _save_partial_result(caminho_saida, f"{tipo_rodada.value}: arquivo atualizado localmente; sincronizando com o Cloud...", include_bytes=not execucao_multi_estado)
 
             master_sync_ok = False
             try:
@@ -2233,7 +2266,7 @@ if executar:
                     mensagem=f"Lote {numero_lote} persistido; {tipo_rodada.value}.",
                 )
 
-            if SALVAR_CHECKPOINT_CLOUD and not todos_os_estados:
+            if SALVAR_CHECKPOINT_CLOUD and not execucao_multi_estado:
                 checkpoint_path = pasta_temporaria / checkpoint_filename(job_id, processados)
                 shutil.copy2(caminho_saida, checkpoint_path)
                 try:
@@ -2245,7 +2278,7 @@ if executar:
                         f"Checkpoint técnico não enviado: {checkpoint_error}"
                     )
 
-            if todos_os_estados and ultimo_lote_do_estado:
+            if execucao_multi_estado and ultimo_lote_do_estado:
                 registros_uf = json_registros_estado.get(uf_lote, [])
                 save_state_checkpoint(ano, job_id, uf_lote, {
                     "status": "CONCLUIDO",
@@ -2260,7 +2293,7 @@ if executar:
                     "status": "EM_ANDAMENTO",
                     "estado_concluido": uf_lote,
                     "estados_concluidos": [
-                        uf_status for uf_status in TODAS_UFS
+                        uf_status for uf_status in ufs_execucao
                         if uf_status in estados_restaurados_json or uf_status == uf_lote
                         or bool(json_registros_estado.get(uf_status))
                     ],
@@ -2332,7 +2365,7 @@ if executar:
                 erros=state["errors"], lote_atual=numero_lote if 'numero_lote' in locals() else 0,
                 master_blob=resultado_blob, mensagem=f"Execução pausada; {tipo_rodada.value}.",
             )
-            _save_partial_result(caminho_saida,f"Processo pausado; arquivo de {tipo_rodada.value} preservado.", include_bytes=not todos_os_estados)
+            _save_partial_result(caminho_saida,f"Processo pausado; arquivo de {tipo_rodada.value} preservado.", include_bytes=not execucao_multi_estado)
             state["status"]="Pausado"
             state["current"]="Cancelado pelo usuário"
             monitor.update(status="Pausado",current="Processo pausado",stage="Arquivo da rodada salvo",method="-")
@@ -2340,7 +2373,7 @@ if executar:
             st.warning("Processo pausado. Ao executar novamente, os municípios já processados serão pulados automaticamente.")
             st.rerun()
 
-        if GERAR_NAO_ENCONTRADOS and not todos_os_estados:
+        if GERAR_NAO_ENCONTRADOS and not execucao_multi_estado:
             for trabalho in trabalhos:
                 for municipio in trabalho["municipios"]:
                     if municipio["codigo_ibge"] in processed_ibge:
@@ -2369,7 +2402,7 @@ if executar:
             write_missing(workbook, missing_rows)
             metrics["Municípios pendentes"] = len(missing_rows)
 
-        if GERAR_NAO_ENCONTRADOS and todos_os_estados:
+        if GERAR_NAO_ENCONTRADOS and execucao_multi_estado:
             write_missing(workbook, missing_rows)
             metrics["Municípios pendentes"] = len(missing_rows)
 
@@ -2404,11 +2437,11 @@ if executar:
                 cloud_message = resultado_cloud["blob_name"]
             except Exception as upload_error:
                 logs.append(f"Reenvio final da rodada falhou: {upload_error}")
-        if todos_os_estados:
+        if execucao_multi_estado:
             try:
                 save_national_status(ano, job_id, {
                     "status": "CONCLUIDO",
-                    "estados_concluidos": list(TODAS_UFS),
+                    "estados_concluidos": list(ufs_execucao),
                     "processados": total,
                     "total": total,
                     "excel_final": cloud_message,

@@ -14,6 +14,7 @@ class Abrangencia(str, Enum):
     ESTADO_INTEIRO = "Estado inteiro"
     MUNICIPIO_UNICO = "Município único"
     MUNICIPIOS_SELECIONADOS = "Municípios selecionados"
+    ESTADOS_SELECIONADOS = "Estados selecionados"
     TODOS_OS_ESTADOS = "Todos os Estados"
     AMOSTRA = "Amostra"
 
