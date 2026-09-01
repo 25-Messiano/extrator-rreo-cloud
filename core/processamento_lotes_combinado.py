@@ -6,6 +6,7 @@ from core.politica_operacoes import Fonte, PoliticaExecucao
 from core.processamento_lotes import execute_dual_parallel
 from core.processamento_lotes_rreo import executar_lote_rreo
 from core.processamento_lotes_fnde import executar_lote_fnde
+from core.recursos_execucao import low_memory_mode
 
 
 def executar_lote_politica(
@@ -28,4 +29,16 @@ def executar_lote_politica(
         return {}, executar_lote_fnde(politica, itens, fnde_worker, fnde_workers, timeout_seconds)
     if rreo_worker is None or fnde_worker is None:
         raise RuntimeError("Execução combinada exige os dois workers.")
-    return execute_dual_parallel(itens, rreo_worker, fnde_worker, rreo_workers, fnde_workers, timeout_seconds)
+
+    # Em instâncias com pouca RAM (Free/Starter), não executamos RREO e FNDE
+    # simultaneamente. Mesmo com 1 worker de cada fonte, dois PDFs abertos ao
+    # mesmo tempo podem ultrapassar o limite de memória do Render.
+    if low_memory_mode():
+        from core.processamento_lotes import execute_parallel
+        rreo_result = execute_parallel(itens, rreo_worker, 1, timeout_seconds)
+        fnde_result = execute_parallel(itens, fnde_worker, 1, timeout_seconds)
+        return rreo_result, fnde_result
+
+    return execute_dual_parallel(
+        itens, rreo_worker, fnde_worker, rreo_workers, fnde_workers, timeout_seconds
+    )

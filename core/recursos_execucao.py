@@ -8,6 +8,7 @@ from pathlib import Path
 @dataclass(frozen=True)
 class RuntimeProfile:
     cpu_count: int
+    memory_limit_mb: int | None
     batch_size: int
     rreo_workers: int
     fnde_workers: int
@@ -42,6 +43,40 @@ def _cgroup_cpu_count() -> int | None:
         return None
 
 
+
+
+def _cgroup_memory_limit_mb() -> int | None:
+    """Lê o limite de RAM do container (cgroup v2/v1) quando disponível."""
+    candidates = [
+        Path("/sys/fs/cgroup/memory.max"),
+        Path("/sys/fs/cgroup/memory/memory.limit_in_bytes"),
+    ]
+    for path in candidates:
+        try:
+            raw = path.read_text(encoding="utf-8").strip()
+            if not raw or raw == "max":
+                continue
+            value = int(raw)
+            # Alguns hosts expõem um número gigantesco para significar "sem limite".
+            if value <= 0 or value >= (1 << 60):
+                continue
+            return max(64, value // (1024 * 1024))
+        except (OSError, ValueError):
+            continue
+    return None
+
+
+def detect_memory_limit_mb() -> int | None:
+    """Detecta o teto de RAM disponível para o processo.
+
+    APP_MEMORY_LIMIT_MB permite sobrescrever manualmente no Render. Quando não
+    informado, usa o limite do cgroup do container.
+    """
+    override = _positive_int(os.getenv("APP_MEMORY_LIMIT_MB"))
+    if override:
+        return override
+    return _cgroup_memory_limit_mb()
+
 def detect_cpu_capacity() -> int:
     """Detecta a capacidade de CPU disponivel no Render/container.
 
@@ -61,31 +96,46 @@ def detect_cpu_capacity() -> int:
     return 1
 
 
-def recommended_profile(cpu_count: int | None = None) -> RuntimeProfile:
-    """Perfil proporcional com prioridade para confiabilidade.
+def recommended_profile(
+    cpu_count: int | None = None,
+    memory_limit_mb: int | None = None,
+) -> RuntimeProfile:
+    """Perfil proporcional com limite explícito de memória.
 
-    RREO possui mais campos e recebe mais workers leves. FNDE possui apenas
-    quatro campos, mas leitura de imagem/OCR e mais cara. Uma parcela da
-    capacidade fica reservada para a segunda leitura/validacao. Os numeros sao
-    limites de concorrencia, nao CPUs exclusivas; as filas podem compartilhar o
-    tempo de CPU quando a outra fonte estiver ociosa.
+    Em instâncias pequenas, RAM é o gargalo antes da CPU. Por isso o tamanho
+    do lote cai para 1–2 municípios e o processamento pesado fica serial.
+    Em máquinas maiores, a concorrência cresce de forma conservadora.
     """
     cpus = max(1, int(cpu_count or detect_cpu_capacity()))
+    memory_mb = memory_limit_mb if memory_limit_mb is not None else detect_memory_limit_mb()
+
+    # Render Free/Starter ou containers equivalentes. Um PDF/OCR por vez evita
+    # picos que fazem o Render matar a instância por exceder RAM.
+    if memory_mb is not None and memory_mb <= 768:
+        return RuntimeProfile(cpus, memory_mb, 1, 1, 1, 1, 1, "Memória mínima <=768 MB")
+    if memory_mb is not None and memory_mb <= 1536:
+        return RuntimeProfile(cpus, memory_mb, 2, 1, 1, 1, 1, "Memória baixa <=1.5 GB")
 
     if cpus <= 1:
-        return RuntimeProfile(cpus, 4, 1, 1, 1, 1, "Seguro 1 CPU")
+        # Standard 1 CPU/2 GB continua conservador para PDF + openpyxl.
+        return RuntimeProfile(cpus, memory_mb, 2, 1, 1, 1, 1, "Seguro 1 CPU")
     if cpus == 2:
-        return RuntimeProfile(cpus, 6, 2, 1, 1, 1, "Seguro 2 CPUs")
+        return RuntimeProfile(cpus, memory_mb, 4, 2, 1, 1, 1, "Seguro 2 CPUs")
     if cpus <= 4:
-        # Pro Plus 4 CPUs: volume maior no RREO, FNDE mais pesado e um canal
-        # dedicado a rechecagem. Threads sao limitadas para nao saturar OCR.
-        return RuntimeProfile(cpus, 8, 3, 2, 1, 1, "Confiavel 4 CPUs")
+        return RuntimeProfile(cpus, memory_mb, 8, 3, 2, 1, 1, "Confiavel 4 CPUs")
     if cpus <= 8:
-        return RuntimeProfile(cpus, 12, 5, 3, 2, 2, "Confiavel 8 CPUs")
+        return RuntimeProfile(cpus, memory_mb, 12, 5, 3, 2, 2, "Confiavel 8 CPUs")
 
-    # Escala proporcional sem explosao de threads em instancias grandes.
     rreo = min(10, max(6, round(cpus * 0.55)))
     fnde = min(6, max(3, round(cpus * 0.30)))
     verification = min(4, max(2, round(cpus * 0.20)))
     gemini = min(3, max(1, round(cpus * 0.15)))
-    return RuntimeProfile(cpus, min(20, max(12, cpus * 2)), rreo, fnde, verification, gemini, "Confiavel 8+ CPUs")
+    return RuntimeProfile(
+        cpus, memory_mb, min(20, max(12, cpus * 2)),
+        rreo, fnde, verification, gemini, "Confiavel 8+ CPUs"
+    )
+
+
+def low_memory_mode(memory_limit_mb: int | None = None) -> bool:
+    limit = memory_limit_mb if memory_limit_mb is not None else detect_memory_limit_mb()
+    return limit is not None and limit <= 1536

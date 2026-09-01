@@ -1,3 +1,14 @@
+# v1.2.9 — Proteção de memória no Render (2026-09-01)
+
+- Detecta o limite de RAM do container via cgroup e aceita `APP_MEMORY_LIMIT_MB` como override.
+- Em até 768 MB usa lote unitário e apenas 1 worker pesado por fonte.
+- Em até 1,5 GB mantém execução conservadora; RREO+FNDE deixam de rodar simultaneamente.
+- Execução nacional gera lotes sob demanda, sem duplicar todos os lotes do Brasil em memória.
+- Após concluir cada UF, persiste o JSON, descarta índices/resultados daquele estado e força coleta de lixo.
+- Resultados dos workers RREO não carregam mais o texto completo do PDF após a auditoria interna.
+- O Excel nacional não é copiado para `st.session_state` a cada lote; o download binário só é carregado no final e dentro de limite configurável.
+- Pendências nacionais são registradas antes da liberação dos índices, preservando a auditoria.
+
 # v1.2.8 — Identidade oficial e deduplicação segura (2026-08-24)
 
 - A **planilha-base passa a ser a autoridade absoluta** para nome, UF e código IBGE do município de destino.

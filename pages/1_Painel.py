@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import gc
 import hashlib
 import random
 import re
@@ -696,8 +697,6 @@ def _rreo_worker_payload(payload: dict[str, Any], temp_root: Path) -> dict[str, 
             )
         return {
             "values": verificacao.get("confirmed", values),
-            "values_extracted": values,
-            "text": text,
             "municipio_interno": municipio_interno,
             "confianca_municipio": confianca,
             "origem_municipio": origem,
@@ -757,7 +756,6 @@ def _fnde_worker_payload(payload: dict[str, Any], temp_root: Path) -> dict[str, 
             )
         return {
             "values": verificacao.get("confirmed", values),
-            "values_extracted": values,
             "warnings": warnings,
             "result": result,
             "verification_ok": bool(verificacao.get("ok")),
@@ -769,10 +767,29 @@ def _fnde_worker_payload(payload: dict[str, Any], temp_root: Path) -> dict[str, 
         caminho.unlink(missing_ok=True)
 
 
-def _save_partial_result(path: Path, cloud_name: str = "Checkpoint local disponível") -> None:
+def _save_partial_result(
+    path: Path,
+    cloud_name: str = "Checkpoint local disponível",
+    *,
+    include_bytes: bool = True,
+) -> None:
+    """Publica o resultado na UI sem duplicar Excel grande na RAM.
+
+    Durante execução nacional o checkpoint durável é JSON no Cloud. Manter uma
+    cópia binária do Excel no ``session_state`` a cada lote dobrava o pico de
+    memória e podia derrubar instâncias pequenas do Render. O binário só é
+    carregado quando solicitado e quando o arquivo está abaixo do limite seguro.
+    """
+    max_bytes = int(SISTEMA_CONFIG.get("download_memoria_max_mb", 12)) * 1024 * 1024
+    payload: bytes | None = None
+    try:
+        if include_bytes and path.exists() and path.stat().st_size <= max_bytes:
+            payload = path.read_bytes()
+    except OSError:
+        payload = None
     st.session_state["last_result"] = {
         "name": path.name,
-        "bytes": path.read_bytes(),
+        "bytes": payload,
         "cloud": cloud_name,
         "mime": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     }
@@ -1577,7 +1594,14 @@ with right:
     result=st.session_state.get("last_result")
     if result:
         st.success(result["name"])
-        st.download_button("⬇ Download",data=result["bytes"],file_name=result["name"],mime=result.get("mime","application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"),use_container_width=True)
+        if result.get("bytes") is not None:
+            st.download_button(
+                "⬇ Download", data=result["bytes"], file_name=result["name"],
+                mime=result.get("mime", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"),
+                use_container_width=True,
+            )
+        else:
+            st.caption("Download em memória suspenso durante processamento pesado; checkpoint protegido no Cloud/JSON.")
         st.caption(result["cloud"])
     else:
         st.caption("O arquivo Excel aparecerá aqui após o processamento.")
@@ -1645,7 +1669,8 @@ if executar:
                         {
                             "estado_cloud": estado_item,
                             "uf": uf_item,
-                            "arquivos": arquivos_item,
+                            "arquivos": [],
+                            "arquivos_count": len(arquivos_item),
                             "indice_rreo": indice_interno_item,
                             "indice_fnde": indice_fnde_item,
                             "municipios": municipios_item,
@@ -1737,7 +1762,7 @@ if executar:
         # O Excel passa a existir como resultado parcial imediatamente. Se um
         # PDF ou serviço externo falhar depois, o usuário ainda terá o arquivo.
         workbook.save(caminho_saida)
-        _save_partial_result(caminho_saida, "Planilha-base preparada; processamento em andamento.")
+        _save_partial_result(caminho_saida, "Planilha-base preparada; processamento em andamento.", include_bytes=not todos_os_estados)
 
         total = sum(len(trabalho["municipios"]) for trabalho in trabalhos)
 
@@ -1752,7 +1777,10 @@ if executar:
         missing_rows: list[dict[str, Any]] = []
         processed_ibge: set[str] = set()
         metrics = {
-            "PDFs encontrados": sum(len(t["arquivos"]) + len(t.get("indice_fnde", {})) for t in trabalhos),
+            "PDFs encontrados": sum(
+                int(t.get("arquivos_count", len(t.get("arquivos", [])))) + len(t.get("indice_fnde", {}))
+                for t in trabalhos
+            ),
             "PDFs processados": 0,
             "Municípios preenchidos": 0,
             "Municípios pendentes": 0,
@@ -1863,28 +1891,30 @@ if executar:
         state["progress"] = processados / total if total else 1.0
 
         cancelado=False
-        json_registros_estado: dict[str, list[dict[str, Any]]] = {uf_item: [] for uf_item in TODAS_UFS}
+        json_registros_estado: dict[str, list[dict[str, Any]]] = {}
 
         # Execução nacional estritamente sequencial por UF. Nenhum lote mistura
         # municípios de estados diferentes; a UF seguinte só entra após a
         # anterior terminar e ter seu JSON persistido.
-        lotes_planejados: list[tuple[int, str, list[dict[str, Any]], bool]] = []
-        numero_global = 0
-        if todos_os_estados:
-            for uf_planejada in TODAS_UFS:
-                itens_uf = [item for item in fila_pendente if item["uf"] == uf_planejada]
-                partes_uf = list(chunks(itens_uf, LOT_SETTINGS.batch_size))
-                for posicao_uf, lote_uf in enumerate(partes_uf):
+        def _iter_lotes_planejados():
+            """Gera lotes sob demanda para não manter o Brasil inteiro duplicado em RAM."""
+            numero_global = 0
+            if todos_os_estados:
+                for uf_planejada in TODAS_UFS:
+                    itens_uf = [item for item in fila_pendente if item["uf"] == uf_planejada]
+                    quantidade_lotes = (len(itens_uf) + LOT_SETTINGS.batch_size - 1) // LOT_SETTINGS.batch_size
+                    for posicao_uf, lote_uf in enumerate(chunks(itens_uf, LOT_SETTINGS.batch_size)):
+                        numero_global += 1
+                        yield numero_global, uf_planejada, lote_uf, posicao_uf == quantidade_lotes - 1
+                    del itens_uf
+                    gc.collect()
+            else:
+                quantidade_lotes = (len(fila_pendente) + LOT_SETTINGS.batch_size - 1) // LOT_SETTINGS.batch_size
+                for posicao, lote_local in enumerate(chunks(fila_pendente, LOT_SETTINGS.batch_size)):
                     numero_global += 1
-                    lotes_planejados.append((numero_global, uf_planejada, lote_uf, posicao_uf == len(partes_uf) - 1))
-                # Estado já concluído/restaurado: não cria lotes novos.
-        else:
-            partes = list(chunks(fila_pendente, LOT_SETTINGS.batch_size))
-            for posicao, lote_local in enumerate(partes):
-                numero_global += 1
-                lotes_planejados.append((numero_global, uf_saida, lote_local, posicao == len(partes) - 1))
+                    yield numero_global, uf_saida, lote_local, posicao == quantidade_lotes - 1
 
-        for numero_lote, uf_lote, lote, ultimo_lote_do_estado in lotes_planejados:
+        for numero_lote, uf_lote, lote, ultimo_lote_do_estado in _iter_lotes_planejados():
             activity_updates_batch: list[dict[str, Any]] = []
             if cancel_token.requested:
                 cancelado=True
@@ -2173,7 +2203,7 @@ if executar:
                 "atualizado_em": timestamp(),
             })
             workbook.save(caminho_saida)
-            _save_partial_result(caminho_saida, f"{tipo_rodada.value}: arquivo atualizado localmente; sincronizando com o Cloud...")
+            _save_partial_result(caminho_saida, f"{tipo_rodada.value}: arquivo atualizado localmente; sincronizando com o Cloud...", include_bytes=not todos_os_estados)
 
             master_sync_ok = False
             try:
@@ -2240,6 +2270,51 @@ if executar:
                 estados_restaurados_json.add(uf_lote)
                 monitor.event("OK", f"{uf_lote} concluído; JSON persistido. Próximo estado liberado.")
 
+                # Registra pendências/erros deste estado antes de liberar os
+                # índices. Na execução nacional não precisamos revisitar todas as
+                # UFs ao final, o que permite realmente descartar memória.
+                if GERAR_NAO_ENCONTRADOS:
+                    for item_pendente in [item for item in fila if item.get("uf") == uf_lote]:
+                        if item_pendente["codigo_ibge"] in processed_ibge:
+                            continue
+                        faltas_estado = []
+                        if PROCESSAR_RREO and not item_pendente.get("arquivo_rreo"):
+                            faltas_estado.append("RREO")
+                        if PROCESSAR_FNDE and not item_pendente.get("arquivo_fnde"):
+                            faltas_estado.append("FNDE")
+                        missing_rows.append({
+                            "Estado/UF": uf_lote,
+                            "Código IBGE": item_pendente["codigo_ibge"],
+                            "Município da planilha-base": item_pendente["municipio"]["nome"],
+                            "Situação": "SEM PDF FORNECIDO" if faltas_estado else "PDF FORNECIDO MAS NÃO LIDO",
+                            "PDF RREO correspondente": (item_pendente.get("arquivo_rreo") or {}).get("name", ""),
+                            "PDF FNDE correspondente": (item_pendente.get("arquivo_fnde") or {}).get("name", ""),
+                            "Observação": ("Faltando: " + ", ".join(faltas_estado)) if faltas_estado else "Não houve preenchimento seguro durante esta execução.",
+                        })
+
+                # Libera imediatamente estruturas do estado concluído. O JSON no
+                # Cloud passa a ser a fonte de retomada; não há razão para manter
+                # índices, municípios e resultados antigos em memória.
+                json_registros_estado.pop(uf_lote, None)
+                for trabalho_concluido in trabalhos:
+                    if trabalho_concluido.get("uf") == uf_lote:
+                        trabalho_concluido["indice_rreo"] = {}
+                        trabalho_concluido["indice_fnde"] = {}
+                        trabalho_concluido["municipios"] = []
+                fila[:] = [item for item in fila if item.get("uf") != uf_lote]
+                fila_pendente[:] = [item for item in fila_pendente if item.get("uf") != uf_lote]
+                gc.collect()
+
+            # Resultados de workers podem conter texto/OCR e objetos grandes.
+            # Desreferencia o lote antes de seguir para reduzir o pico residente.
+            rreo_results.clear()
+            fnde_results.clear()
+            try:
+                del rreo_data, fnde_data, rreo_result_obj
+            except NameError:
+                pass
+            gc.collect()
+
             monitor.event("INFO",f"Lote {numero_lote} salvo; {tipo_rodada.value}")
             if cancelado:
                 break
@@ -2257,7 +2332,7 @@ if executar:
                 erros=state["errors"], lote_atual=numero_lote if 'numero_lote' in locals() else 0,
                 master_blob=resultado_blob, mensagem=f"Execução pausada; {tipo_rodada.value}.",
             )
-            _save_partial_result(caminho_saida,f"Processo pausado; arquivo de {tipo_rodada.value} preservado.")
+            _save_partial_result(caminho_saida,f"Processo pausado; arquivo de {tipo_rodada.value} preservado.", include_bytes=not todos_os_estados)
             state["status"]="Pausado"
             state["current"]="Cancelado pelo usuário"
             monitor.update(status="Pausado",current="Processo pausado",stage="Arquivo da rodada salvo",method="-")
@@ -2265,7 +2340,7 @@ if executar:
             st.warning("Processo pausado. Ao executar novamente, os municípios já processados serão pulados automaticamente.")
             st.rerun()
 
-        if GERAR_NAO_ENCONTRADOS:
+        if GERAR_NAO_ENCONTRADOS and not todos_os_estados:
             for trabalho in trabalhos:
                 for municipio in trabalho["municipios"]:
                     if municipio["codigo_ibge"] in processed_ibge:
@@ -2294,13 +2369,17 @@ if executar:
             write_missing(workbook, missing_rows)
             metrics["Municípios pendentes"] = len(missing_rows)
 
+        if GERAR_NAO_ENCONTRADOS and todos_os_estados:
+            write_missing(workbook, missing_rows)
+            metrics["Municípios pendentes"] = len(missing_rows)
+
         metrics["Data/hora de fim"] = timestamp()
         metrics["Arquivo de saída"] = caminho_saida.name
         if GERAR_AUDITORIA:
             write_audit(workbook, metrics)
 
         workbook.save(caminho_saida)
-        _save_partial_result(caminho_saida, f"Arquivo final de {tipo_rodada.value} salvo localmente; enviando ao Cloud...")
+        _save_partial_result(caminho_saida, f"Arquivo final de {tipo_rodada.value} salvo localmente; enviando ao Cloud...", include_bytes=False)
 
         cloud_message = "UPLOAD_FALHOU - download local disponível"
         try:

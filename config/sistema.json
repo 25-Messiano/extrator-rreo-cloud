@@ -55,5 +55,7 @@
   "rreo_bimestre_padrao": 6,
   "processamento_nacional_sequencial_por_estado": true,
   "checkpoint_json_por_estado": true,
-  "excel_nacional_somente_ao_final": true
+  "excel_nacional_somente_ao_final": true,
+  "download_memoria_max_mb": 12,
+  "limpeza_memoria_por_estado": true
 }
