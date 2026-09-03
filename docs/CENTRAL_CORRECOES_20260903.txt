@@ -1,4 +1,4 @@
-CENTRAL DE CORRECOES - v1.3.2
+CENTRAL DE CORRECOES - v1.3.3
 
 OBJETIVO
 Separar a conferencia/correcao do Painel Unico de Extracao sem duplicar o motor de extracao.
@@ -20,3 +20,9 @@ SEGURANCA
 - Master e rodadas multiestado nao participam da reconstrução retroativa.
 - Status e erros dos LOG_RREO/LOG_FNDE prevalecem quando disponiveis.
 - O bimestre RREO e escolhido na Central apenas para conferir a existencia do PDF no APPDOWELEVER.
+
+
+CORRECAO v1.3.3:
+- reconhece Rodada Nova estadual no padrao RREO_UF_ANO_Bx_RODADA_NOVA;
+- usa o MASTER cumulativo como fallback retroativo por UF quando nao houver planilha estadual independente;
+- nao exige reprocessar estados ja acumulados no MASTER.

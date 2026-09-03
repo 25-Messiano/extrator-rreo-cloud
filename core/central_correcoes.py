@@ -67,7 +67,7 @@ def _parse_planilha_estadual(item: dict[str, Any]) -> PlanilhaEstadual | None:
     """
     name = str(item.get("name") or "")
     upper = name.upper()
-    if not upper.endswith(".XLSX") or "_ESTADO_" not in upper:
+    if not upper.endswith(".XLSX"):
         return None
     if "MASTER" in upper or "TODOS_OS_ESTADOS" in upper or "SELECIONADOS" in upper:
         return None
@@ -82,8 +82,20 @@ def _parse_planilha_estadual(item: dict[str, Any]) -> PlanilhaEstadual | None:
     else:
         return None
 
+    # Há duas famílias reais de saídas estaduais no app:
+    # 1) RREO_ESTADO_GO_...xlsx (fluxos antigos/checkpoints)
+    # 2) RREO_GO_2025_B6_RODADA_NOVA_...xlsx (Rodada Nova atual)
+    # A v1.3.2 aceitava apenas a primeira e por isso podia reconstruir 0 UFs.
     match = re.search(r"_ESTADO_([A-Z]{2})(?:_|\.)", upper)
-    uf = match.group(1) if match else identificar_uf(name)
+    if not match and "_RODADA_NOVA_" in upper:
+        match = re.match(r"^(?:RREO_FNDE|RREO|FNDE)_([A-Z]{2})_\d{4}(?:_|\.)", upper)
+    if match:
+        uf = match.group(1)
+    else:
+        # Checkpoints podem estar armazenados em .../03_PLANILHAS_PROCESSADAS/UF/.
+        blob_name = str(item.get("blob_name") or "").upper()
+        folder_match = re.search(r"/03_PLANILHAS_PROCESSADAS/([A-Z]{2})/", blob_name)
+        uf = folder_match.group(1) if folder_match else identificar_uf(name)
     if not uf:
         return None
     return PlanilhaEstadual(
@@ -93,6 +105,45 @@ def _parse_planilha_estadual(item: dict[str, Any]) -> PlanilhaEstadual | None:
         blob_name=str(item.get("blob_name") or ""),
         updated=item.get("updated"),
     )
+
+
+def _discover_master(year: int) -> PlanilhaEstadual | None:
+    """Localiza o master cumulativo do ano como fallback de reconstrução.
+
+    Muitos estados foram processados individualmente em modo Incrementação/Correção,
+    que atualiza o MASTER em vez de produzir um arquivo estadual independente.
+    """
+    expected = f"RREO_FNDE_BRASIL_MASTER_{int(year)}.XLSX"
+    candidates: list[PlanilhaEstadual] = []
+    for item in list_results(None):
+        name = str(item.get("name") or "")
+        if name.upper() != expected:
+            continue
+        candidates.append(PlanilhaEstadual(
+            uf="BR", fonte="RREO+FNDE", name=name,
+            blob_name=str(item.get("blob_name") or ""), updated=item.get("updated"),
+        ))
+    if not candidates:
+        return None
+    floor = datetime.min.replace(tzinfo=timezone.utc)
+    return max(candidates, key=lambda x: x.updated or floor)
+
+
+def _ufs_from_workbook(payload: bytes) -> list[str]:
+    wb = load_workbook(io.BytesIO(payload), read_only=True, data_only=True)
+    try:
+        if ABA_DESTINO not in wb.sheetnames:
+            return []
+        ws = wb[ABA_DESTINO]
+        ufs: set[str] = set()
+        for row in range(3, ws.max_row + 1):
+            ente = str(ws.cell(row=row, column=4).value or "").strip().upper()
+            match = re.search(r"/([A-Z]{2})$", ente)
+            if match:
+                ufs.add(match.group(1))
+        return sorted(ufs)
+    finally:
+        wb.close()
 
 
 def discover_latest_state_spreadsheets(year: int) -> dict[tuple[str, str], PlanilhaEstadual]:
@@ -289,7 +340,17 @@ def rebuild_index_from_state_spreadsheets(
     planilhas e gravação de um novo catálogo técnico em CENTRAL_CORRECOES.
     """
     latest = discover_latest_state_spreadsheets(year)
-    ufs = sorted({uf for uf, _ in latest})
+    master = _discover_master(year)
+    master_payload: bytes | None = None
+    master_ufs: list[str] = []
+    if master is not None:
+        try:
+            master_payload = download_bytes(master.blob_name)
+            master_ufs = _ufs_from_workbook(master_payload)
+        except Exception:
+            master_payload = None
+            master_ufs = []
+    ufs = sorted({uf for uf, _ in latest} | set(master_ufs))
     merged_all: list[dict[str, Any]] = []
     total = len(ufs)
     for pos, uf in enumerate(ufs, start=1):
@@ -322,6 +383,33 @@ def rebuild_index_from_state_spreadsheets(
                         "planilhas_origem": [],
                     }
                 _merge_record(merged[code], item)
+        # Se não houver planilha estadual reconhecida para a UF, usa o MASTER
+        # cumulativo como fonte retroativa. Isso reaproveita estados processados
+        # individualmente em Incrementação/Correção sem reprocessar os PDFs.
+        if not merged and master is not None and master_payload is not None and uf in master_ufs:
+            records_master = _read_state_sheet(master_payload, uf, "RREO+FNDE", master)
+            if records_master:
+                sources_used.append({
+                    "fonte": "MASTER", "name": master.name, "blob_name": master.blob_name,
+                })
+                for item in records_master:
+                    code = item["codigo_ibge"]
+                    merged[code] = {
+                        "ano": int(year),
+                        "codigo_ibge": code,
+                        "uf": uf,
+                        "municipio": item["municipio"],
+                        "row": item.get("row", 0),
+                        "status_rreo": "NA",
+                        "status_fnde": "NA",
+                        "campos_rreo": 0,
+                        "campos_fnde": 0,
+                        "esperados_rreo": len(_RREO_COLS),
+                        "esperados_fnde": len(_FNDE_COLS),
+                        "planilhas_origem": [],
+                    }
+                    _merge_record(merged[code], item)
+
         records = list(merged.values())
         if annotate_pdfs:
             _annotate_pdf_availability(records, uf, int(year), int(bimestre))

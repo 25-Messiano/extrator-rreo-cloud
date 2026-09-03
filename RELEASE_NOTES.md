@@ -1,3 +1,12 @@
+# v1.3.3 — Central de Correções: reconstrução real das rodadas estaduais
+
+- Corrige o caso em que a Central reconstruía `0 município(s)` apesar de existirem resultados no Cloud.
+- Reconhece também saídas estaduais de Rodada Nova no padrão `RREO_UF_ANO_Bx_RODADA_NOVA_...xlsx`.
+- Mantém reconhecimento das saídas `_ESTADO_UF_...xlsx`.
+- Quando os estados foram processados individualmente por Incrementação/Correção e acumulados no MASTER, a Central usa `RREO_FNDE_BRASIL_MASTER_<ano>.xlsx` como fonte retroativa e separa os municípios por UF.
+- O MASTER é apenas lido; nenhuma planilha existente é alterada durante a reconstrução.
+- 44 testes automatizados aprovados.
+
 # v1.3.2 — Central de Correções
 
 - Nova página independente **Central de Correções** no menu lateral, logo abaixo do Painel único.

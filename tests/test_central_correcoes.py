@@ -66,3 +66,25 @@ def test_reconstrucao_preserva_erro_do_log():
     rows = _read_state_sheet(bio.getvalue(), "GO", "RREO", origin)
     assert rows[0]["status_rreo"] == "ERRO"
     assert rows[0]["erro_rreo"] == "PDF divergente"
+
+
+def test_parse_rodada_nova_estadual():
+    item = {
+        "name": "RREO_RR_2025_B6_RODADA_NOVA_20260901_160341.xlsx",
+        "blob_name": "01_Arquivo_dos_Estados_RREO_e_FNDE/03_PLANILHAS_PROCESSADAS/RODADAS/2025/RREO_RR_2025_B6_RODADA_NOVA_20260901_160341.xlsx",
+        "updated": None,
+    }
+    parsed = _parse_planilha_estadual(item)
+    assert parsed is not None
+    assert parsed.uf == "RR"
+    assert parsed.fonte == "RREO"
+
+
+def test_parse_checkpoint_em_pasta_uf():
+    item = {
+        "name": "checkpoint_job_001.xlsx",
+        "blob_name": "01_Arquivo_dos_Estados_RREO_e_FNDE/03_PLANILHAS_PROCESSADAS/GO/checkpoint_job_001.xlsx",
+        "updated": None,
+    }
+    # Nome sem prefixo de fonte não é aceito como resultado final; evita falso positivo.
+    assert _parse_planilha_estadual(item) is None
