@@ -1153,6 +1153,14 @@ if not PLANILHA_BASE.exists():
     st.error("A planilha-base não foi encontrada.")
     st.stop()
 
+# Preset vindo da Central de Correções. Ele apenas prepara os widgets;
+# o processamento continua usando este mesmo motor oficial.
+central_preset = st.session_state.get("central_correcao_preset") or {}
+if central_preset:
+    preset_execution = str(central_preset.get("execucao") or "")
+    if preset_execution in operacoes_habilitadas:
+        st.session_state["execucao_escolhida_widget"] = preset_execution
+
 anos_referencia = list(range(2030, 2022, -1))
 ano = st.selectbox(
     "Ano de Referência",
@@ -1387,11 +1395,17 @@ with c3:
         st.selectbox("Município", ["Todos os municípios dos estados selecionados"], disabled=True)
         selection_note = f"{len(ufs_selecionadas)} estado(s) selecionado(s): {', '.join(ufs_selecionadas) if ufs_selecionadas else 'nenhum'}."
     elif modo=="Município único":
+        municipio_key=f"municipio_unico_oficial_v2_{ano}_{uf}"
+        preset_code=str((central_preset or {}).get("codigo_ibge") or "")
+        if preset_code and str((central_preset or {}).get("uf") or "").upper() == uf:
+            preset_municipio=next((m for m in municipios if str(m.get("codigo_ibge")) == preset_code), None)
+            if preset_municipio is not None:
+                st.session_state[municipio_key]=preset_municipio
         municipio_selecionado=st.selectbox(
             "Município",
             municipios,
             format_func=lambda i:f"{i['nome']} - {i['uf']}",
-            key=f"municipio_unico_oficial_v2_{ano}_{uf}",
+            key=municipio_key,
         )
         municipios_selecionados=[municipio_selecionado]
         selection_note="Um município selecionado manualmente."
@@ -1481,6 +1495,12 @@ elif tipo_rodada is TipoRodada.CORRECAO:
         "Rodada de Correção: os municípios selecionados serão reprocessados. "
         "Após leitura bem-sucedida de cada fonte, os valores antigos dessa fonte serão limpos e substituídos."
     )
+if central_preset and tipo_rodada is TipoRodada.CORRECAO:
+    st.caption(
+        f"Correção preparada pela Central: {central_preset.get('municipio','')}/{central_preset.get('uf','')} "
+        f"· IBGE {central_preset.get('codigo_ibge','')} · fonte {central_preset.get('fonte','')}"
+    )
+    st.session_state.pop("central_correcao_preset", None)
 try:
     resumo_atividade = {} if execucao_multi_estado else activity_db.state_activity_summary(ano, uf)
     total_registrado = sum(resumo_atividade.values())

@@ -1,3 +1,12 @@
+# v1.3.2 — Central de Correções
+
+- Nova página independente **Central de Correções** no menu lateral, logo abaixo do Painel único.
+- Reconstrução retroativa de JSONs por UF a partir das planilhas estaduais já existentes no Cloud.
+- Catálogo nacional de correções salvo sem alterar as planilhas processadas.
+- Relatório `PENDENCIAS_BRASIL_<ano>.xlsx` com status RREO/FNDE, existência de PDF e origem.
+- Correção por IBGE prepara o mesmo motor oficial em **Rodada de Correção**, evitando duplicar o extrator.
+- Planilhas master, multiestado e relatórios são ignorados na reconstrução para não misturar bases.
+
 # v1.3.1 — RREO exclusivo APPDOWELEVER, sem fallback antigo
 
 - Origem RREO única: `appdowelever-arquivos/01_Arquivo_dos_Estados_RREO_e_FNDE/4_APPDOWELEVER/RREO/{ANO}/{ESTADO}/B{N}/`.

@@ -87,6 +87,7 @@ def render_sidebar(db: AuthDatabase | None = None) -> None:
         )
         st.page_link("app.py", label="Painel inicial", icon="🏠")
         st.page_link("pages/1_Painel.py", label="Painel único de extração", icon="📊")
+        st.page_link("pages/6_Central_Correcoes.py", label="Central de Correções", icon="🛠️")
         st.page_link("pages/4_Arquivos_Cloud.py", label="Arquivos Cloud", icon="📁")
         st.page_link("pages/2_Historico.py", label="Histórico", icon="🕘")
         if is_admin():
@@ -115,7 +116,7 @@ def render_sidebar(db: AuthDatabase | None = None) -> None:
             <div class="side-status"><span class="dot"></span>Cloud Storage conectado</div>
             <div class="side-status"><span class="dot"></span>SQLite ativo</div>
             <div class="side-status"><span class="dot"></span>Gemini configurado</div>
-            <div style="margin-top:34px;font-size:10px;color:#8391ae!important">VERSÃO</div><div style="font-size:12px;margin-top:5px">v1.3.1</div>
+            <div style="margin-top:34px;font-size:10px;color:#8391ae!important">VERSÃO</div><div style="font-size:12px;margin-top:5px">v1.3.2</div>
             """,
             unsafe_allow_html=True,
         )

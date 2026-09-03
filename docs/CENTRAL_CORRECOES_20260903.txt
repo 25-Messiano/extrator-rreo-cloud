@@ -1,0 +1,22 @@
+CENTRAL DE CORRECOES - v1.3.2
+
+OBJETIVO
+Separar a conferencia/correcao do Painel Unico de Extracao sem duplicar o motor de extracao.
+
+FLUXO
+1. A Central lista somente planilhas estaduais independentes existentes em 03_PLANILHAS_PROCESSADAS.
+2. Para cada UF/fonte, usa somente a planilha mais recente.
+3. Ignora MASTER, Todos os Estados e Estados selecionados para nao misturar bases.
+4. Le a aba Sequencia_PlanilhaCalculo (2) e as abas LOG_RREO/LOG_FNDE quando existirem.
+5. Reconstrói JSON por UF e catalogo nacional em:
+   01_Arquivo_dos_Estados_RREO_e_FNDE/03_PLANILHAS_PROCESSADAS/CENTRAL_CORRECOES/<ANO>/
+6. O relatorio de pendencias e salvo em CENTRAL_CORRECOES/<ANO>/RELATORIOS/.
+7. A correcao por municipio usa Ano + Codigo IBGE como identidade.
+8. Ao corrigir, a Central abre o mesmo Painel Unico em Rodada de Correcao. Nao existe um segundo extrator.
+
+SEGURANCA
+- Reconstruir o indice nunca altera planilhas processadas.
+- Planilhas de origem sao somente leitura.
+- Master e rodadas multiestado nao participam da reconstrução retroativa.
+- Status e erros dos LOG_RREO/LOG_FNDE prevalecem quando disponiveis.
+- O bimestre RREO e escolhido na Central apenas para conferir a existencia do PDF no APPDOWELEVER.
