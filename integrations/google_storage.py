@@ -510,6 +510,32 @@ def upload_result(
     )
 
 
+def list_results_by_prefix(prefix: str) -> list[dict[str, Any]]:
+    """Lista arquivos XLSX de um prefixo exato no bucket de resultados.
+
+    Usado pela Central de Correções para evitar varrer toda a árvore de
+    PLANILHAS_PROCESSADAS quando o diretório da rodada já é conhecido.
+    """
+    client = get_storage_client()
+    normalized = str(prefix or "").strip().lstrip("/")
+    blobs = client.list_blobs(BUCKET_NAME, prefix=normalized)
+    files: list[dict[str, Any]] = []
+    for blob in blobs:
+        if not blob.name.lower().endswith(".xlsx"):
+            continue
+        files.append({
+            "name": Path(blob.name).name,
+            "blob_name": blob.name,
+            "size": blob.size or 0,
+            "updated": blob.updated,
+        })
+    return sorted(
+        files,
+        key=lambda item: (item["updated"] is not None, item["updated"]),
+        reverse=True,
+    )
+
+
 def list_results(
     state: str | None = None,
 ) -> list[dict[str, Any]]:

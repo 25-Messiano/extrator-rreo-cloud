@@ -49,7 +49,11 @@ if st.button("🔄 Reconstruir índice a partir das planilhas existentes", type=
         catalog = rebuild_index_from_state_spreadsheets(year, progress=on_progress, annotate_pdfs=True, bimestre=bimestre)
         st.session_state[f"central_catalog_{year}"] = catalog
         bar.empty()
-        st.success(f"Índice reconstruído: {catalog.get('total_municipios', 0)} município(s) em {len(catalog.get('ufs', []))} UF(s).")
+        st.success(
+            f"Índice reconstruído: {catalog.get('total_municipios', 0)} município(s) em "
+            f"{len(catalog.get('ufs', []))} UF(s). "
+            f"Planilhas estaduais encontradas: {catalog.get('planilhas_estaduais_encontradas', 0)}."
+        )
     except Exception as error:
         bar.empty()
         st.error("Não foi possível reconstruir o índice de correções.")

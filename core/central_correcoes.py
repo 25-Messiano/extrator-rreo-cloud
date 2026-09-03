@@ -21,6 +21,7 @@ from integrations.google_storage import (
     find_rreo_folder,
     list_fnde_pdfs_by_uf,
     list_results,
+    list_results_by_prefix,
     list_rreo_pdfs_by_uf,
     upload_file,
     upload_text,
@@ -108,25 +109,15 @@ def _parse_planilha_estadual(item: dict[str, Any]) -> PlanilhaEstadual | None:
 
 
 def _discover_master(year: int) -> PlanilhaEstadual | None:
-    """Localiza o master cumulativo do ano como fallback de reconstrução.
+    """Aponta diretamente para o MASTER conhecido, sem varrer o Cloud inteiro.
 
-    Muitos estados foram processados individualmente em modo Incrementação/Correção,
-    que atualiza o MASTER em vez de produzir um arquivo estadual independente.
+    A existência é validada somente se o fallback for realmente necessário.
     """
-    expected = f"RREO_FNDE_BRASIL_MASTER_{int(year)}.XLSX"
-    candidates: list[PlanilhaEstadual] = []
-    for item in list_results(None):
-        name = str(item.get("name") or "")
-        if name.upper() != expected:
-            continue
-        candidates.append(PlanilhaEstadual(
-            uf="BR", fonte="RREO+FNDE", name=name,
-            blob_name=str(item.get("blob_name") or ""), updated=item.get("updated"),
-        ))
-    if not candidates:
-        return None
-    floor = datetime.min.replace(tzinfo=timezone.utc)
-    return max(candidates, key=lambda x: x.updated or floor)
+    name = f"RREO_FNDE_BRASIL_MASTER_{int(year)}.xlsx"
+    blob_name = f"{RESULTADOS_PREFIX}MASTER/{name}"
+    return PlanilhaEstadual(
+        uf="BR", fonte="RREO+FNDE", name=name, blob_name=blob_name, updated=None,
+    )
 
 
 def _ufs_from_workbook(payload: bytes) -> list[str]:
@@ -147,10 +138,15 @@ def _ufs_from_workbook(payload: bytes) -> list[str]:
 
 
 def discover_latest_state_spreadsheets(year: int) -> dict[tuple[str, str], PlanilhaEstadual]:
-    """Obtém a planilha estadual mais recente por UF e fonte."""
-    del year  # nomes atuais não carregam o ano de forma confiável; o conteúdo é a autoridade.
+    """Obtém a planilha estadual mais recente por UF e fonte.
+
+    A busca é propositalmente restrita a RODADAS/<ano>/, que é o local real
+    das planilhas estaduais produzidas por Rodada Nova. Isso evita a varredura
+    pesada de toda a árvore 03_PLANILHAS_PROCESSADAS.
+    """
+    prefix = f"{RESULTADOS_PREFIX}RODADAS/{int(year)}/"
     latest: dict[tuple[str, str], PlanilhaEstadual] = {}
-    for item in list_results(None):
+    for item in list_results_by_prefix(prefix):
         parsed = _parse_planilha_estadual(item)
         if parsed is None:
             continue
@@ -429,6 +425,7 @@ def rebuild_index_from_state_spreadsheets(
 
     catalog = {
         "schema": CATALOGO_SCHEMA,
+        "planilhas_estaduais_encontradas": len(latest),
         "ano": int(year),
         "gerado_em": _agora(),
         "bimestre_rreo": int(bimestre),

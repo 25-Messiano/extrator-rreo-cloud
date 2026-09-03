@@ -1,4 +1,4 @@
-# v1.3.3 — Central de Correções: reconstrução real das rodadas estaduais
+# v1.3.4 — Central de Correções: reconstrução real das rodadas estaduais
 
 - Corrige o caso em que a Central reconstruía `0 município(s)` apesar de existirem resultados no Cloud.
 - Reconhece também saídas estaduais de Rodada Nova no padrão `RREO_UF_ANO_Bx_RODADA_NOVA_...xlsx`.
@@ -166,3 +166,9 @@
 - Em retomada nacional, estados concluídos são reconstruídos dos JSONs antes de continuar.
 - Durante execução nacional, o Excel fica local/parcial; o Excel consolidado é publicado no Cloud somente no final.
 - O ID do trabalho nacional inclui o bimestre para impedir reaproveitamento de checkpoint de outro período.
+
+# v1.3.4 — Central de Correções: busca direta em RODADAS/<ano>
+- A Central deixa de varrer toda a árvore 03_PLANILHAS_PROCESSADAS e consulta diretamente RODADAS/<ano>/.
+- Reconhece RREO_UF_ANO_B6_RODADA_NOVA_*.xlsx e seleciona a mais recente por UF/fonte.
+- O MASTER passa a ser fallback por caminho conhecido, sem busca ampla.
+- A interface informa quantas planilhas estaduais foram encontradas.
