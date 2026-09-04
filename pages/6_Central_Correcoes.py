@@ -13,6 +13,7 @@ from core.central_correcoes import (
     rebuild_index_from_state_spreadsheets,
     upload_pending_report,
 )
+from core.maestro_ia import ExtractionCase, make_case_id, observe_case, status_snapshot
 from integrations.google_storage import health_check
 from ui.theme import apply_theme, metric_card, render_sidebar
 
@@ -25,6 +26,13 @@ st.markdown(
     '<div class="hero-sub">Conferência pós-processamento, reconstrução de JSONs, pendências e correções por município.</div>'
     '</div><span class="online">● Sistema Online</span></div>',
     unsafe_allow_html=True,
+)
+
+maestro_status = status_snapshot()
+st.caption(
+    f"🧠 MAESTRO IA · Modo sombra={'SIM' if maestro_status.get('shadow_mode') else 'NÃO'} · "
+    f"OpenAI live={'SIM' if maestro_status.get('live_ai') else 'NÃO'} · "
+    f"Memória operacional: {maestro_status.get('memory', {}).get('cases', 0)} caso(s)."
 )
 
 status = health_check()
@@ -156,6 +164,19 @@ else:
     source = st.selectbox("Fonte a corrigir", available_sources or ["RREO"])
 
     if st.button("🛠️ Abrir no Painel em Rodada de Correção", type="primary", width="stretch"):
+        observe_case(ExtractionCase(
+            case_id=make_case_id(source, year, str(chosen.get("uf") or ""), str(chosen.get("codigo_ibge") or "")),
+            source=source,
+            year=year,
+            uf=str(chosen.get("uf") or ""),
+            ibge=str(chosen.get("codigo_ibge") or ""),
+            municipality=str(chosen.get("municipio") or ""),
+            operation="CENTRAL_CORRECOES",
+            status=str(chosen.get("status_geral") or "PENDENTE"),
+            error=str(chosen.get("erro_rreo") or chosen.get("erro_fnde") or ""),
+            pdf_name=str(chosen.get("pdf_rreo_nome") or chosen.get("pdf_fnde_nome") or ""),
+            metadata={"origem": "CENTRAL_CORRECOES", "shadow": True},
+        ))
         preset = correction_preset(year, chosen, source)
         st.session_state["central_correcao_preset"] = preset
         st.session_state["execucao_escolhida_widget"] = preset["execucao"]

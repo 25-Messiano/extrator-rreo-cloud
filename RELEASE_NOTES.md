@@ -172,3 +172,13 @@
 - Reconhece RREO_UF_ANO_B6_RODADA_NOVA_*.xlsx e seleciona a mais recente por UF/fonte.
 - O MASTER passa a ser fallback por caminho conhecido, sem busca ampla.
 - A interface informa quantas planilhas estaduais foram encontradas.
+
+## Laboratório MAESTRO IA — modo sombra
+- Núcleo MAESTRO IA adicionado sem alterar o resultado oficial.
+- OpenAI Supervisor preparado via Agents SDK e variável OPENAI_API_KEY.
+- Gemini definido como Especialista de Extração; chamadas reais continuam desativadas no modo sombra inicial.
+- Memória operacional SQLite auditável.
+- Propostas de patch nunca são aplicadas automaticamente.
+- Hooks não bloqueantes no Painel Único e na Central de Correções.
+- Central otimizada para leitura XLSX streaming e MASTER adiado para fallback.
+- Evals locais, mutation gate e workflow de homologação adicionados.

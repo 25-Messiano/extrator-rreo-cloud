@@ -90,6 +90,7 @@ from core.checkpoint_json_nacional import (
     save_national_status,
     save_state_checkpoint,
 )
+from core.maestro_ia import ExtractionCase, make_case_id, observe_case, status_snapshot
 
 
 st.markdown("""
@@ -707,6 +708,7 @@ def _rreo_worker_payload(payload: dict[str, Any], temp_root: Path) -> dict[str, 
             "verification_ok": bool(verificacao.get("ok")),
             "verification_method": verificacao.get("method", ""),
             "verification_divergences": divergencias,
+            "evidence_text": (verificacao.get("verification_text", "")[:45000] if (erro or divergencias) else ""),
             "error": erro,
         }
     finally:
@@ -1141,6 +1143,14 @@ with m1: metric_card("☁","Armazenamento","Cloud Storage","Conectado" if cloud_
 with m2: metric_card("🗄","Banco de Dados","SQLite","Ativo","purple")
 with m3: metric_card("🛡","Credenciais GCS","Configuradas" if cloud_ok else "Pendentes","OK" if cloud_ok else "Atenção","green")
 with m4: metric_card("✦","Gemini API","Configurado" if gemini_ok else "Pendente","OK" if gemini_ok else "Atenção","blue")
+
+maestro_status = status_snapshot()
+st.caption(
+    f"🧠 MAESTRO IA: {'MODO SOMBRA' if maestro_status.get('shadow_mode') else 'ATIVO'} · "
+    f"OpenAI live={'SIM' if maestro_status.get('live_ai') else 'NÃO'} · "
+    f"Memória: {maestro_status.get('memory', {}).get('cases', 0)} caso(s). "
+    "No modo sombra, nenhuma decisão da IA altera a planilha oficial."
+)
 
 if not cloud_ok:
     st.error("Não foi possível conectar ao Google Cloud Storage.")
@@ -2239,6 +2249,31 @@ if executar:
                     "status_geral": status_geral,
                     "ultimo_erro": "; ".join(erros_municipio),
                 })
+
+                # MAESTRO IA - observação assíncrona e não bloqueante.
+                # Não altera workbook, status oficial, JSON nacional ou decisão do motor.
+                if PROCESSAR_RREO:
+                    observe_case(ExtractionCase(
+                        case_id=make_case_id("RREO", ano, uf_item, codigo_ibge),
+                        source="RREO",
+                        year=ano,
+                        uf=uf_item,
+                        ibge=codigo_ibge,
+                        municipality=municipio_encontrado["nome"],
+                        operation=operacao,
+                        status="OK" if status_rreo == "PROCESSADO" else status_rreo,
+                        error="; ".join(erros_municipio),
+                        pdf_name=(arquivo_rreo.get("name", "") if arquivo_rreo else ""),
+                        values=dict(rreo_values),
+                        verification_ok=bool(rreo_data and rreo_data.get("verification_ok")),
+                        verification_method=(rreo_data.get("verification_method", "") if rreo_data else ""),
+                        divergences=(rreo_data.get("verification_divergences", {}) if rreo_data else {}),
+                        metadata={
+                            "rodada": str(tipo_rodada), "shadow": True,
+                            "blob_name": (arquivo_rreo.get("blob_name", "") if arquivo_rreo else ""),
+                            "document_text": (rreo_data.get("evidence_text", "") if rreo_data else ""),
+                        },
+                    ))
 
                 if status_geral == "PROCESSADO":
                     state["success"] += 1

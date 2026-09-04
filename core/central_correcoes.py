@@ -177,17 +177,21 @@ def _latest_log_by_ibge(wb, sheet_name: str) -> dict[str, dict[str, Any]]:
     if sheet_name not in wb.sheetnames:
         return {}
     ws = wb[sheet_name]
-    headers = {str(cell.value or "").strip(): idx for idx, cell in enumerate(ws[1], start=1)}
-    code_col = headers.get("Código IBGE")
-    if not code_col:
+    iterator = ws.iter_rows(values_only=True)
+    try:
+        header_row = next(iterator)
+    except StopIteration:
+        return {}
+    headers = {str(value or "").strip(): idx for idx, value in enumerate(header_row)}
+    code_idx = headers.get("Código IBGE")
+    if code_idx is None:
         return {}
     out: dict[str, dict[str, Any]] = {}
-    for row in range(2, ws.max_row + 1):
-        code = str(ws.cell(row=row, column=code_col).value or "").strip().split(".")[0]
+    for values in iterator:
+        code = str(values[code_idx] if code_idx < len(values) else "").strip().split(".")[0]
         if len(code) != 7 or not code.isdigit():
             continue
-        item = {header: ws.cell(row=row, column=col).value for header, col in headers.items()}
-        out[code] = item
+        out[code] = {header: (values[idx] if idx < len(values) else None) for header, idx in headers.items()}
     return out
 
 
@@ -203,7 +207,24 @@ def _apply_log_status(item: dict[str, Any], log: dict[str, Any] | None, source: 
     item[f"validacao_{source.lower()}"] = str(log.get("Validação dupla") or "").strip()
 
 
+def _count_present(values: tuple[Any, ...], columns: list[int]) -> tuple[str, int, int]:
+    # CAMPOS_DESTINO usa colunas 1-based; iter_rows retorna tupla 0-based.
+    present = 0
+    for col in columns:
+        idx = col - 1
+        value = values[idx] if 0 <= idx < len(values) else None
+        if _value_present(value):
+            present += 1
+    expected = len(columns)
+    if present == 0:
+        return "PENDENTE", present, expected
+    if present < expected:
+        return "PARCIAL", present, expected
+    return "DADOS_PRESENTES", present, expected
+
+
 def _read_state_sheet(payload: bytes, uf: str, source: str, origin: PlanilhaEstadual) -> list[dict[str, Any]]:
+    """Leitura streaming: uma passagem sequencial pelo XML, sem ws.cell repetitivo."""
     wb = load_workbook(io.BytesIO(payload), read_only=True, data_only=True)
     try:
         if ABA_DESTINO not in wb.sheetnames:
@@ -212,38 +233,27 @@ def _read_state_sheet(payload: bytes, uf: str, source: str, origin: PlanilhaEsta
         rreo_logs = _latest_log_by_ibge(wb, RREO_LOG_SHEET)
         fnde_logs = _latest_log_by_ibge(wb, FNDE_LOG_SHEET)
         records: list[dict[str, Any]] = []
-        for row in range(3, ws.max_row + 1):
-            code_raw = ws.cell(row=row, column=3).value
-            ente = str(ws.cell(row=row, column=4).value or "").strip()
+        for excel_row, values in enumerate(ws.iter_rows(min_row=3, values_only=True), start=3):
+            code_raw = values[2] if len(values) > 2 else None
+            ente = str(values[3] if len(values) > 3 else "").strip()
             code = str(code_raw or "").strip().split(".")[0]
             if len(code) != 7 or not code.isdigit() or not ente.upper().endswith(f"/{uf}"):
                 continue
             municipio = ente.rsplit("/", 1)[0].strip()
             item = {
-                "ano": None,
-                "codigo_ibge": code,
-                "uf": uf,
-                "municipio": municipio,
-                "row": row,
-                "planilha_origem": origin.name,
-                "blob_origem": origin.blob_name,
-                "fonte_planilha": source,
-                "status_rreo": "NA",
-                "status_fnde": "NA",
-                "campos_rreo": 0,
-                "campos_fnde": 0,
-                "esperados_rreo": len(_RREO_COLS),
-                "esperados_fnde": len(_FNDE_COLS),
+                "ano": None, "codigo_ibge": code, "uf": uf, "municipio": municipio,
+                "row": excel_row, "planilha_origem": origin.name, "blob_origem": origin.blob_name,
+                "fonte_planilha": source, "status_rreo": "NA", "status_fnde": "NA",
+                "campos_rreo": 0, "campos_fnde": 0,
+                "esperados_rreo": len(_RREO_COLS), "esperados_fnde": len(_FNDE_COLS),
             }
             if source in {"RREO", "RREO+FNDE"}:
-                status, count, expected = _source_status(ws, row, _RREO_COLS)
+                status, count, expected = _count_present(values, _RREO_COLS)
                 item.update(status_rreo=status, campos_rreo=count, esperados_rreo=expected)
-            if source in {"FNDE", "RREO+FNDE"}:
-                status, count, expected = _source_status(ws, row, _FNDE_COLS)
-                item.update(status_fnde=status, campos_fnde=count, esperados_fnde=expected)
-            if source in {"RREO", "RREO+FNDE"}:
                 _apply_log_status(item, rreo_logs.get(code), "RREO")
             if source in {"FNDE", "RREO+FNDE"}:
+                status, count, expected = _count_present(values, _FNDE_COLS)
+                item.update(status_fnde=status, campos_fnde=count, esperados_fnde=expected)
                 _apply_log_status(item, fnde_logs.get(code), "FNDE")
             records.append(item)
         return records
@@ -336,17 +346,23 @@ def rebuild_index_from_state_spreadsheets(
     planilhas e gravação de um novo catálogo técnico em CENTRAL_CORRECOES.
     """
     latest = discover_latest_state_spreadsheets(year)
-    master = _discover_master(year)
+    # Regra de performance: planilhas estaduais primeiro. O MASTER só é aberto
+    # como fallback quando nenhuma rodada estadual foi descoberta.
+    master = None
     master_payload: bytes | None = None
     master_ufs: list[str] = []
-    if master is not None:
-        try:
-            master_payload = download_bytes(master.blob_name)
-            master_ufs = _ufs_from_workbook(master_payload)
-        except Exception:
-            master_payload = None
-            master_ufs = []
-    ufs = sorted({uf for uf, _ in latest} | set(master_ufs))
+    ufs = sorted({uf for uf, _ in latest})
+    if not ufs:
+        master = _discover_master(year)
+        if master is not None:
+            try:
+                master_payload = download_bytes(master.blob_name)
+                master_ufs = _ufs_from_workbook(master_payload)
+                ufs = sorted(master_ufs)
+            except Exception:
+                master_payload = None
+                master_ufs = []
+                ufs = []
     merged_all: list[dict[str, Any]] = []
     total = len(ufs)
     for pos, uf in enumerate(ufs, start=1):
