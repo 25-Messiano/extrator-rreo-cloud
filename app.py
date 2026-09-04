@@ -50,7 +50,11 @@ a,b = st.columns([3,1])
 with a:
     st.markdown("Selecione o estado, o município e o ano no painel operacional. O sistema lista os PDFs, processa os dados e gera a planilha automaticamente.")
 with b:
-    st.page_link("pages/1_Painel.py", label="Abrir Painel de Extração", icon="▶️", use_container_width=True)
+    col_action_1, col_action_2 = st.columns(2)
+    with col_action_1:
+        st.page_link("pages/1_Painel.py", label="Abrir Painel de Extração", icon="▶️", use_container_width=True)
+    with col_action_2:
+        st.page_link("pages/7_Download_Lote.py", label="Abrir Download em Lote", icon="📦", use_container_width=True)
 st.markdown('</div>', unsafe_allow_html=True)
 
 st.markdown('<div class="section-card"><div class="section-title">Fluxo Operacional</div><div class="flow"><div class="flow-step"><div class="flow-num">1</div><div><div class="flow-name">Listagem</div><div class="flow-desc">PDFs localizados no Cloud Storage</div></div></div><div class="flow-arrow">→</div><div class="flow-step"><div class="flow-num">2</div><div><div class="flow-name">Extração</div><div class="flow-desc">Gemini identifica as linhas do RREO</div></div></div><div class="flow-arrow">→</div><div class="flow-step"><div class="flow-num">3</div><div><div class="flow-name">Geração</div><div class="flow-desc">Excel preenchido com os dados</div></div></div><div class="flow-arrow">→</div><div class="flow-step"><div class="flow-num">4</div><div><div class="flow-name">Upload</div><div class="flow-desc">Resultado salvo e liberado</div></div></div></div></div>', unsafe_allow_html=True)
