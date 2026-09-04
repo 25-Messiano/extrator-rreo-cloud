@@ -93,3 +93,51 @@ def test_signed_url_uses_results_bucket(monkeypatch):
     monkeypatch.setattr(dl, "get_storage_client", lambda: client)
     url = dl.signed_download_url("folder/test.zip")
     assert url.endswith("folder/test.zip")
+
+
+def test_state_source_from_round_name():
+    assert dl._state_source_from_round_name("RREO_AC_2025_B6_RODADA_NOVA_20260901_010101.xlsx") == ("AC", "RREO")
+    assert dl._state_source_from_round_name("FNDE_BA_2025_RODADA_NOVA_20260901_010101.xlsx") == ("BA", "FNDE")
+    assert dl._state_source_from_round_name("RREO_FNDE_MG_2025_B6_RODADA_NOVA_20260901_010101.xlsx") == ("MG", "RREO+FNDE")
+    assert dl._state_source_from_round_name("RREO_FNDE_BRASIL_MASTER_2025.xlsx") == (None, None)
+
+
+def test_latest_processed_state_spreadsheets(monkeypatch):
+    from datetime import datetime, timezone
+    old=datetime(2026,9,1,tzinfo=timezone.utc); new=datetime(2026,9,2,tzinfo=timezone.utc)
+    monkeypatch.setattr(dl, "list_processed_rounds", lambda year: [
+        {"uf":"AC","source":"RREO","name":"old.xlsx","blob_name":"r/old.xlsx","size":1,"updated":old},
+        {"uf":"AC","source":"RREO","name":"new.xlsx","blob_name":"r/new.xlsx","size":2,"updated":new},
+        {"uf":"BA","source":"RREO","name":"ba.xlsx","blob_name":"r/ba.xlsx","size":3,"updated":old},
+    ])
+    got=dl.latest_processed_state_spreadsheets(2025)
+    assert [x["name"] for x in got] == ["new.xlsx","ba.xlsx"]
+
+
+def test_inventory_processed_state_filters_uf(monkeypatch):
+    monkeypatch.setattr(dl, "latest_processed_state_spreadsheets", lambda year: [
+        {"uf":"AC","source":"RREO","name":"ac.xlsx","blob_name":"r/ac.xlsx","size":10,"updated":None},
+        {"uf":"BA","source":"RREO","name":"ba.xlsx","blob_name":"r/ba.xlsx","size":20,"updated":None},
+    ])
+    inv=dl.inventory_processed_spreadsheets(2025,"ESTADO","AC","MAIS_RECENTES")
+    assert inv["xlsx_count"] == 1
+    assert inv["files"][0]["name"] == "ac.xlsx"
+
+
+def test_prepare_processed_spreadsheets_zip(monkeypatch):
+    client=FakeClient()
+    source=client.bucket(dl.BUCKET_NAME)
+    source.blobs["round/ac.xlsx"]=FakeBlob("round/ac.xlsx",b"ACX")
+    source.blobs["round/ba.xlsx"]=FakeBlob("round/ba.xlsx",b"BAX")
+    monkeypatch.setattr(dl,"get_storage_client",lambda:client)
+    monkeypatch.setattr(dl,"inventory_processed_spreadsheets",lambda *args,**kwargs:{
+        "scope":"BRASIL","uf":None,"year":2025,"selection":"MAIS_RECENTES","source_bytes":6,
+        "files":[
+            {"uf":"AC","name":"ac.xlsx","blob_name":"round/ac.xlsx","size":3},
+            {"uf":"BA","name":"ba.xlsx","blob_name":"round/ba.xlsx","size":3},
+        ]})
+    pkg=dl.prepare_processed_spreadsheets_zip(2025,"BRASIL",None,"MAIS_RECENTES")
+    uploaded=client.bucket(dl.BUCKET_NAME).blob(pkg.blob_name).uploaded
+    with zipfile.ZipFile(io.BytesIO(uploaded)) as zf:
+        assert sorted(zf.namelist()) == ["AC/ac.xlsx","BA/ba.xlsx"]
+        assert zf.read("AC/ac.xlsx") == b"ACX"

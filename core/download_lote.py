@@ -21,6 +21,12 @@ from integrations.google_storage import (
 DOWNLOAD_LOTE_PREFIX = (
     "01_Arquivo_dos_Estados_RREO_e_FNDE/04_DOWNLOADS_LOTE/RREO/"
 )
+DOWNLOAD_PLANILHAS_PREFIX = (
+    "01_Arquivo_dos_Estados_RREO_e_FNDE/04_DOWNLOADS_LOTE/PLANILHAS/"
+)
+RESULTADOS_PREFIX = "01_Arquivo_dos_Estados_RREO_e_FNDE/03_PLANILHAS_PROCESSADAS/"
+RODADAS_PREFIX = f"{RESULTADOS_PREFIX}RODADAS/"
+MASTER_PREFIX = f"{RESULTADOS_PREFIX}MASTER/"
 
 ProgressCallback = Callable[[int, int, str], None]
 
@@ -220,4 +226,148 @@ def signed_download_url(blob_name: str, hours: int = 2) -> str:
         expiration=timedelta(hours=max(1, min(int(hours), 24))),
         method="GET",
         response_disposition=f'attachment; filename="{Path(blob_name).name}"',
+    )
+
+
+# ---------------------------------------------------------------------------
+# PLANILHAS PROCESSADAS
+# ---------------------------------------------------------------------------
+
+def _blob_item(blob: Any) -> dict[str, Any]:
+    return {
+        "name": Path(blob.name).name,
+        "blob_name": blob.name,
+        "size": int(getattr(blob, "size", 0) or 0),
+        "updated": getattr(blob, "updated", None),
+    }
+
+
+def _list_xlsx(prefix: str) -> list[dict[str, Any]]:
+    client = get_storage_client()
+    timeout = float(os.getenv("GCS_TIMEOUT_SECONDS", "120"))
+    items = []
+    for blob in client.list_blobs(BUCKET_NAME, prefix=prefix, timeout=timeout):
+        if str(blob.name).lower().endswith(".xlsx"):
+            items.append(_blob_item(blob))
+    return items
+
+
+def _state_source_from_round_name(name: str) -> tuple[str | None, str | None]:
+    """Extrai UF e fonte somente das planilhas estaduais de Rodada Nova."""
+    import re
+    upper = Path(str(name)).name.upper()
+    if "_RODADA_NOVA_" not in upper or "MASTER" in upper or "SELECIONADOS" in upper or "TODOS_OS_ESTADOS" in upper:
+        return None, None
+    if upper.startswith("RREO_FNDE_"):
+        source = "RREO+FNDE"
+        pattern = r"^RREO_FNDE_([A-Z]{2})_\d{4}(?:_|\.)"
+    elif upper.startswith("RREO_"):
+        source = "RREO"
+        pattern = r"^RREO_([A-Z]{2})_\d{4}(?:_|\.)"
+    elif upper.startswith("FNDE_"):
+        source = "FNDE"
+        pattern = r"^FNDE_([A-Z]{2})_\d{4}(?:_|\.)"
+    else:
+        return None, None
+    m = re.match(pattern, upper)
+    return (m.group(1), source) if m else (None, None)
+
+
+def list_processed_rounds(year: int | str = 2025) -> list[dict[str, Any]]:
+    """Lista apenas XLSX estaduais reconhecidos em RODADAS/<ano>."""
+    out = []
+    for item in _list_xlsx(f"{RODADAS_PREFIX}{int(year)}/"):
+        uf, source = _state_source_from_round_name(item["name"])
+        if uf:
+            out.append({**item, "uf": uf, "source": source})
+    return sorted(out, key=lambda x: (x["uf"], x["source"] or "", x["name"]))
+
+
+def latest_processed_state_spreadsheets(year: int | str = 2025) -> list[dict[str, Any]]:
+    """Mantém somente a planilha mais recente por UF/fonte."""
+    from datetime import datetime, timezone
+    minimum = datetime.min.replace(tzinfo=timezone.utc)
+    latest: dict[tuple[str, str], dict[str, Any]] = {}
+    for item in list_processed_rounds(year):
+        key = (item["uf"], item["source"] or "")
+        prev = latest.get(key)
+        if prev is None or (item.get("updated") or minimum) > (prev.get("updated") or minimum):
+            latest[key] = item
+    return sorted(latest.values(), key=lambda x: (x["uf"], x["source"] or ""))
+
+
+def inventory_processed_spreadsheets(
+    year: int | str = 2025,
+    scope: str = "BRASIL",
+    uf: str | None = None,
+    selection: str = "MAIS_RECENTES",
+) -> dict[str, Any]:
+    scope_n = str(scope).upper().strip()
+    selection_n = str(selection).upper().strip()
+    target = str(uf or "").upper().strip()
+    if selection_n == "MASTER":
+        files = _list_xlsx(MASTER_PREFIX)
+        expected = f"RREO_FNDE_BRASIL_MASTER_{int(year)}.xlsx".upper()
+        files = [x for x in files if x["name"].upper() == expected]
+    else:
+        files = latest_processed_state_spreadsheets(year) if selection_n == "MAIS_RECENTES" else list_processed_rounds(year)
+        if scope_n == "ESTADO":
+            files = [x for x in files if x.get("uf") == target]
+    return {
+        "scope": scope_n,
+        "uf": target or None,
+        "year": int(year),
+        "selection": selection_n,
+        "xlsx_count": len(files),
+        "source_bytes": sum(int(x.get("size") or 0) for x in files),
+        "state_count": len({x.get("uf") for x in files if x.get("uf")}),
+        "files": files,
+    }
+
+
+def prepare_processed_spreadsheets_zip(
+    year: int | str = 2025,
+    scope: str = "BRASIL",
+    uf: str | None = None,
+    selection: str = "MAIS_RECENTES",
+    progress: ProgressCallback | None = None,
+) -> DownloadPackage:
+    """Cria ZIP das planilhas processadas sem alterar nenhum XLSX original."""
+    inv = inventory_processed_spreadsheets(year, scope, uf, selection)
+    files = inv["files"]
+    if not files:
+        raise FileNotFoundError("Nenhuma planilha processada encontrada para a seleção.")
+    scope_n = inv["scope"]
+    selection_n = inv["selection"]
+    target = inv["uf"]
+    year_i = int(year)
+    if selection_n == "MASTER":
+        filename = f"PLANILHA_MASTER_BRASIL_{year_i}.zip"
+    elif scope_n == "ESTADO":
+        filename = f"PLANILHAS_PROCESSADAS_{target}_{year_i}.zip"
+    else:
+        suffix = "MAIS_RECENTES" if selection_n == "MAIS_RECENTES" else "TODAS_RODADAS"
+        filename = f"PLANILHAS_PROCESSADAS_BRASIL_{year_i}_{suffix}.zip"
+    blob_name = f"{DOWNLOAD_PLANILHAS_PREFIX}{year_i}/{filename}"
+    client = get_storage_client()
+    bucket = client.bucket(BUCKET_NAME)
+    timeout = float(os.getenv("GCS_TIMEOUT_SECONDS", "120"))
+    with tempfile.TemporaryDirectory(prefix="planilhas_download_lote_") as tmp:
+        zip_path = Path(tmp) / filename
+        with zipfile.ZipFile(zip_path, mode="w", compression=zipfile.ZIP_DEFLATED, allowZip64=True) as archive:
+            for index, item in enumerate(files, 1):
+                name = item["name"]
+                state = item.get("uf")
+                arcname = f"{state}/{name}" if scope_n == "BRASIL" and state else name
+                blob = bucket.blob(item["blob_name"])
+                with archive.open(arcname, "w", force_zip64=True) as entry:
+                    blob.download_to_file(entry, timeout=timeout)
+                if progress:
+                    progress(index, len(files), f"{state + ' · ' if state else ''}{name}")
+        bucket.blob(blob_name).upload_from_filename(str(zip_path), content_type="application/zip", timeout=timeout)
+        zip_bytes = zip_path.stat().st_size
+    return DownloadPackage(
+        scope=scope_n, year=year_i, bimestre="PLANILHAS", uf=target,
+        filename=filename, bucket=BUCKET_NAME, blob_name=blob_name,
+        pdf_count=len(files), source_bytes=inv["source_bytes"], zip_bytes=zip_bytes,
     )

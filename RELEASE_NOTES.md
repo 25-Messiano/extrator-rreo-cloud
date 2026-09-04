@@ -1,3 +1,12 @@
+# v1.3.5.2 — Download em Lote de Planilhas Processadas
+
+- Mantém Download em Lote no menu lateral e atalho na tela inicial.
+- Acrescenta Planilhas processadas na mesma página.
+- Opções: estaduais mais recentes, todas as Rodadas Novas e MASTER nacional.
+- Abrangência Estado/Brasil quando aplicável.
+- ZIP gerado no Cloud, link temporário, originais somente leitura.
+- Prova visual de versão v1.3.5.2 no menu e rodapé da página.
+
 # v1.3.5 — Download em Lote
 
 - Nova página lateral **📦 Download em Lote**.

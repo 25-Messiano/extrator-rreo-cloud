@@ -18,4 +18,12 @@ def test_download_lote_page_and_core_exist():
 
 def test_release_marker_is_visible_in_sidebar():
     theme = Path("ui/theme.py").read_text(encoding="utf-8")
-    assert "v1.3.5.1" in theme
+    assert "v1.3.5.2" in theme
+
+
+def test_download_lote_page_exposes_processed_spreadsheets():
+    page = Path("pages/7_Download_Lote.py").read_text(encoding="utf-8")
+    assert "Planilhas processadas" in page
+    assert "Estaduais mais recentes" in page
+    assert "MASTER nacional" in page
+    assert "Preparar ZIP das planilhas" in page
