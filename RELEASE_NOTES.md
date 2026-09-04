@@ -1,3 +1,13 @@
+# v1.3.5 — Download em Lote
+
+- Nova página lateral **📦 Download em Lote**.
+- Download RREO por **Estado** ou **Brasil inteiro**.
+- Leitura exclusiva da origem oficial `appdowelever-arquivos`.
+- ZIP criado em disco temporário com leitura sequencial, sem acumular todos os PDFs na RAM.
+- ZIP final salvo no bucket de resultados em `04_DOWNLOADS_LOTE/RREO/...`.
+- Link temporário de download direto no navegador.
+- Nenhum PDF original, planilha, Central de Correções ou motor de extração é alterado.
+
 # v1.3.4 — Central de Correções: reconstrução real das rodadas estaduais
 
 - Corrige o caso em que a Central reconstruía `0 município(s)` apesar de existirem resultados no Cloud.

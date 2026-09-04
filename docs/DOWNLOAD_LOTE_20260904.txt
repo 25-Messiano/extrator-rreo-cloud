@@ -1,0 +1,30 @@
+DOWNLOAD EM LOTE RREO - v1.3.5
+Data: 2026-09-04
+
+OBJETIVO
+Adicionar ao menu lateral uma pagina independente "Download em Lote" sem alterar o motor de extracao, a Central de Correcoes ou o MAESTRO IA.
+
+ORIGEM DOS PDFS
+Bucket: appdowelever-arquivos
+Prefixo: 01_Arquivo_dos_Estados_RREO_e_FNDE/4_APPDOWELEVER/RREO/{ANO}/{PASTA_UF}/B{N}/
+
+MODOS
+1. Estado: gera RREO_UF_ANO_BN.zip com todos os PDFs do Estado/bimestre.
+2. Brasil inteiro: gera RREO_BRASIL_ANO_BN.zip, organizado internamente em pastas por UF.
+
+SEGURANCA E MEMORIA
+- PDFs originais sao somente lidos.
+- ZIP usa ZIP_STORED porque PDFs ja sao comprimidos, reduzindo CPU.
+- Arquivos sao transferidos um a um para o ZIP temporario; nao sao acumulados todos na RAM.
+- ZIP final e enviado ao bucket maestro-rreo-arquivos.
+- Download usa URL assinada temporaria, evitando carregar um ZIP nacional inteiro na memoria do Streamlit.
+
+SAIDA
+Bucket: maestro-rreo-arquivos
+Prefixo: 01_Arquivo_dos_Estados_RREO_e_FNDE/04_DOWNLOADS_LOTE/RREO/{ANO}/B{N}/
+
+VALIDACOES
+- compileall: OK
+- pytest: 53 testes aprovados
+- validate_project.py: OK
+- carga sintetica Brasil: 27 UFs / 5.570 PDFs / pico Python ~4,31 MB
