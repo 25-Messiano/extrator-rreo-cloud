@@ -18,6 +18,9 @@ RREO_LOG_HEADERS = [
     "Código IBGE no arquivo", "IBGE do arquivo divergente",
     "Método de identificação do arquivo", "Confiança da identificação do arquivo",
     "Duplicados ignorados", "Duplicado conflitante",
+    "RREO SAFE", "SHA-256 PDF", "Fingerprint resultado",
+    "Leitor secundário", "Confiança SAFE", "Pós-gravação",
+    "Divergências pós-gravação",
 ]
 
 

@@ -57,5 +57,14 @@
   "checkpoint_json_por_estado": true,
   "excel_nacional_somente_ao_final": true,
   "download_memoria_max_mb": 12,
-  "limpeza_memoria_por_estado": true
+  "limpeza_memoria_por_estado": true,
+  "rreo_safe_enabled": true,
+  "rreo_safe_exigir_municipio_interno": true,
+  "rreo_safe_bloquear_divergencia_municipio": true,
+  "rreo_safe_leitor_secundario": "PYMUPDF_GEOMETRY",
+  "rreo_safe_exigir_pos_gravacao": true,
+  "rreo_safe_exigir_pos_xlsx": true,
+  "rreo_safe_hash_sha256": true,
+  "rreo_safe_confidence_min": 95,
+  "rreo_ocr_fallback": false
 }

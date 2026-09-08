@@ -9,6 +9,7 @@ import pdfplumber
 
 from core.validacao import normalizar_texto, validar_codigos_rreo
 from integrations.gemini import extract_rreo_values, identify_rreo_municipality
+from modules.rreo_safe import compare_values, extract_codes_geometry, sha256_file
 
 DEFAULT_CODES = [
     "1.1", "1.2", "1.3", "1.4", "2.1", "2.1.1", "2.1.2", "2.2",
@@ -144,34 +145,42 @@ def verify_values(
     codigos: Iterable[str] | None = None,
     tolerance: float = 0.01,
 ) -> dict[str, Any]:
-    """Rele a fonte e compara cada codigo RREO antes da gravacao final."""
+    """Validação RREO independente e determinística.
+
+    Leitor A: pdfplumber textual.
+    Leitor B: PyMuPDF por coordenadas, ancorado semanticamente na coluna
+    "Bimestre (b)". A IA é usada apenas como árbitro das divergências.
+    """
     codes = validar_codigos_rreo(codigos or DEFAULT_CODES)
-    verification_text = extract_text_verification(pdf_path)
-    second = extract_codes(verification_text, codes)
-    divergences: dict[str, dict[str, float | None]] = {}
-    confirmed: dict[str, float | None] = {}
+    secondary = extract_codes_geometry(pdf_path, codes)
+    compared = compare_values(expected, secondary, codes, tolerance=tolerance)
+    confirmed = dict(compared["confirmed"])
+    divergences = dict(compared["divergences"])
+    verification_text = ""
 
-    for code in codes:
-        first_value = expected.get(code)
-        second_value = second.get(code)
-        if first_value is None and second_value is None:
-            confirmed[code] = None
-            continue
-        if first_value is not None and second_value is not None and abs(float(first_value) - float(second_value)) <= tolerance:
-            confirmed[code] = round(float(first_value), 2)
-            continue
-        divergences[code] = {"extracao": first_value, "verificacao": second_value}
-
-    # Somente as divergencias sao submetidas a uma terceira leitura estruturada.
     if divergences:
+        verification_text = extract_text_verification(pdf_path)
         try:
             adjudicated = extract_rreo_values(texto_pdf=verification_text, codigos=list(divergences))
         except Exception:
             adjudicated = {}
         for code in list(divergences):
             first_value = expected.get(code)
+            second_value = secondary.get(code)
             third_value = adjudicated.get(code)
-            if first_value is not None and third_value is not None and abs(float(first_value) - float(third_value)) <= tolerance:
+            # O árbitro só libera quando concorda com um dos leitores e não há
+            # indício de dois valores plausíveis distintos para a mesma célula.
+            if third_value is None:
+                continue
+            matches_first = first_value is not None and abs(float(first_value) - float(third_value)) <= tolerance
+            matches_second = second_value is not None and abs(float(second_value) - float(third_value)) <= tolerance
+            if matches_first and not matches_second:
+                confirmed[code] = round(float(first_value), 2)
+                divergences.pop(code, None)
+            elif matches_second and not matches_first:
+                confirmed[code] = round(float(second_value), 2)
+                divergences.pop(code, None)
+            elif matches_first and matches_second:
                 confirmed[code] = round(float(first_value), 2)
                 divergences.pop(code, None)
 
@@ -179,6 +188,10 @@ def verify_values(
         "ok": not divergences,
         "confirmed": confirmed,
         "divergences": divergences,
-        "method": "SEGUNDA_LEITURA_PDFPLUMBER + GEMINI_APENAS_DIVERGENCIAS",
+        "method": "PDFPLUMBER_TEXT + PYMUPDF_GEOMETRY_COLUNA_B + GEMINI_ARBITRO_SOMENTE_DIVERGENCIAS",
         "verification_text": verification_text,
+        "secondary_values": secondary,
+        "pdf_sha256": sha256_file(pdf_path),
+        "column_semantic": True,
     }
+

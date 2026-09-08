@@ -42,6 +42,7 @@ from integrations.google_storage import (
     round_blob_name,
 )
 from modules.rreo import process as processar_rreo, identify_internal_municipality, verify_values as verificar_rreo
+from modules.rreo_safe import identity_guard, confidence_score, result_fingerprint
 from modules.fnde import process as processar_fnde, verify_values as verificar_fnde
 from modules.mapeamento_nova_planilha import (
     ABA_DESTINO,
@@ -53,6 +54,10 @@ from modules.mapeamento_nova_planilha import (
     preencher_rreo_nova_planilha,
     limpar_campos_fonte,
     validar_estrutura_planilha,
+    verificar_resultados_gravados,
+    snapshot_campos_fonte,
+    restaurar_snapshot_campos_fonte,
+    verificar_resultados_em_arquivo,
 )
 from core.config_manager import load_json
 from core.database import Database
@@ -691,12 +696,27 @@ def _rreo_worker_payload(payload: dict[str, Any], temp_root: Path) -> dict[str, 
             "ok": True, "confirmed": values, "divergences": {}, "method": "DESATIVADA"
         }
         divergencias = verificacao.get("divergences", {})
-        erro = ""
+        nome_interno = municipio_interno.get("nome", "") if municipio_interno else ""
+        identidade = identity_guard(
+            payload["municipio"]["nome"],
+            nome_interno,
+            require_internal=bool(SISTEMA_CONFIG.get("rreo_safe_exigir_municipio_interno", True)),
+        )
+        erro_partes: list[str] = []
         if divergencias and SISTEMA_CONFIG.get("validacao_bloquear_divergencia_valor", True):
-            erro = "RREO com divergência na verificação: " + "; ".join(
-                f"{codigo} extração={dados.get('extracao')} verificação={dados.get('verificacao')}"
-                for codigo, dados in divergencias.items()
-            )
+            erro_partes.append("RREO com divergência entre leitores independentes: " + "; ".join(
+                f"{codigo}={dados}" for codigo, dados in divergencias.items()
+            ))
+        if SISTEMA_CONFIG.get("rreo_safe_bloquear_divergencia_municipio", True) and not identidade["ok"]:
+            erro_partes.append("RREO bloqueado por identidade: " + str(identidade.get("message") or identidade.get("status")))
+        erro = " | ".join(erro_partes)
+        safe_ok = bool(verificacao.get("ok")) and bool(identidade.get("ok"))
+        score = confidence_score(
+            identity_ok=bool(identidade.get("ok")),
+            dual_ok=bool(verificacao.get("ok")),
+            column_semantic=bool(verificacao.get("column_semantic", False)),
+            hash_ok=bool(verificacao.get("pdf_sha256")),
+        )
         return {
             "values": verificacao.get("confirmed", values),
             "municipio_interno": municipio_interno,
@@ -704,10 +724,14 @@ def _rreo_worker_payload(payload: dict[str, Any], temp_root: Path) -> dict[str, 
             "origem_municipio": origem,
             "modelo_municipio": modelo,
             "tentativas_municipio": tentativas,
-            # A identificação interna é tolerante e serve somente para auditoria.
-            "verification_ok": bool(verificacao.get("ok")),
+            "identity_ok": bool(identidade.get("ok")),
+            "identity_status": identidade.get("status", ""),
+            "verification_ok": safe_ok,
             "verification_method": verificacao.get("method", ""),
             "verification_divergences": divergencias,
+            "secondary_values": verificacao.get("secondary_values", {}),
+            "pdf_sha256": verificacao.get("pdf_sha256", ""),
+            "safe_confidence": score,
             "evidence_text": (verificacao.get("verification_text", "")[:45000] if (erro or divergencias) else ""),
             "error": erro,
         }
@@ -2016,6 +2040,7 @@ if executar:
                     yield numero_global, uf_saida, lote_local, posicao == quantidade_lotes - 1
 
         for numero_lote, uf_lote, lote, ultimo_lote_do_estado in _iter_lotes_planejados():
+            rreo_persist_checks: list[dict[str, Any]] = []
             activity_updates_batch: list[dict[str, Any]] = []
             if cancel_token.requested:
                 cancelado=True
@@ -2098,24 +2123,60 @@ if executar:
                                 # nem destino: o nome externo continua sendo a regra oficial.
                                 pass
 
-                        # Na Rodada de Correção, uma leitura RREO bem-sucedida
-                        # substitui integralmente os campos RREO antigos da linha.
-                        if limpa_fonte_antes_de_gravar(tipo_rodada) and rreo_values and not rreo_data.get("error"):
-                            limpar_campos_fonte(worksheet, municipio_encontrado["row"], "RREO")
+                        # RREO SAFE: a planilha oficial só recebe valores quando
+                        # identidade + dois leitores independentes estiverem validados.
+                        linha_rreo = municipio_encontrado["row"]
+                        snapshot_rreo = snapshot_campos_fonte(worksheet, linha_rreo, "RREO")
+                        if not rreo_data.get("error") and rreo_data.get("verification_ok") and rreo_values:
+                            if limpa_fonte_antes_de_gravar(tipo_rodada):
+                                limpar_campos_fonte(worksheet, linha_rreo, "RREO")
+                            rreo_count = preencher_resultados(
+                                worksheet,
+                                linha_rreo,
+                                rreo_values,
+                                colunas_codigos,
+                            )
+                            pos_write = verificar_resultados_gravados(
+                                worksheet,
+                                linha_rreo,
+                                rreo_values,
+                                fonte="RREO",
+                                tolerancia=float(SISTEMA_CONFIG.get("validacao_tolerancia_centavos", 0.01)),
+                            )
+                            rreo_data["post_write_ok"] = bool(pos_write.get("ok"))
+                            rreo_data["post_write_divergences"] = pos_write.get("divergencias", {})
+                            rreo_data["result_fingerprint"] = result_fingerprint(
+                                codigo_ibge, ano, bimestre_rreo, rreo_values
+                            )
+                            if not pos_write.get("ok"):
+                                restaurar_snapshot_campos_fonte(worksheet, linha_rreo, snapshot_rreo)
+                                rreo_count = 0
+                                erro_pos = "RREO rollback: valor extraído não corresponde à célula gravada: " + str(pos_write.get("divergencias", {}))
+                                rreo_data["error"] = erro_pos
+                                erros_municipio.append(erro_pos)
+                                monitor.event("ERROR", erro_pos)
+                            else:
+                                rreo_data["safe_confidence"] = confidence_score(
+                                    identity_ok=bool(rreo_data.get("identity_ok")),
+                                    dual_ok=bool(rreo_data.get("verification_ok")),
+                                    column_semantic=True,
+                                    hash_ok=bool(rreo_data.get("pdf_sha256")),
+                                    post_write_ok=True,
+                                )
+                                rreo_persist_checks.append({
+                                    "row": linha_rreo,
+                                    "ibge": codigo_ibge,
+                                    "values": dict(rreo_values),
+                                })
+                        else:
+                            # Nenhum valor duvidoso toca a planilha.
+                            rreo_count = 0
+                            if rreo_data.get("error"):
+                                monitor.event("ERROR", f"RREO SAFE bloqueou {identificacao}: {rreo_data.get('error')}")
 
-                        # REGRA OFICIAL: o nome externo manda. A leitura interna serve
-                        # somente para auditoria e jamais impede o preenchimento.
-                        rreo_count = preencher_resultados(
-                            worksheet,
-                            municipio_encontrado["row"],
-                            rreo_values,
-                            colunas_codigos,
-                        )
                         if divergencia_nome_rreo:
-                            monitor.event("WARNING", f"RREO divergente (somente auditoria): {divergencia_nome_rreo}")
-                        if rreo_data.get("error") and not municipio_interno:
-                            # Falha na conferência interna não bloqueia o processamento pelo nome externo.
-                            pass
+                            acao_divergencia_rreo = "BLOQUEADO_RREO_SAFE; DIVERGENCIA_DE_IDENTIDADE"
+                            monitor.event("ERROR", f"RREO SAFE: {divergencia_nome_rreo}")
                         if arquivo_rreo:
                             metrics["PDFs processados"] += 1
 
@@ -2194,6 +2255,13 @@ if executar:
                             for reg in (arquivo_rreo.get("duplicados_ignorados") or [])
                         ) if arquivo_rreo else "",
                         "Duplicado conflitante": "SIM" if (arquivo_rreo and arquivo_rreo.get("duplicado_conflitante")) else "NÃO",
+                        "RREO SAFE": "ATIVO",
+                        "SHA-256 PDF": rreo_data.get("pdf_sha256", "") if rreo_data else "",
+                        "Fingerprint resultado": rreo_data.get("result_fingerprint", "") if rreo_data else "",
+                        "Leitor secundário": "PyMuPDF Geometry / coluna Bimestre (b)",
+                        "Confiança SAFE": f"{int(rreo_data.get('safe_confidence', 0) or 0)}%" if rreo_data else "",
+                        "Pós-gravação": "OK" if (rreo_data and rreo_data.get("post_write_ok")) else "NÃO EXECUTADO/BLOQUEADO",
+                        "Divergências pós-gravação": str(rreo_data.get("post_write_divergences", {})) if rreo_data else "",
                     })
 
                 if GERAR_LOG_FNDE and PROCESSAR_FNDE:
@@ -2329,13 +2397,25 @@ if executar:
                 "atualizado_em": timestamp(),
             })
             workbook.save(caminho_saida)
+            persist_check = verificar_resultados_em_arquivo(
+                caminho_saida,
+                rreo_persist_checks,
+                tolerancia=float(SISTEMA_CONFIG.get("validacao_tolerancia_centavos", 0.01)),
+            ) if PROCESSAR_RREO else {"ok": True, "divergencias": {}, "total": 0}
             _save_partial_result(caminho_saida, f"{tipo_rodada.value}: arquivo atualizado localmente; sincronizando com o Cloud...", include_bytes=not execucao_multi_estado)
 
             master_sync_ok = False
             try:
+                if not persist_check.get("ok"):
+                    raise RuntimeError(
+                        "RREO SAFE bloqueou upload: divergência após reabrir XLSX: "
+                        + str(persist_check.get("divergencias", {}))
+                    )
                 master_result = _persistir_resultado_atual()
                 master_sync_ok = True
                 st.session_state["last_result"]["cloud"] = master_result["blob_name"]
+                if PROCESSAR_RREO and rreo_persist_checks:
+                    monitor.event("OK", f"RREO SAFE pós-XLSX: {persist_check.get('total', 0)} célula(s) persistidas e reconferidas")
             except Exception as master_upload_error:
                 logs.append(
                     f"{datetime.now().strftime('%H:%M:%S')}  "

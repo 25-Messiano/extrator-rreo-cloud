@@ -680,3 +680,106 @@ __all__ = [
     "preencher_fnde_nova_planilha",
     "gravar_em_arquivo",
 ]
+
+
+def verificar_resultados_gravados(
+    worksheet: Worksheet,
+    linha_municipio: int,
+    valores: Mapping[str, Any],
+    *,
+    fonte: str = "RREO",
+    tolerancia: float = 0.01,
+) -> dict[str, Any]:
+    """Confere imediatamente se cada valor chegou à célula autorizada correta."""
+    validar_worksheet(worksheet)
+    fonte_norm = str(fonte or '').strip().upper()
+    divergencias: dict[str, dict[str, Any]] = {}
+    conferidos: dict[str, str] = {}
+    for codigo, esperado_bruto in valores.items():
+        chave = str(codigo).strip().upper()
+        campo = MAPA_CAMPOS_DESTINO.get(chave)
+        if campo is None or campo.fonte != fonte_norm or esperado_bruto is None:
+            continue
+        esperado = _converter_valor_numerico(esperado_bruto)
+        celula = worksheet.cell(row=linha_municipio, column=campo.coluna)
+        atual = celula.value
+        try:
+            atual_num = _converter_valor_numerico(atual)
+        except Exception:
+            atual_num = None
+        if esperado is None or atual_num is None or abs(float(esperado) - float(atual_num)) > tolerancia:
+            divergencias[chave] = {
+                'esperado': esperado,
+                'gravado': atual,
+                'celula': celula.coordinate,
+            }
+        else:
+            conferidos[chave] = celula.coordinate
+    return {
+        'ok': not divergencias,
+        'divergencias': divergencias,
+        'conferidos': conferidos,
+        'total': len(conferidos),
+    }
+
+
+def snapshot_campos_fonte(worksheet: Worksheet, linha_municipio: int, fonte: str) -> dict[int, tuple[Any, str]]:
+    """Snapshot transacional dos campos autorizados de uma fonte."""
+    validar_worksheet(worksheet)
+    fonte_norm = str(fonte or '').strip().upper()
+    snap: dict[int, tuple[Any, str]] = {}
+    for campo in CAMPOS_DESTINO:
+        if campo.fonte != fonte_norm:
+            continue
+        cell = worksheet.cell(row=linha_municipio, column=campo.coluna)
+        snap[campo.coluna] = (cell.value, cell.number_format)
+    return snap
+
+
+def restaurar_snapshot_campos_fonte(worksheet: Worksheet, linha_municipio: int, snapshot: Mapping[int, tuple[Any, str]]) -> None:
+    """Rollback transacional da linha quando qualquer guarda falhar."""
+    validar_worksheet(worksheet)
+    for coluna, state in snapshot.items():
+        cell = worksheet.cell(row=linha_municipio, column=int(coluna))
+        cell.value, cell.number_format = state
+
+
+def verificar_resultados_em_arquivo(
+    caminho_xlsx: str | Path,
+    registros: list[dict[str, Any]],
+    *,
+    tolerancia: float = 0.01,
+) -> dict[str, Any]:
+    """Reabre o XLSX salvo e prova que os valores persistiram nas células certas."""
+    if not registros:
+        return {'ok': True, 'divergencias': {}, 'total': 0}
+    wb = load_workbook(Path(caminho_xlsx), read_only=True, data_only=False)
+    try:
+        ws = obter_aba_destino(wb)
+        divergencias: dict[str, Any] = {}
+        total = 0
+        for registro in registros:
+            row = int(registro['row'])
+            values = registro.get('values') or {}
+            ibge = str(registro.get('ibge') or '')
+            for codigo, esperado_bruto in values.items():
+                chave = str(codigo).strip().upper()
+                campo = MAPA_CAMPOS_DESTINO.get(chave)
+                if campo is None or campo.fonte != 'RREO' or esperado_bruto is None:
+                    continue
+                total += 1
+                esperado = _converter_valor_numerico(esperado_bruto)
+                atual = ws.cell(row=row, column=campo.coluna).value
+                try:
+                    atual_num = _converter_valor_numerico(atual)
+                except Exception:
+                    atual_num = None
+                if esperado is None or atual_num is None or abs(float(esperado) - float(atual_num)) > tolerancia:
+                    divergencias[f'{ibge}:{chave}'] = {
+                        'esperado': esperado,
+                        'gravado': atual,
+                        'celula': f'{campo.letra}{row}',
+                    }
+        return {'ok': not divergencias, 'divergencias': divergencias, 'total': total}
+    finally:
+        wb.close()
