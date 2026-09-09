@@ -11,7 +11,7 @@ from typing import Any, Iterable, Mapping
 from integrations.google_storage import BUCKET_NAME, get_storage_client
 from modules.rreo_safe import validate_state_completeness
 
-ENGINE_VERSION = "1.3.7.1"
+ENGINE_VERSION = "1.3.7.2"
 REGISTRY_SCHEMA_VERSION = 1
 REGISTRY_BLOB = os.getenv(
     "RREO_SAFE_REGISTRY_BLOB",
@@ -217,6 +217,8 @@ def record_municipality(
         d = dict(rreo_data or {})
         vals = dict(values or {})
         divergences = dict(d.get("verification_divergences") or {})
+        structural_divergences = dict(d.get("structural_divergences") or {})
+        semantic_divergences = dict(d.get("semantic_divergences") or {})
         secondary = dict(d.get("secondary_values") or {})
         missing_a = [c for c, v in vals.items() if v is None]
         missing_b = [c for c in vals if secondary and secondary.get(c) is None]
@@ -243,6 +245,8 @@ def record_municipality(
             "values": vals,
             "secondary_values": secondary,
             "financial_divergences": divergences,
+            "structural_divergences": structural_divergences,
+            "semantic_divergences": semantic_divergences,
             "missing_reader_a": missing_a,
             "missing_reader_b": missing_b,
             "error": error or d.get("error") or "",
@@ -257,14 +261,22 @@ def record_municipality(
         run["pending_review"] = sum(1 for x in items if x.get("status") != "VALIDADO_SAFE")
         run["processing_errors"] = sum(1 for x in items if x.get("error"))
         run["financial_comparisons"] = sum(len(x.get("values") or {}) for x in items if x.get("arquivo_pdf"))
-        run["financial_divergences"] = sum(len(x.get("financial_divergences") or {}) for x in items)
+        run["financial_divergences"] = sum(
+            len(x.get("financial_divergences") or {})
+            + len(x.get("structural_divergences") or {})
+            + len(x.get("semantic_divergences") or {})
+            for x in items
+        )
         run["missing_fields_reader_a"] = sum(len(x.get("missing_reader_a") or []) for x in items)
         run["missing_fields_reader_b"] = sum(len(x.get("missing_reader_b") or []) for x in items)
         run["failure_cases"] = [
             {
                 "codigo_ibge": x.get("codigo_ibge"), "municipio": x.get("municipio"),
                 "municipio_interno": x.get("municipio_interno"), "identity_status": x.get("identity_status"),
-                "financial_divergences": x.get("financial_divergences"), "error": x.get("error"),
+                "financial_divergences": x.get("financial_divergences"),
+                "structural_divergences": x.get("structural_divergences"),
+                "semantic_divergences": x.get("semantic_divergences"),
+                "error": x.get("error"),
             }
             for x in items if x.get("status") != "VALIDADO_SAFE"
         ]

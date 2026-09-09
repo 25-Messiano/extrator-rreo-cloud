@@ -70,5 +70,20 @@
   "rreo_safe_registry_enabled": true,
   "rreo_safe_registry_sync_every": 5,
   "rreo_safe_registry_cloud_required": false,
-  "rreo_safe_registry_auto_activate_alias": false
+  "rreo_safe_registry_auto_activate_alias": false,
+  "json_pipeline_enabled": true,
+  "json_identity_enabled": true,
+  "json_extraction_enabled": true,
+  "json_validation_enabled": true,
+  "json_destination_enabled": true,
+  "identificacao_fonte_principal": "HARMONIZACAO_NOMINAL",
+  "identificacao_usar_nome_externo": true,
+  "identificacao_usar_nome_interno": true,
+  "identificacao_usar_ente_planilha": true,
+  "identificacao_restringir_por_uf": true,
+  "identificacao_ibge_somente_confirmacao": true,
+  "openai_revisor_opcional": true,
+  "ia_pode_gravar_excel": false,
+  "extrator_pdf_pode_gravar_excel": false,
+  "destino_json_obrigatorio": true
 }

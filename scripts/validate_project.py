@@ -50,7 +50,7 @@ if sistema.get("backup_drive") is True:
     raise SystemExit("backup_drive deve permanecer false.")
 
 painel = (ROOT / "pages" / "1_Painel.py").read_text(encoding="utf-8")
-if 'CHECKPOINT_SCHEMA_VERSION = "PLANILHA_SEQUENCIA_V2"' not in painel:
+if 'CHECKPOINT_SCHEMA_VERSION = "PLANILHA_SEQUENCIA_V3_RREO_SAFE_STRUCTURAL"' not in painel:
     raise SystemExit("Versão de esquema dos checkpoints não está protegida.")
 
 print(f"OK: planilha oficial contém a aba {ABA!r}.")

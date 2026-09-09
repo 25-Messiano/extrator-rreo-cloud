@@ -1,0 +1,9 @@
+V1.3.8 JSON PIPELINE + TOLERANT IDENTITY
+- harmonizacao nominal externa/interna/ente/UF
+- IBGE somente apos identificacao
+- 15 modulos exclusivos RREO
+- PREVISAO (a) bloqueada
+- REALIZADA (b) autorizada
+- 4 JSONs: identidade/extracao/validacao/destino
+- destino por cabecalho real da planilha
+- Gemini/OpenAI consultivos, sem escrita Excel

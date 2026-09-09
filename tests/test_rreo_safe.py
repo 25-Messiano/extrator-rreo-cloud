@@ -135,3 +135,40 @@ def test_v137_apostrophe_and_hyphen_canonicalization():
     assert canonical_municipality_name("Olho d'Água do Borges") == canonical_municipality_name("OLHO-DÁGUA DO BORGES")
     assert canonical_municipality_name("Tanque d'Arca") == canonical_municipality_name("TANQUE DARCA")
     assert canonical_municipality_name("Alta Floresta d'Oeste") == canonical_municipality_name("ALTA FLORESTA DOESTE")
+
+
+def test_v1372_agua_branca_regression_1_4_and_structural_guards():
+    from modules.rreo import validate_structural_relations, validate_semantic_labels
+    pdf = ROOT / 'data' / 'referencias_rreo' / 'RREO_Municipal_2025_Agua_Branca-PB.pdf'
+    text = extract_text(pdf)
+    primary = extract_codes(text, CODES)
+    assert primary['1.4'] == 1458429.92
+    assert primary['2.1'] == 25889148.95
+    checked = verify_values(pdf, primary, CODES)
+    assert checked['ok'] is True
+    assert checked['structural_divergences'] == {}
+    assert checked['semantic_divergences'] == {}
+    assert validate_structural_relations(text, primary) == {}
+    assert validate_semantic_labels(text) == {}
+
+
+def test_v1372_structural_guard_blocks_same_wrong_value_in_two_readers():
+    from modules.rreo import validate_structural_relations
+    text = '''
+1- RECEITA DE IMPOSTOS 1.614.408,00 2.246.802,06
+1.1- Receita Resultante do IPTU 168.872,00 89.888,42
+1.2- Receita Resultante do ITBI 40.597,00 45.223,58
+1.3- Receita Resultante do ISS 429.954,00 653.260,14
+1.4- Receita Resultante do IRRF 974.985,00 1.458.429,92
+2- RECEITA DE TRANSFERENCIAS 24.143.040,00 30.087.736,26
+2.1- Cota-Parte FPM 20.700.000,00 25.889.148,95
+2.1.1- Parcela CF b 19.200.000,00 22.898.228,45
+2.1.2- Parcela CF d e 1.500.000,00 2.990.920,50
+'''
+    wrong = {
+        '1.1': 89888.42, '1.2': 45223.58, '1.3': 653260.14,
+        '1.4': 30087736.26, '2.1': 25889148.95,
+        '2.1.1': 22898228.45, '2.1.2': 2990920.50,
+    }
+    problems = validate_structural_relations(text, wrong)
+    assert 'TOTAL_1' in problems

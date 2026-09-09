@@ -13,6 +13,7 @@ from modules.rreo_safe import (
     compare_values, extract_codes_geometry, sha256_file,
     extract_municipality_header_candidates, resolve_municipality_candidate,
 )
+from modules.rreo_fields.registry import extract_many as extract_exclusive_fields
 
 DEFAULT_CODES = [
     "1.1", "1.2", "1.3", "1.4", "2.1", "2.1.1", "2.1.2", "2.2",
@@ -48,11 +49,98 @@ def _line_block(text: str, code: str, max_chars: int = 900) -> str:
 
 
 def extract_codes(text: str, codes: Iterable[str] | None = None) -> dict[str, float | None]:
-    result: dict[str, float | None] = {}
-    for code in validar_codigos_rreo(codes or DEFAULT_CODES):
-        values = MONEY_PATTERN.findall(_line_block(text, code))
-        result[code] = _br_to_float(values[1]) if len(values) >= 2 else None
+    """V1.3.7.3: cada codigo e extraido por seu proprio modulo exclusivo.
+
+    Codigo de LINHA e papel de COLUNA sao tipos diferentes; a coluna (a) e
+    registrada como proibida e somente RECEITAS REALIZADAS (b) e retornada.
+    """
+    selected = validar_codigos_rreo(codes or DEFAULT_CODES)
+    result, _evidence = extract_exclusive_fields(text, selected)
     return result
+
+
+
+
+def _extract_total_value(text: str, total_code: str) -> float | None:
+    """Extrai a coluna (b) de uma linha total inteira, ex.: ``1- RECEITA DE IMPOSTOS``.
+
+    Esta leitura existe apenas como prova estrutural independente dos 15 campos.
+    Ela nao substitui nenhum valor individual; serve para bloquear aprovacao quando
+    a soma dos filhos nao fecha com o total oficial do proprio PDF.
+    """
+    match = re.search(rf"(?m)^\s*{re.escape(total_code)}\s*[-–—]", text)
+    if not match:
+        return None
+    limit = min(len(text), match.start() + 1200)
+    next_match = re.search(r"(?m)^\s*\d+(?:\.\d+)+\s*[-–—]", text[match.end():limit])
+    end = match.end() + next_match.start() if next_match else limit
+    block = text[match.start():end]
+    values = MONEY_PATTERN.findall(block)
+    return _br_to_float(values[1]) if len(values) >= 2 else None
+
+
+def validate_structural_relations(
+    text: str,
+    values: dict[str, float | None],
+    tolerance: float = 0.02,
+) -> dict[str, dict[str, float | None]]:
+    """Valida identidades contabeis que pegam deslocamento de linha.
+
+    Regras fail-closed:
+    - 1.1 + 1.2 + 1.3 + 1.4 deve fechar com 1- RECEITA DE IMPOSTOS;
+    - 2.1.1 + 2.1.2 deve fechar com 2.1- Cota-Parte FPM.
+
+    So cria divergencia quando todos os valores necessarios existem no PDF.
+    """
+    divergences: dict[str, dict[str, float | None]] = {}
+
+    total_1 = _extract_total_value(text, "1")
+    filhos_1 = [values.get(c) for c in ("1.1", "1.2", "1.3", "1.4")]
+    if total_1 is not None and all(v is not None for v in filhos_1):
+        soma_1 = round(sum(float(v) for v in filhos_1 if v is not None), 2)
+        if abs(soma_1 - float(total_1)) > tolerance:
+            divergences["TOTAL_1"] = {
+                "total_pdf": round(float(total_1), 2),
+                "soma_1_1_a_1_4": soma_1,
+            }
+
+    v21 = values.get("2.1")
+    v211 = values.get("2.1.1")
+    v212 = values.get("2.1.2")
+    if v21 is not None and v211 is not None and v212 is not None:
+        soma_21 = round(float(v211) + float(v212), 2)
+        if abs(soma_21 - float(v21)) > tolerance:
+            divergences["TOTAL_2.1"] = {
+                "2.1_pdf": round(float(v21), 2),
+                "soma_2.1.1_2.1.2": soma_21,
+            }
+
+    return divergences
+
+
+def validate_semantic_labels(text: str) -> dict[str, str]:
+    """Confirma que codigos sensiveis continuam ligados ao rotulo correto."""
+    expected = {
+        "1.1": ("IPTU", "PROPRIEDADE PREDIAL"),
+        "1.2": ("ITBI", "TRANSMISSAO INTER VIVOS"),
+        "1.3": ("ISS", "SERVICOS DE QUALQUER NATUREZA"),
+        "1.4": ("IRRF", "RENDA RETIDO"),
+        "2.1": ("FPM",),
+        "2.2": ("ICMS",),
+        "2.3": ("IPI",),
+        "2.4": ("ITR",),
+        "2.5": ("IPVA",),
+        "2.6": ("IOF",),
+    }
+    problems: dict[str, str] = {}
+    for code, keywords in expected.items():
+        block = _line_block(text, code, max_chars=1000)
+        if not block:
+            continue
+        normalized = normalizar_texto(block)
+        if not any(normalizar_texto(k) in normalized for k in keywords):
+            problems[code] = f"Rotulo da linha {code} nao confirmou {keywords}"
+    return problems
 
 
 def identify_internal_municipality(
@@ -153,6 +241,14 @@ def verify_values(
     divergences = dict(compared["divergences"])
     verification_text = ""
 
+    # V1.3.7.2: uma concordancia entre dois leitores nao basta se ambos
+    # puderem ter escorregado para a mesma linha. As relacoes estruturais e
+    # os rotulos do proprio PDF funcionam como terceira prova independente.
+    structural_divergences = validate_structural_relations(
+        extract_text(pdf_path), expected, tolerance=max(tolerance, 0.02)
+    )
+    semantic_divergences = validate_semantic_labels(extract_text(pdf_path))
+
     if divergences:
         verification_text = extract_text_verification(pdf_path)
         try:
@@ -180,13 +276,16 @@ def verify_values(
                 divergences.pop(code, None)
 
     return {
-        "ok": not divergences,
+        "ok": not divergences and not structural_divergences and not semantic_divergences,
         "confirmed": confirmed,
         "divergences": divergences,
-        "method": "PDFPLUMBER_TEXT + PYMUPDF_GEOMETRY_COLUNA_B + GEMINI_ARBITRO_SOMENTE_DIVERGENCIAS",
+        "structural_divergences": structural_divergences,
+        "semantic_divergences": semantic_divergences,
+        "method": "PDFPLUMBER_TEXT + PYMUPDF_GEOMETRY_COLUNA_B + RELACOES_ESTRUTURAIS + ROTULO_SEMANTICO + GEMINI_ARBITRO_SOMENTE_DIVERGENCIAS",
         "verification_text": verification_text,
         "secondary_values": secondary,
         "pdf_sha256": sha256_file(pdf_path),
-        "column_semantic": True,
+        "column_semantic": not semantic_divergences,
+        "structural_ok": not structural_divergences,
     }
 

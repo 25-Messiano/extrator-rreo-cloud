@@ -134,7 +134,7 @@ PROGRAMAS_FNDE_ATIVOS = [
 LOT_SETTINGS = BatchSettings.from_mapping(SISTEMA_CONFIG)
 configure_max_concurrency(LOT_SETTINGS.gemini_concurrency)
 SALVAR_CHECKPOINT_CLOUD = bool(SISTEMA_CONFIG.get("salvar_checkpoint_cloud", True))
-CHECKPOINT_SCHEMA_VERSION = "PLANILHA_SEQUENCIA_V2"
+CHECKPOINT_SCHEMA_VERSION = "PLANILHA_SEQUENCIA_V3_RREO_SAFE_STRUCTURAL"
 
 
 PLANILHA_BASE = (
@@ -702,6 +702,8 @@ def _rreo_worker_payload(payload: dict[str, Any], temp_root: Path) -> dict[str, 
             "ok": True, "confirmed": values, "divergences": {}, "method": "DESATIVADA"
         }
         divergencias = verificacao.get("divergences", {})
+        divergencias_estruturais = verificacao.get("structural_divergences", {})
+        divergencias_semanticas = verificacao.get("semantic_divergences", {})
         nome_interno = municipio_interno.get("nome", "") if municipio_interno else ""
         identidade = identity_guard(
             payload["municipio"]["nome"],
@@ -713,6 +715,10 @@ def _rreo_worker_payload(payload: dict[str, Any], temp_root: Path) -> dict[str, 
             erro_partes.append("RREO com divergência entre leitores independentes: " + "; ".join(
                 f"{codigo}={dados}" for codigo, dados in divergencias.items()
             ))
+        if divergencias_estruturais:
+            erro_partes.append("RREO bloqueado por inconsistência estrutural: " + str(divergencias_estruturais))
+        if divergencias_semanticas:
+            erro_partes.append("RREO bloqueado por rótulo semântico incompatível: " + str(divergencias_semanticas))
         if SISTEMA_CONFIG.get("rreo_safe_bloquear_divergencia_municipio", True) and not identidade["ok"]:
             erro_partes.append("RREO bloqueado por identidade: " + str(identidade.get("message") or identidade.get("status")))
         erro = " | ".join(erro_partes)
@@ -735,6 +741,8 @@ def _rreo_worker_payload(payload: dict[str, Any], temp_root: Path) -> dict[str, 
             "verification_ok": safe_ok,
             "verification_method": verificacao.get("method", ""),
             "verification_divergences": divergencias,
+            "structural_divergences": divergencias_estruturais,
+            "semantic_divergences": divergencias_semanticas,
             "secondary_values": verificacao.get("secondary_values", {}),
             "pdf_sha256": verificacao.get("pdf_sha256", ""),
             "safe_confidence": score,
