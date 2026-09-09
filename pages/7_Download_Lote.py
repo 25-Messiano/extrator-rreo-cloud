@@ -105,4 +105,4 @@ if package:
     st.link_button(f"⬇ Baixar {package['filename']}",package["url"],type="primary",width="stretch")
     st.caption("O link é temporário por segurança. Se expirar, basta preparar o ZIP novamente.")
 
-st.markdown('<div class="footerbar">📦 PDFs + Planilhas processadas &nbsp;•&nbsp; Estado ou Brasil inteiro &nbsp;•&nbsp; Originais preservados &nbsp;•&nbsp; v1.3.7 RREO SAFE</div>',unsafe_allow_html=True)
+st.markdown('<div class="footerbar">📦 PDFs + Planilhas processadas &nbsp;•&nbsp; Estado ou Brasil inteiro &nbsp;•&nbsp; Originais preservados &nbsp;•&nbsp; v1.3.7.1 RREO SAFE REGISTRY</div>',unsafe_allow_html=True)

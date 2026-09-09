@@ -66,5 +66,9 @@
   "rreo_safe_exigir_pos_xlsx": true,
   "rreo_safe_hash_sha256": true,
   "rreo_safe_confidence_min": 95,
-  "rreo_ocr_fallback": false
+  "rreo_ocr_fallback": false,
+  "rreo_safe_registry_enabled": true,
+  "rreo_safe_registry_sync_every": 5,
+  "rreo_safe_registry_cloud_required": false,
+  "rreo_safe_registry_auto_activate_alias": false
 }

@@ -1,3 +1,12 @@
+# v1.3.7.1 — RREO SAFE REGISTRY
+
+- Registro Mestre JSON cumulativo e persistente no Cloud.
+- Atualização atômica por município; sync a cada 5, ao fim da UF e da rodada.
+- Histórico consolidado das auditorias reais já executadas.
+- Alias controlado novo: PRESIDENTE CASTELLO BRANCO/SC -> Presidente Castelo Branco.
+- Nenhum alias novo é autoativado por aprendizado; propostas ficam para revisão.
+- Cobertura estadual incompleta é registrada como CONCLUIDO_INCOMPLETO.
+
 # v1.3.7 — RREO SAFE IDENTITY HARDENING
 
 Versao de endurecimento de identidade criada a partir das rodadas reais estaduais.

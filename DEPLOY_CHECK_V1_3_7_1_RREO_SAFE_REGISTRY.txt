@@ -1,0 +1,11 @@
+EXTRATOR RREO CLOUD v1.3.7.1 - RREO SAFE REGISTRY
+
+CHECKS DE DEPLOY
+- Interface mostra v1.3.7.1 RREO SAFE REGISTRY.
+- core/rreo_safe_registry.py presente.
+- data/rreo_safe_registry/REGISTRO_MESTRE_RREO_SAFE.json presente.
+- Registro Cloud: 01_Arquivo_dos_Estados_RREO_e_FNDE/04_AUDITORIA_RREO_SAFE/REGISTRO_MESTRE_RREO_SAFE.json
+- Sync local por município e Cloud a cada 5 municípios.
+- Sync obrigatório ao concluir UF e rodada.
+- Alias automático permanece DESATIVADO; novas propostas exigem revisão.
+- Alias SC Castelo/Castello incluído na tabela controlada.

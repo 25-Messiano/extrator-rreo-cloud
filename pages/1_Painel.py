@@ -63,6 +63,12 @@ from core.config_manager import load_json
 from core.database import Database
 from core.auditoria import timestamp, write_audit, write_missing
 from core.auditoria_rreo import append_rreo_log
+from core.rreo_safe_registry import (
+    begin_state_run as registry_begin_state_run,
+    record_municipality as registry_record_municipality,
+    finish_state_run as registry_finish_state_run,
+    finish_job as registry_finish_job,
+)
 from core.auditoria_fnde import append_fnde_log
 from core.indice_rreo import build_rreo_index, localizar_por_municipio
 from core.indice_fnde import build_fnde_index
@@ -1975,6 +1981,25 @@ if executar:
         checkpoint_state_folder = f"CHECKPOINTS/{job_id}"
         operacao_registro = f"{tipo_rodada.value} | {operacao}"
 
+        # RREO SAFE Registry: abre um registro persistente por UF antes do primeiro município.
+        # A cobertura estadual (oficiais x PDFs encontrados) passa a fazer parte da prova da rodada.
+        if PROCESSAR_RREO:
+            for trabalho_reg in trabalhos:
+                uf_reg = str(trabalho_reg.get("uf") or "").upper()
+                expected_reg = [m.get("nome", "") for m in trabalho_reg.get("municipios", [])]
+                found_reg = [
+                    extrair_nome_arquivo(item["arquivo_rreo"]["name"])
+                    for item in fila
+                    if item.get("uf") == uf_reg and item.get("arquivo_rreo")
+                ]
+                try:
+                    registry_begin_state_run(
+                        job_id=job_id, uf=uf_reg, year=ano, bimestre=bimestre_rreo,
+                        operation=operacao_registro, expected_names=expected_reg, found_names=found_reg,
+                    )
+                except Exception as registry_error:
+                    logs.append(f"Registro Mestre RREO SAFE não iniciou para {uf_reg}: {registry_error}")
+
         # Retomada nacional: cada UF concluída é reidratada do JSON persistido
         # antes de montar a fila pendente. Isso permite reiniciar o Render sem
         # depender de um Excel parcial no Cloud.
@@ -2282,6 +2307,21 @@ if executar:
                         "Divergências pós-gravação": str(rreo_data.get("post_write_divergences", {})) if rreo_data else "",
                     })
 
+                # Registro Mestre RREO SAFE: grava cada município de forma atômica e
+                # sincroniza com o Cloud periodicamente. Falha no registro nunca libera
+                # dado bloqueado nem altera a decisão SAFE da extração.
+                if PROCESSAR_RREO and arquivo_rreo:
+                    try:
+                        registry_record_municipality(
+                            job_id=job_id, uf=uf_item, codigo_ibge=codigo_ibge,
+                            municipio=municipio_encontrado["nome"],
+                            arquivo_pdf=arquivo_rreo.get("name", ""),
+                            rreo_data=rreo_data or {}, values=rreo_values or {},
+                            error="; ".join(erros_municipio),
+                        )
+                    except Exception as registry_error:
+                        monitor.event("WARNING", f"Registro Mestre RREO SAFE: {registry_error}")
+
                 if GERAR_LOG_FNDE and PROCESSAR_FNDE:
                     found_fnde = [k for k, v in fnde_values.items() if float(v or 0.0) != 0.0]
                     missing_fnde = [k for k in PROGRAMAS_FNDE_ATIVOS if k not in found_fnde]
@@ -2492,6 +2532,10 @@ if executar:
                     "total": total,
                 })
                 estados_restaurados_json.add(uf_lote)
+                try:
+                    registry_finish_state_run(job_id=job_id, uf=uf_lote, status="CONCLUIDO")
+                except Exception as registry_error:
+                    monitor.event("WARNING", f"Registro Mestre RREO SAFE ({uf_lote}): {registry_error}")
                 monitor.event("OK", f"{uf_lote} concluído; JSON persistido. Próximo estado liberado.")
 
                 # Registra pendências/erros deste estado antes de liberar os
@@ -2664,6 +2708,15 @@ if executar:
         except Exception as log_export_error:
             logs.append(f"Log de atividade não pôde ser exportado: {log_export_error}")
 
+        if PROCESSAR_RREO:
+            try:
+                if not execucao_multi_estado:
+                    for uf_reg in sorted({item.get("uf") for item in fila if item.get("uf")}):
+                        registry_finish_state_run(job_id=job_id, uf=uf_reg, status="CONCLUIDO")
+                registry_finish_job(job_id=job_id, status="CONCLUIDO", message="Execução finalizada e registro sincronizado.")
+            except Exception as registry_error:
+                logs.append(f"Registro Mestre RREO SAFE final não sincronizou: {registry_error}")
+
         activity_db.upsert_job(
             job_id=job_id, ano=ano, escopo=uf_saida, operacao=operacao_registro,
             status="CONCLUIDO", total=total, concluidos=len(processed_ibge),
@@ -2713,6 +2766,11 @@ if executar:
                     erros=state.get("errors", 0), lote_atual=locals().get("numero_lote", 0),
                     master_blob=resultado_blob, mensagem=str(error),
                 )
+        except Exception:
+            pass
+        try:
+            if PROCESSAR_RREO and "job_id" in locals():
+                registry_finish_job(job_id=job_id, status="FALHA", message=str(error))
         except Exception:
             pass
         st.exception(error)
