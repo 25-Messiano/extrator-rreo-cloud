@@ -1,0 +1,3 @@
+{"id":"baseline_ok","status":"OK","verification_ok":true,"expect":"OBSERVADO_OK"}
+{"id":"falha_sem_evidencia","status":"ERRO","verification_ok":false,"expect":"PENDENTE_CONFERENCIA"}
+{"id":"divergencia","status":"PARCIAL","verification_ok":false,"expect":"PENDENTE_CONFERENCIA"}

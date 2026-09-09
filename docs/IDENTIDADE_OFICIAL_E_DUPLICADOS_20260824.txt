@@ -1,0 +1,40 @@
+IDENTIDADE OFICIAL E DUPLICADOS - 24/08/2026
+
+REGRA CENTRAL
+A planilha-base e a autoridade para a identidade municipal.
+- Nome oficial: vem da planilha-base.
+- Codigo IBGE oficial: vem da planilha-base.
+- UF oficial: vem da planilha-base.
+- O PDF/filename nunca pode alterar esses tres campos.
+
+LOCALIZACAO DE PDF
+1. O app tenta associar o arquivo ao cadastro oficial do estado.
+2. Nome oficial normalizado pode localizar o PDF mesmo com IBGE digitado errado no filename.
+3. IBGE correto continua sendo usado como pista forte quando coerente.
+4. Pequenas diferencas de acento/grafia podem usar similaridade, desde que nao exista ambiguidade real.
+5. A pasta estadual no Cloud vale como evidencia de UF antes de um IBGE possivelmente errado no nome do arquivo.
+
+EXEMPLO SATUBA/AL
+Base oficial: 2708907 | Satuba | AL
+Arquivo Cloud: FNDE_2025_22708907_Satuba - AL.pdf
+Resultado: processar como 2708907 | Satuba | AL e registrar IBGE_ARQUIVO_DIVERGENTE=22708907.
+O codigo errado do arquivo nao e copiado para a planilha.
+
+DUPLICADOS
+- Um municipio gera no maximo um arquivo por fonte na fila de processamento.
+- Mesmo hash MD5: DUPLICADO_IDENTICO; copia ignorada na fila.
+- Hash/conteudo diferente: DUPLICADO_CONFLITANTE; um candidato e escolhido por confianca da associacao e, em empate, pelo upload mais recente.
+- Os demais arquivos ficam registrados no log.
+- Esta rotina NAO apaga arquivos fisicamente do Cloud para evitar perda acidental.
+
+AUDITORIA
+LOG_FNDE e LOG_RREO registram:
+- codigo IBGE oficial (ja existente);
+- codigo encontrado no filename;
+- se o codigo do arquivo diverge da base;
+- metodo e confianca de identificacao;
+- duplicados ignorados;
+- indicacao de duplicado conflitante.
+
+SEGURANCA
+A regra de identificacao e tolerante para nao perder municipios. A validacao dos valores extraidos continua rigorosa e independente, conforme VALIDACAO_DUPLA_E_RECURSOS_ADAPTATIVOS_20260824.txt.

@@ -1,0 +1,31 @@
+RECUPERACAO AUTOMATICA DO EXTRATOR RREO CLOUD - v1.2.6
+
+O aplicativo observa os arquivos do projeto e calcula um fingerprint SHA256.
+Na inicializacao/deploy e depois em intervalos regulares (padrao: 120 segundos),
+se o fingerprint estiver diferente do ultimo salvo no Cloud Storage, o app gera:
+
+1) RECUPERACAO_APP.txt
+   - data/hora UTC
+   - fingerprint do projeto
+   - commit/servico Render quando disponivel
+   - lista detalhada de arquivos, tamanhos e SHA256
+   - instrucoes de recuperacao
+
+2) RECUPERACAO_APP.py
+   - script Python autossuficiente
+   - contem snapshot ZIP compactado em Base64
+   - ao executar, reconstrui os arquivos do projeto
+
+Destino no bucket:
+99_BACKUP_RECUPERACAO_APP/HISTORICO/<data_hash>/RECUPERACAO_APP.txt
+99_BACKUP_RECUPERACAO_APP/HISTORICO/<data_hash>/RECUPERACAO_APP.py
+99_BACKUP_RECUPERACAO_APP/ULTIMO/RECUPERACAO_APP.txt
+99_BACKUP_RECUPERACAO_APP/ULTIMO/RECUPERACAO_APP.py
+
+O app nao inclui credenciais, .env, secrets.toml, caches, logs temporarios
+nem bancos locais de usuarios/runtime. Esses itens devem continuar protegidos
+nas variaveis de ambiente/servicos do Render.
+
+Variaveis opcionais:
+APP_RECOVERY_PREFIX=99_BACKUP_RECUPERACAO_APP/
+APP_RECOVERY_WATCH_SECONDS=120

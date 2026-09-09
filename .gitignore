@@ -1,5 +1,0 @@
-.github/workflows/homologacao-maestro.yml
-.github/workflows/homologacao-maestro.yml
-app.py
-auth/__init__.py
-auth/database.py
