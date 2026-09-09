@@ -111,11 +111,24 @@ def identify_municipality(
     similarity_min: float = 0.82,
     ambiguity_margin: float = 0.03,
 ) -> dict[str, Any]:
+    """Identifica municipio com prioridade para nome externo exato e unico.
+
+    Regra V1.3.9:
+    - universo sempre limitado a UF;
+    - nome externo exato e unico em D e suficiente para identificar;
+    - nome interno confirma/audita, mas nao derruba match externo exato por abreviacao;
+    - se o nome interno apontar fortemente para OUTRO municipio, bloqueia conflito;
+    - IBGE so e lido da planilha depois da harmonizacao nominal.
+    """
     uf = str(uf or "").upper().strip()
     external = external_name_from_filename(filename, uf)
     internal_candidates = extract_municipality_header_candidates(internal_text, uf)
     internal = internal_candidates[0] if internal_candidates else ""
     candidates = worksheet_candidates(ws, uf)
+
+    external_norm = normalize_name(external)
+    exact_external = [c for c in candidates if normalize_name(c.municipio) == external_norm]
+
     ranked: list[dict[str, Any]] = []
     for c in candidates:
         score, s_ext, s_int = _score_candidate(external, internal, c, uf)
@@ -130,6 +143,41 @@ def identify_municipality(
             "score_interno": s_int,
         })
     ranked.sort(key=lambda x: (-x["score"], -x["score_externo"], -x["score_interno"], x["row"]))
+
+    # Match externo exato e unico: autoridade primaria.
+    if len(exact_external) == 1:
+        c = exact_external[0]
+        best = next(x for x in ranked if x["row"] == c.row)
+        internal_conflict = None
+        if internal:
+            internal_rank = sorted(ranked, key=lambda x: (-x["score_interno"], x["row"]))
+            top_internal = internal_rank[0] if internal_rank else None
+            if (
+                top_internal
+                and top_internal["row"] != c.row
+                and top_internal["score_interno"] >= 0.94
+                and best["score_interno"] < 0.82
+            ):
+                internal_conflict = top_internal
+        status = "CONFLITO_IDENTIDADE" if internal_conflict else "EXATO_EXTERNO"
+        return {
+            "tipo": "IDENTIDADE_MUNICIPIO",
+            "uf": uf,
+            "nome_externo": external,
+            "nome_externo_normalizado": external_norm,
+            "nome_interno": internal,
+            "nome_interno_normalizado": normalize_name(internal),
+            "candidatos_internos": internal_candidates,
+            "status": status,
+            "identificado": status == "EXATO_EXTERNO",
+            "melhor_candidato": best,
+            "segundo_candidato": internal_conflict,
+            "top5": ranked[:5],
+            "regra": "EXTERNO_EXATO_UNICO+UF; INTERNO=AUDITORIA; IBGE SOMENTE APOS HARMONIZACAO",
+            "limiar_similaridade": similarity_min,
+            "margem_ambiguidade": ambiguity_margin,
+        }
+
     best = ranked[0] if ranked else None
     second = ranked[1] if len(ranked) > 1 else None
     if not best:
@@ -139,10 +187,9 @@ def identify_municipality(
     elif second and (best["score"] - second["score"]) < ambiguity_margin:
         status = "AMBIGUO"
     else:
-        exact_ext = normalize_name(external) == normalize_name(best["municipio_planilha"])
         exact_int = bool(internal) and normalize_name(internal) == normalize_name(best["municipio_planilha"])
-        if exact_ext or exact_int:
-            status = "EXATO"
+        if exact_int:
+            status = "EXATO_INTERNO"
         elif best["score"] >= 0.94:
             status = "ALTA_CONFIANCA"
         else:
@@ -156,7 +203,7 @@ def identify_municipality(
         "nome_interno_normalizado": normalize_name(internal),
         "candidatos_internos": internal_candidates,
         "status": status,
-        "identificado": status in {"EXATO", "ALTA_CONFIANCA", "TOLERANCIA_VALIDADA"},
+        "identificado": status in {"EXATO_INTERNO", "ALTA_CONFIANCA", "TOLERANCIA_VALIDADA"},
         "melhor_candidato": best,
         "segundo_candidato": second,
         "top5": ranked[:5],

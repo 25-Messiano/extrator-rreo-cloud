@@ -1,0 +1,35 @@
+{
+  "versao": "1.3.9",
+  "nome": "SAFE INTEGRATED MAPPING",
+  "fail_closed": true,
+  "camadas": [
+    "estrutura_abcd",
+    "identidade_tolerante",
+    "json_identidade",
+    "extracao_campos_exclusivos",
+    "bloqueio_coluna_a",
+    "autorizacao_coluna_b",
+    "json_extracao",
+    "validacao_safe",
+    "json_validado",
+    "mapeamento_cabecalho_real",
+    "json_destino",
+    "implantacao_excel",
+    "json_implantacao"
+  ],
+  "autoridades": {
+    "municipio": "nome externo + nome interno + ente federado + UF",
+    "ibge": "confirmacao apos harmonizacao nominal",
+    "valor": "py exclusivo do codigo + coluna b",
+    "celula": "linha da identidade validada por A-D + coluna resolvida no cabecalho real"
+  },
+  "proibicoes": [
+    "extrator_escrever_excel",
+    "destino_ler_pdf",
+    "usar_coluna_a_como_valor",
+    "inventar_destino_para_2.1",
+    "inventar_destino_para_6.2",
+    "gravar_com_identidade_ambigua",
+    "gravar_com_cabecalho_divergente"
+  ]
+}

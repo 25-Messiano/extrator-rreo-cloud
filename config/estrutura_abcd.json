@@ -1,0 +1,45 @@
+{
+  "versao": "V1.3.8.1",
+  "tipo": "RREO_ESTRUTURA_ABCD",
+  "planilha_padrao": {
+    "cabecalho_linha": 1,
+    "linha_metadados": 2,
+    "primeira_linha_dados": 3
+  },
+  "colunas": {
+    "A": {
+      "nome": "Nº",
+      "papel": "SEQUENCIAL_GERAL",
+      "obrigatoria": true,
+      "gravacao_financeira": false,
+      "regra": "sequencial inteiro crescente das linhas cadastrais; não é código de município"
+    },
+    "B": {
+      "nome": "Qut. Municípios",
+      "papel": "SEQUENCIAL_MUNICIPIO_UF",
+      "obrigatoria": true,
+      "gravacao_financeira": false,
+      "regra": "sequencial de municípios dentro da UF; reinicia após cada cabeçalho estadual"
+    },
+    "C": {
+      "nome": "Código IBGE",
+      "papel": "IDENTIFICADOR_OFICIAL",
+      "obrigatoria": true,
+      "gravacao_financeira": false,
+      "regra": "municípios devem ter 7 dígitos; cabeçalhos estaduais podem ter 2 dígitos; Brasil pode ter valor próprio"
+    },
+    "D": {
+      "nome": "Ente Federado",
+      "papel": "NOME_OFICIAL_UF",
+      "obrigatoria": true,
+      "gravacao_financeira": false,
+      "regra": "nome oficial do ente e UF; base de harmonização nominal com nomes externo e interno do PDF"
+    }
+  },
+  "politica": {
+    "bloquear_implantacao_se_abcd_invalido": true,
+    "usar_ibge_como_confirmacao_pos_identificacao": true,
+    "usar_ente_federado_como_referencia_nominal": true,
+    "nunca_usar_colunas_abcd_para_valores_rreo": true
+  }
+}
