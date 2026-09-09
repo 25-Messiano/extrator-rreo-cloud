@@ -1,17 +1,13 @@
-# v1.3.6 — RREO SAFE
+# v1.3.7 — RREO SAFE IDENTITY HARDENING
 
-Versão de segurança do motor RREO textual.
+Versao de endurecimento de identidade criada a partir das rodadas reais estaduais.
 
-- Segundo leitor realmente independente: PyMuPDF por geometria.
-- Âncora semântica na coluna `Bimestre (b)`; não depende apenas de "segundo número".
-- Bloqueio de município externo x conteúdo divergente.
-- SHA-256 do PDF e fingerprint do resultado.
-- Transação por município com rollback.
-- Conferência imediata PDF -> célula.
-- Reabertura do XLSX após salvar e conferência antes de upload ao Cloud.
-- Upload oficial bloqueado quando a persistência não confere.
-- LOG_RREO ampliado com evidências SAFE.
-- IA somente como árbitro de divergências.
-- OCR não participa do fluxo normal RREO.
+Principais mudancas:
+- elimina correspondencia municipal por substring;
+- extrai identidade de cabecalho explicito com UF;
+- canonicaliza contracoes como d'Oeste/DOESTE;
+- inclui aliases controlados de variantes e nomes historicos comprovados;
+- mantem comportamento fail-closed para desconhecidos/ambiguos;
+- preserva dupla leitura financeira independente e travas pos-gravacao da v1.3.6.
 
-Base: v1.3.5.2. As rotinas FNDE, Central de Correções, Download em Lote e MAESTRO IA permanecem preservadas.
+Veja `docs/RREO_SAFE_V137.md`.

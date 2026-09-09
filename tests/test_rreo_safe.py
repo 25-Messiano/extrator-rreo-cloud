@@ -66,3 +66,72 @@ def test_post_write_and_post_xlsx_guard(tmp_path):
     persisted = verificar_resultados_em_arquivo(out, [{'row':1613,'ibge':'3102852','values':values}])
     assert persisted['ok'] is True
     assert persisted['total'] == 3
+
+
+def _cities(uf, *names):
+    return [
+        {"codigo_ibge": f"{i+1:07d}", "nome": name, "uf": uf}
+        for i, name in enumerate(names)
+    ]
+
+
+def test_v137_header_identity_never_uses_short_substring():
+    cities = _cities("SC", "Itá", "Itajaí", "Ituporanga")
+    city, conf, method, _, _ = identify_internal_municipality(
+        "RELATORIO RREO\nITAJAI - SC\nRECEITAS REALIZADAS", cities, "SC", False
+    )
+    assert city and city["nome"] == "Itajaí"
+    assert conf == 1.0
+    assert method == "CABECALHO_EXATO_OU_ALIAS_CONTROLADO"
+
+
+def test_v137_d_oeste_contraction_is_exact_but_not_shorter_city():
+    cities = _cities("PR", "Tapejara", "Itapejara d'Oeste", "Pérola", "Pérola d'Oeste")
+    city, *_ = identify_internal_municipality("ITAPEJARA DOESTE - PR\nPREVISAO", cities, "PR", False)
+    assert city and city["nome"] == "Itapejara d'Oeste"
+    city, *_ = identify_internal_municipality("PEROLA DOESTE - PR\nPREVISAO", cities, "PR", False)
+    assert city and city["nome"] == "Pérola d'Oeste"
+
+
+def test_v137_controlled_historical_aliases_rn():
+    cities = _cities("RN", "Boa Saúde", "Campo Grande", "Arez", "Assú")
+    cases = {
+        "JANUARIO CICCO - RN": "Boa Saúde",
+        "AUGUSTO SEVERO - RN": "Campo Grande",
+        "ARES - RN": "Arez",
+        "ACU - RN": "Assú",
+    }
+    for header, expected in cases.items():
+        city, conf, method, _, _ = identify_internal_municipality(header, cities, "RN", False)
+        assert city and city["nome"] == expected
+        assert conf == 1.0
+        assert method == "CABECALHO_EXATO_OU_ALIAS_CONTROLADO"
+
+
+def test_v137_unknown_similar_name_stays_blocked():
+    cities = _cities("SP", "Flores", "Floresta")
+    city, conf, method, _, _ = identify_internal_municipality("FLORESTINHA - SP", cities, "SP", False)
+    assert city is None
+    assert conf == 0.0
+    assert method == "MUNICIPIO_INTERNO_NAO_IDENTIFICADO"
+
+
+def test_v137_identity_guard_accepts_safe_contraction_only():
+    assert identity_guard("São Jorge d'Oeste", "SAO JORGE DOESTE")["ok"] is True
+    assert identity_guard("Itapejara d'Oeste", "Tapejara")["ok"] is False
+
+
+def test_v137_state_completeness_detects_missing_pdf():
+    from modules.rreo_safe import validate_state_completeness
+    result = validate_state_completeness(["Alpha", "Beta", "Gamma"], ["Alpha", "Gamma"])
+    assert result["ok"] is False
+    assert result["missing"] == ["Beta"]
+    assert result["expected"] == 3
+    assert result["found"] == 2
+
+
+def test_v137_apostrophe_and_hyphen_canonicalization():
+    from modules.rreo_safe import canonical_municipality_name
+    assert canonical_municipality_name("Olho d'Água do Borges") == canonical_municipality_name("OLHO-DÁGUA DO BORGES")
+    assert canonical_municipality_name("Tanque d'Arca") == canonical_municipality_name("TANQUE DARCA")
+    assert canonical_municipality_name("Alta Floresta d'Oeste") == canonical_municipality_name("ALTA FLORESTA DOESTE")

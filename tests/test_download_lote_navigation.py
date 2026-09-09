@@ -18,7 +18,7 @@ def test_download_lote_page_and_core_exist():
 
 def test_release_marker_is_visible_in_sidebar():
     theme = Path("ui/theme.py").read_text(encoding="utf-8")
-    assert "v1.3.6 RREO SAFE" in theme
+    assert "v1.3.7 RREO SAFE" in theme
 
 
 def test_download_lote_page_exposes_processed_spreadsheets():

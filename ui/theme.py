@@ -117,7 +117,7 @@ def render_sidebar(db: AuthDatabase | None = None) -> None:
             <div class="side-status"><span class="dot"></span>Cloud Storage conectado</div>
             <div class="side-status"><span class="dot"></span>SQLite ativo</div>
             <div class="side-status"><span class="dot"></span>Gemini configurado</div>
-            <div style="margin-top:34px;font-size:10px;color:#8391ae!important">VERSÃO</div><div style="font-size:12px;margin-top:5px">v1.3.6 RREO SAFE</div>
+            <div style="margin-top:34px;font-size:10px;color:#8391ae!important">VERSÃO</div><div style="font-size:12px;margin-top:5px">v1.3.7 RREO SAFE</div>
             """,
             unsafe_allow_html=True,
         )

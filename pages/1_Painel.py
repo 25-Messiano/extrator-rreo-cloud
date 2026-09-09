@@ -42,7 +42,7 @@ from integrations.google_storage import (
     round_blob_name,
 )
 from modules.rreo import process as processar_rreo, identify_internal_municipality, verify_values as verificar_rreo
-from modules.rreo_safe import identity_guard, confidence_score, result_fingerprint
+from modules.rreo_safe import identity_guard, confidence_score, result_fingerprint, validate_state_completeness
 from modules.fnde import process as processar_fnde, verify_values as verificar_fnde
 from modules.mapeamento_nova_planilha import (
     ABA_DESTINO,
@@ -1627,6 +1627,24 @@ with left:
     else:
         st.caption(f"Exibindo {min(100,len(preview))} de {len(lista_preview)} município(s) selecionado(s).")
     st.info(selection_note)
+    if PROCESSAR_RREO and not execucao_multi_estado and modo == "Estado inteiro":
+        cobertura_rreo = validate_state_completeness(
+            [m.get("nome", "") for m in municipios],
+            [extrair_nome_arquivo(a.get("name", "")) for a in arquivos_pdf],
+        )
+        if not cobertura_rreo.get("ok"):
+            faltantes = cobertura_rreo.get("missing", [])
+            extras = cobertura_rreo.get("extra", [])
+            detalhes = []
+            if faltantes:
+                detalhes.append("faltando: " + ", ".join(faltantes[:20]) + (" ..." if len(faltantes) > 20 else ""))
+            if extras:
+                detalhes.append("extras: " + ", ".join(extras[:20]) + (" ..." if len(extras) > 20 else ""))
+            st.warning(
+                f"RREO SAFE — lote estadual incompleto: {cobertura_rreo.get('found')} PDF(s) para "
+                f"{cobertura_rreo.get('expected')} município(s). O processamento pode continuar, mas o estado "
+                f"não deve ser considerado integralmente concluído. " + " | ".join(detalhes)
+            )
     st.markdown('</div>',unsafe_allow_html=True)
 
 with mid:

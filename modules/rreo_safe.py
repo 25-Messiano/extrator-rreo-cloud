@@ -4,6 +4,7 @@ import hashlib
 import json
 import math
 import re
+from functools import lru_cache
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable, Mapping
@@ -13,6 +14,106 @@ import fitz
 from core.validacao import normalizar_texto, validar_codigos_rreo
 
 MONEY_PATTERN = re.compile(r"(?<!\d)(?:\d{1,3}(?:\.\d{3})*|\d+),\d{2}(?!\d)")
+
+
+_ALIAS_PATH = Path(__file__).resolve().parents[1] / 'config' / 'rreo_municipality_aliases.json'
+
+
+def canonical_municipality_name(value: Any) -> str:
+    """Normalizacao municipal segura, preservando equivalencia de contracoes.
+
+    Exemplos equivalentes: d'Oeste/DOESTE, d'Agua/DAGUA, d'Arca/DARCA.
+    Nao faz fuzzy e nao remove palavras inteiras do nome.
+    """
+    raw = str(value or '').strip()
+    raw = re.sub(r"\b([Dd])['’`´]\s*([A-Za-zÀ-ÿ])", r"\1\2", raw)
+    return normalizar_texto(raw)
+
+
+@lru_cache(maxsize=1)
+def load_municipality_aliases() -> dict[tuple[str, str], str]:
+    aliases: dict[tuple[str, str], str] = {}
+    if not _ALIAS_PATH.exists():
+        return aliases
+    try:
+        payload = json.loads(_ALIAS_PATH.read_text(encoding='utf-8'))
+    except Exception:
+        return aliases
+    for item in payload.get('aliases', []):
+        uf = str(item.get('uf') or '').upper().strip()
+        alias = canonical_municipality_name(item.get('alias'))
+        official = canonical_municipality_name(item.get('official'))
+        if len(uf) == 2 and alias and official:
+            aliases[(uf, alias)] = official
+    return aliases
+
+
+def resolve_municipality_candidate(
+    raw_candidate: str,
+    municipios: Iterable[Mapping[str, Any]],
+    uf: str,
+) -> dict[str, Any] | None:
+    """Resolve somente por igualdade canonica ou alias explicitamente cadastrado."""
+    uf = str(uf or '').upper().strip()
+    key = canonical_municipality_name(raw_candidate)
+    if not key:
+        return None
+    by_key = {
+        canonical_municipality_name(city.get('nome')): city
+        for city in municipios
+        if str(city.get('uf') or uf).upper().strip() == uf
+    }
+    if key in by_key:
+        return dict(by_key[key])
+    official_key = load_municipality_aliases().get((uf, key))
+    if official_key and official_key in by_key:
+        return dict(by_key[official_key])
+    return None
+
+
+def extract_municipality_header_candidates(text: str, uf: str, *, max_lines: int = 140) -> list[str]:
+    """Extrai candidatos apenas de linhas que parecem cabecalho municipal.
+
+    Evita a antiga busca por substring em todo o texto, que confundia Itá com
+    palavras/municipios maiores e Tapejara com Itapejara d'Oeste.
+    """
+    uf = str(uf or '').upper().strip()
+    candidates: list[str] = []
+    for raw_line in (text or '').splitlines()[:max_lines]:
+        line = raw_line.strip()
+        if not line or len(line) > 150:
+            continue
+        # Formato dominante dos PDFs: MUNICIPIO - UF / MUNICIPIO / UF.
+        # Faz o parse antes de normalizar, pois normalizar_texto remove o hifen.
+        m = re.match(rf"^(.+?)\s*[-/]\s*{re.escape(uf)}\s*$", line, flags=re.IGNORECASE)
+        if m:
+            candidate = m.group(1).strip()
+            if 2 <= len(candidate) <= 100:
+                candidates.append(candidate)
+                continue
+        # Rotulos explicitos, sem procurar nomes soltos no restante do relatorio.
+        normalized = normalizar_texto(line)
+        m = re.match(r"^(?:MUNICIPIO|ENTE FEDERADO|PREFEITURA MUNICIPAL DE|PREFEITURA DE)\s*[:\-]?\s*(.+)$", normalized)
+        if m:
+            candidate = re.split(r"\s{2,}|EXERCICIO|PERIODO|CNPJ|RELATORIO|DEMONSTRATIVO", m.group(1))[0].strip()
+            if candidate:
+                candidates.append(candidate)
+    # ordem estavel, sem duplicatas
+    return list(dict.fromkeys(candidates))
+
+
+def validate_state_completeness(expected_names: Iterable[str], found_names: Iterable[str]) -> dict[str, Any]:
+    expected = {canonical_municipality_name(x): str(x) for x in expected_names if canonical_municipality_name(x)}
+    found = {canonical_municipality_name(x): str(x) for x in found_names if canonical_municipality_name(x)}
+    missing_keys = sorted(set(expected) - set(found))
+    extra_keys = sorted(set(found) - set(expected))
+    return {
+        'ok': not missing_keys and not extra_keys,
+        'expected': len(expected),
+        'found': len(found),
+        'missing': [expected[k] for k in missing_keys],
+        'extra': [found[k] for k in extra_keys],
+    }
 
 
 def br_to_float(value: str) -> float:
@@ -144,8 +245,8 @@ def compare_values(primary: Mapping[str, Any], secondary: Mapping[str, Any], cod
 
 
 def identity_guard(expected_name: str, internal_name: str | None, *, require_internal: bool = True) -> dict[str, Any]:
-    exp = normalizar_texto(expected_name)
-    internal = normalizar_texto(internal_name or '')
+    exp = canonical_municipality_name(expected_name)
+    internal = canonical_municipality_name(internal_name or '')
     if not internal:
         return {
             'ok': not require_internal,
