@@ -1,0 +1,9 @@
+EXTRATOR RREO CLOUD v1.3.7.2 - RREO SAFE STRUCTURAL
+
+Critérios mínimos antes de LIVE:
+1. pytest integral aprovado.
+2. Água Branca/PB: 1.4 = 1.458.429,92.
+3. Água Branca/PB: 2.1 = 25.889.148,95.
+4. Relação 1.1+1.2+1.3+1.4 = total 1 validada.
+5. Relação 2.1.1+2.1.2 = 2.1 validada.
+6. Qualquer inconsistência estrutural/semântica deve bloquear a planilha oficial.

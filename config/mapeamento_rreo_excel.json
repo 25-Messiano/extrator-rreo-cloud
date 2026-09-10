@@ -1,0 +1,83 @@
+{
+  "versao": "1.3.9",
+  "descricao": "Autoridade central de mapeamento RREO. Separa estrutura A-D, identidade, codigos PDF, colunas (a)/(b), validacao e destino Excel.",
+  "planilha": {
+    "usar_aba_ativa": true,
+    "linha_cabecalho": 1,
+    "primeira_linha_dados": 3,
+    "total_colunas_esperado": 27,
+    "validar_cabecalho_antes_de_gravar": true
+  },
+  "estrutura_planilha": {
+    "A": {"papel": "sequencial_geral", "descricao": "Sequencial geral das linhas cadastrais"},
+    "B": {"papel": "sequencial_municipios_estado", "descricao": "Sequencial/quantidade de municipios dentro do estado"},
+    "C": {"papel": "codigo_ibge", "descricao": "Codigo IBGE oficial lido da planilha depois da identificacao nominal"},
+    "D": {"papel": "ente_federado", "descricao": "Nome oficial Municipio/UF usado na harmonizacao nominal"}
+  },
+  "identificacao_municipio": {
+    "universo": "MESMA_UF",
+    "principal": ["nome_externo_pdf", "nome_interno_pdf", "ente_federado_planilha", "uf"],
+    "regra_externo_exato": "Se nome externo normalizado casar de forma exata e unica com D dentro da UF, identificar sem exigir IBGE no PDF; nome interno vira confirmacao/auditoria.",
+    "regra_conflito_interno": "Se nome interno apontar fortemente para outro municipio da mesma UF, bloquear como CONFLITO_IDENTIDADE.",
+    "ibge": "confirmacao_e_vinculo_da_linha_apos_harmonizacao",
+    "usar_tolerancia_nominal": true,
+    "bloquear_se_ambiguo": true,
+    "fail_closed": true
+  },
+  "colunas_pdf": {
+    "a": {
+      "nome": "PREVISAO ATUALIZADA (a)",
+      "coletar": false,
+      "gravar_excel": false,
+      "regra": "Reconhecer exclusivamente para orientacao estrutural. Valor desta coluna nunca pode entrar no JSON validado de implantacao."
+    },
+    "b": {
+      "nome": "RECEITAS REALIZADAS Ate o Bimestre (b)",
+      "coletar": true,
+      "gravar_excel": true,
+      "regra": "Unica coluna monetaria autorizada para alimentar os codigos RREO e o Excel."
+    }
+  },
+  "codigos": {
+    "1.1": {"destino": "P", "modo": "gravar", "descricao": "IPTU"},
+    "1.2": {"destino": "R", "modo": "gravar", "descricao": "ITBI"},
+    "1.3": {"destino": "S", "modo": "gravar", "descricao": "ISS"},
+    "1.4": {"destino": "Q", "modo": "gravar", "descricao": "IRRF"},
+    "2.1": {"destino": null, "modo": "validar", "descricao": "Cota-Parte FPM"},
+    "2.1.1": {"destino": "E", "modo": "gravar", "descricao": "FPM - CF art. 159, I, b"},
+    "2.1.2": {"destino": "F", "modo": "gravar", "descricao": "FPM - CF art. 159, I, d e e"},
+    "2.2": {"destino": "K", "modo": "gravar", "descricao": "Cota-Parte ICMS"},
+    "2.3": {"destino": "H", "modo": "gravar", "descricao": "Cota-Parte IPI-Exportacao"},
+    "2.4": {"destino": "J", "modo": "gravar", "descricao": "Cota-Parte ITR"},
+    "2.5": {"destino": "L", "modo": "gravar", "descricao": "Cota-Parte IPVA"},
+    "2.6": {"destino": "T", "modo": "gravar", "descricao": "Cota-Parte IOF-Ouro"},
+    "6.1.1": {"destino": "N", "modo": "gravar", "descricao": "FUNDEB - Principal"},
+    "6.2": {"destino": null, "modo": "validar", "descricao": "FUNDEB - Complementacao da Uniao - VAAF"},
+    "6.2.1": {"destino": "O", "modo": "gravar", "descricao": "FUNDEB VAAF - Principal"}
+  },
+  "colunas_proibidas_rreo": ["G", "I", "M", "U", "V", "W", "X", "Y", "Z", "AA"],
+  "sequencia_oficial": [
+    "AUDITAR_A_B_C_D",
+    "IDENTIFICAR_MUNICIPIO_TOLERANTE",
+    "GERAR_JSON_IDENTIDADE",
+    "EXTRAIR_POR_PY_EXCLUSIVO",
+    "BLOQUEAR_COLUNA_A",
+    "AUTORIZAR_COLUNA_B",
+    "GERAR_JSON_EXTRACAO",
+    "VALIDAR_SAFE",
+    "GERAR_JSON_VALIDADO",
+    "RESOLVER_DESTINO_PELO_CABECALHO_REAL",
+    "GERAR_JSON_DESTINO",
+    "IMPLANTAR_EXCEL",
+    "GERAR_JSON_IMPLANTACAO"
+  ],
+  "exemplo_homologado": {
+    "municipio": "Araci",
+    "uf": "BA",
+    "ibge": "2902104",
+    "linha_excel": 235,
+    "codigo": "1.3",
+    "coluna_destino": "S",
+    "celula_destino": "S235"
+  }
+}
