@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "description": "Aliases controlados para identidade RREO. Nunca usar fuzzy solto para liberar gravacao.",
+  "aliases": [
+    {
+      "uf": "AL",
+      "alias": "SAO LUIS DO QUITUNDE",
+      "official": "São Luiz do Quitunde",
+      "reason": "variante ortografica no PDF"
+    },
+    {
+      "uf": "SP",
+      "alias": "MOJI MIRIM",
+      "official": "Mogi Mirim",
+      "reason": "variante ortografica no PDF"
+    },
+    {
+      "uf": "SP",
+      "alias": "FLORINIA",
+      "official": "Florínea",
+      "reason": "variante ortografica no PDF"
+    },
+    {
+      "uf": "RS",
+      "alias": "CHIAPETTA",
+      "official": "Chiapeta",
+      "reason": "variante ortografica no PDF"
+    },
+    {
+      "uf": "RN",
+      "alias": "ARES",
+      "official": "Arez",
+      "reason": "variante ortografica no PDF"
+    },
+    {
+      "uf": "RN",
+      "alias": "ACU",
+      "official": "Assú",
+      "reason": "variante historica/ortografica no PDF"
+    },
+    {
+      "uf": "RN",
+      "alias": "JANUARIO CICCO",
+      "official": "Boa Saúde",
+      "reason": "denominacao historica no PDF"
+    },
+    {
+      "uf": "RN",
+      "alias": "AUGUSTO SEVERO",
+      "official": "Campo Grande",
+      "reason": "denominacao historica no PDF"
+    },
+    {
+      "uf": "SC",
+      "alias": "PRESIDENTE CASTELLO BRANCO",
+      "official": "Presidente Castelo Branco",
+      "reason": "variante ortografica confirmada no PDF oficial; teste V3.7"
+    }
+  ]
+}

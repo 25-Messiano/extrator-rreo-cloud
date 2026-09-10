@@ -1,0 +1,4 @@
+VERSAO=v1.3.5.2
+MENU=Download em Lote
+PAGINA=pages/7_Download_Lote.py
+CONTEUDO=PDFs RREO + Planilhas processadas

@@ -1,0 +1,21 @@
+TIPOS DE RODADA — REGRA OFICIAL
+
+1. RODADA NOVA
+- Sempre começa de data/RREO-TCM+FNDE PLANILHA BASE.xlsx.
+- Não baixa nem herda valores do master anterior.
+- Processa toda a seleção, independentemente do histórico.
+- Salva resultado independente em PLANILHAS_PROCESSADAS/RODADAS/<ano>/.
+- Não marca atividade global do master, evitando que uma futura incrementação pule dados que não foram incorporados ao master.
+
+2. RODADA DE CORREÇÃO
+- Baixa o master existente; se não existir, parte da base oficial.
+- Faz backup técnico antes de alterar.
+- Força nova leitura dos municípios selecionados.
+- Quando a leitura de uma fonte tem valores válidos, limpa todos os campos antigos daquela fonte na linha do município e grava os novos.
+- Se a leitura falhar ou não houver valores, não apaga dados antigos daquela fonte.
+
+3. RODADA DE INCREMENTAÇÃO
+- Baixa o master existente; se não existir, parte da base oficial.
+- Processa somente o que não está concluído.
+- Se um município estava SEM_PDF e um arquivo novo aparecer no Cloud, ele volta automaticamente para a fila.
+- Não sobrescreve dados de municípios já concluídos.

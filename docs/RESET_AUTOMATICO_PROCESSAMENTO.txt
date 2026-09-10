@@ -1,0 +1,8 @@
+RESET AUTOMATICO DO PROCESSAMENTO
+
+Regra aplicada:
+- Ao mudar operacao/modalidade, ano, estado ou conjunto de municipios, o painel apaga o estado transitorio da execucao anterior.
+- Sao limpos: progresso, logs, resultado, checkpoint carregado, codigos concluidos e indices mantidos na sessao.
+- Os valores atuais dos widgets nao sao apagados.
+- Checkpoints agora usam uma chave exclusiva contendo operacao, modalidade, ano, escopo e resumo da selecao de municipios.
+- Um checkpoint de Acre, Bahia, Amostra, Estado Inteiro ou outra operacao nao pode mais ser reaproveitado em contexto diferente.

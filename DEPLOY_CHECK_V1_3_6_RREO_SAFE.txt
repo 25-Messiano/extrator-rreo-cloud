@@ -1,0 +1,25 @@
+EXTRATOR RREO CLOUD v1.3.6 - RREO SAFE
+
+BASE: v1.3.5.2
+
+PROVAS DE IMPLEMENTACAO
+- modules/rreo_safe.py existe
+- requirements.txt inclui PyMuPDF
+- modules/rreo.py usa PDFPLUMBER_TEXT + PYMUPDF_GEOMETRY_COLUNA_B
+- divergencia de municipio bloqueia a gravacao RREO
+- divergencia de leitores bloqueia a gravacao RREO
+- gravacao usa snapshot/rollback por municipio
+- XLSX e reaberto ao fim de cada lote antes do upload oficial
+- LOG_RREO registra hash, fingerprint, confianca e pos-gravacao
+- interface mostra v1.3.6 RREO SAFE
+
+HOMOLOGACAO LOCAL
+- compileall: OK
+- pytest: 67 passed
+- validate_project.py: OK
+- referencia Angelandia/MG: leitores independentes concordam nos codigos testados
+
+RENDER
+- nenhuma nova variavel de ambiente obrigatoria
+- PyMuPDF sera instalado pelo requirements.txt durante build Docker
+- OCR nao faz parte do caminho normal do RREO
