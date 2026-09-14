@@ -1,0 +1,117 @@
+TESOURARIA APLB — DOCUMENTO MESTRE DE RECUPERAÇÃO
+Versão conceitual inicial — 2026-09-02
+
+1. OBJETIVO
+Sistema financeiro e de tesouraria com fonte única de verdade: banco de dados central de lançamentos. A planilha-base mensal da APLB é o modelo operacional de entrada: Data | Código | B/C | Especificação | Entrada Banco | Saída Banco | Entrada Caixa | Saída Caixa | Saldo.
+
+2. PRINCÍPIO CENTRAL
+LANÇAMENTO ÚNICO -> Código oficial APLB -> Banco/Caixa -> Entrada/Saída -> Classificação -> Saldo -> Conciliação -> Relatórios -> DRE -> Fluxo de Caixa -> Patrimônio -> Auditoria.
+
+3. CÓDIGOS OFICIAIS
+Tabela própria com código, descrição, natureza, categoria DRE, vigência, ativo/inativo, observação e regras auxiliares. O mapeamento definitivo será ajustado posteriormente.
+
+4. LANÇAMENTOS
+Campos: ID único, data, competência, código APLB, B/C, natureza, especificação, favorecido/origem, documento, valor, conta financeira, categoria DRE, centro de custo/projeto, observação, origem, status, usuário e timestamps.
+
+5. STATUS
+RASCUNHO -> EM_CONFERENCIA -> APROVADO -> CONCILIADO -> FECHADO.
+
+6. CORREÇÃO / ESTORNO
+Correção nunca apaga o histórico: registra antes/depois, usuário, data/hora e motivo. Estorno cria reversão vinculada ao original. Exclusão é lógica. Após correção, recalcular saldos, relatórios, DRE e fluxo de caixa.
+
+7. IMPORTAÇÃO DE EXTRATOS
+Aceitar PDF textual, PDF com tabela, PDF escaneado (OCR fallback), XLSX/XLS e CSV.
+Fluxo: upload -> original no Cloud -> extração -> normalização -> regras + IA -> sugestões -> Excel de conferência + JSON -> revisão humana -> liberação -> base oficial -> conciliação -> relatórios/DRE/fluxo -> auditoria.
+REGRA: IA nunca grava diretamente na base oficial.
+
+8. ARQUIVO DE CONFERÊNCIA
+Campos: data, histórico original, favorecido, documento, valor, débito/crédito, B/C, código sugerido, categoria DRE, especificação sugerida, confiança IA, status e observação do conferente.
+
+9. JSON
+Gerar: conferencia_<id>.json, lote_aprovado_<id>.json, snapshot_fechamento_<ano_mes>.json e auditoria_export_<periodo>.json. JSON serve para auditoria, reprocessamento e recuperação.
+
+10. DEDUPLICAÇÃO
+Fingerprint: conta + data + valor + documento + histórico normalizado. Reimportação deve identificar já importados, novos e possíveis alterados.
+
+11. CONCILIAÇÃO
+Comparar extrato x lançamentos oficiais. Status: conciliado, divergente, extrato sem lançamento, lançamento sem extrato, pendente.
+
+12. USUÁRIOS
+Login/senha com hash seguro. Perfis: ADMINISTRADOR, TESOURARIA, CONFERENTE, CONSULTA, AUDITORIA.
+
+13. AUDITORIA
+Guardar usuário, data/hora, ação, tabela/registro, valor anterior, valor novo, motivo e sessão/IP quando disponível.
+
+14. BANCO DE DADOS
+Produção: PostgreSQL em Cloud. SQLite apenas fallback local de desenvolvimento.
+
+15. ARQUIVOS NO CLOUD
+Guardar extratos, PDFs, planilhas, comprovantes, conferências, JSONs, relatórios e snapshots.
+
+16. FLUXO DE CAIXA REALIZADO
+Derivado apenas de lançamentos oficiais efetivamente realizados. Visões diária, semanal, mensal, trimestral, semestral e anual; Banco, Caixa e consolidado; por código, DRE, favorecido e centro de custo.
+
+17. FLUXO DE CAIXA PROJETADO
+Cadastro de previsões futuras: data prevista, receita/despesa, valor, código, descrição, favorecido/origem, conta prevista, recorrência, probabilidade, observação e status. Comparar projetado x realizado, variação e saldo futuro; alertar insuficiência de caixa.
+
+18. PATRIMÔNIO
+Número patrimonial, descrição, categoria, aquisição, valor, fornecedor, NF, local, responsável, conservação, vida útil, situação, anexo e lançamento de origem. Ao classificar bem permanente, oferecer cadastro patrimonial.
+
+19. PESQUISA AVANÇADA
+Busca por código, nome, favorecido, documento, valor e descrição. Filtros por período, ano, mês, B/C, entrada/saída, faixa de valor, DRE, conta, status, usuário, conciliação e comprovante. Futuro: AND/OR, pesquisas salvas, comparação histórica, duplicidades, busca em documentos e linguagem natural com IA.
+
+20. RELATÓRIOS
+Todos derivados da mesma base: demonstrativo mensal, Banco, Caixa, Banco+Caixa, entradas/saídas, semestrais, anuais, suprimento de caixa, saldos históricos, prestação de contas, execução financeira, DRE, por código, auditoria, fluxo de caixa e patrimônio.
+
+21. DRE
+Gerado de Código APLB -> Categoria DRE. O mapeamento será ajustado sem reescrever lançamentos históricos indevidamente.
+
+22. FECHAMENTO
+Validar saldos, conciliação e pendências; gerar snapshot JSON e relatórios. Depois, bloquear mês. Reabertura somente autorizada e auditada.
+
+23. SEGURANÇA E RECUPERAÇÃO
+PostgreSQL Cloud + arquivos Cloud + JSONs + snapshots + auditoria + GitHub + este documento mestre + código Python de recuperação.
+
+24. IMPLEMENTAÇÃO
+Primeiro consolidar arquitetura e regras; depois implementar módulos. Não fechar prematuramente os códigos.
+
+25. PÁGINAS PREVISTAS
+Dashboard; Lançamentos; Correção/Estorno; Banco; Caixa; Extratos Bancários; Importação Inteligente; Conferência; Conciliação; Fluxo de Caixa; Patrimônio; Fechamento; Relatórios; DRE; Códigos; Pesquisa Avançada; Auditoria; Usuários; Configurações.
+
+26. CADASTROS EM JANELAS FLUTUANTES
+Os cadastros de códigos, grupos/subgrupos DRE, favorecidos, contas e patrimônio devem ser acessíveis pela interface, preferencialmente em janelas flutuantes/modais, com Salvar/Cancelar e mensagem clara de sucesso ou erro. O usuário não deve precisar editar diretamente o banco de dados.
+
+27. GRUPOS E CÓDIGOS DRE
+Grupos e subgrupos são cadastráveis em árvore. Cada grupo pode ter zero, um ou vários códigos APLB vinculados. Um código pode ter vínculo com vigência. Mudanças podem valer apenas a partir de determinada data, preservando relatórios históricos fechados.
+
+28. ALERTA DE ACESSO
+Todo login bem-sucedido deve ser registrado. Quando PROGRAMADOR_ALERT_WEBHOOK_URL estiver configurada, o app envia aviso ao programador com usuário, perfil e data/hora, nunca com a senha.
+
+29. SITUAÇÃO DA IMPLEMENTAÇÃO V1 OPERACIONAL
+- PostgreSQL via DATABASE_URL efetivamente utilizado em produção.
+- SQLite somente como fallback local.
+- Login e senha com hash PBKDF2.
+- Lançamentos, correção, estorno e auditoria funcionais.
+- Cadastro de códigos, grupos DRE, vínculos, contas, favorecidos e patrimônio.
+- Importação de Excel/CSV e leitura conservadora de PDF.
+- Arquivo de conferência Excel/JSON e liberação humana.
+- Fluxo de caixa realizado e projetado.
+- Pesquisa avançada.
+- Fechamento mensal e bloqueio de período.
+- Motor DRE por vínculo Código APLB -> Grupo DRE.
+- Cloud Storage de arquivos e IA externa avançada permanecem configuráveis por ambiente e serão ativados em evolução posterior.
+
+30. CARGA INICIAL CONSOLIDADA 2026
+A recuperação também restaura automaticamente a carga idempotente dos demonstrativos 01_2026.pdf, 02_2026.pdf e 03_2026.pdf a partir de data/carga_inicial_2026.csv, caso ainda não exista no banco. São 281 movimentos oficiais, mais os saldos de abertura Banco R$ 181,46 e Caixa R$ 13.777,09. A trilha de origem fica na tabela carga_inicial_itens. Totais e validações estão documentados em docs/CARGA_INICIAL_2026.md.
+
+V11 - IMPLANTACAO COMPLETA
+- Centros de custo cadastraveis e vinculaveis aos lancamentos/importacoes.
+- Contas financeiras com edicao, ativacao/inativacao e saldos iniciais.
+- Patrimonio com transferencia, responsavel, manutencao/baixa e historico.
+- Fechamento mensal com diagnostico de pendencias e reabertura auditada.
+- Usuarios com perfis e permissoes individuais.
+- Auditoria filtravel/exportavel.
+- Backup completo diario; upload Cloud opcional via S3 compativel quando configurado.
+- Monitoramento de lancamentos, conferencias, importacoes, acessos e falhas de login.
+- Conciliacao automatica por competencia, data, valor, natureza e conta, com revisao manual de ambiguidades.
+- Regra fundamental preservada: lancamentos oficiais sao a fonte unica de saldos, DRE e relatorios.

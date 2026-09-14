@@ -1,0 +1,67 @@
+grupo,nome,ordem
+1.1,Mensalidade Sindical,10
+1.2,Rendimento de Aplicações Financeiras,20
+1.3,Captação de Recursos de Terceiros,30
+1.4,Transferência entre contas,40
+1.5,Outras Receitas,50
+2.1.1,Folha de Pagamento,101
+2.1.2,Acordo Coletivo,102
+2.1.3,Outros (Especificar),103
+2.2.1,FGTS,201
+2.2.2,FGTS Multa Rescisória,202
+2.2.3,"Rescisão de Trabalho (Saldo de Salário, Aviso Prévio, Outros)",203
+2.2.4,PIS sobre a Folha de Pagamento,204
+2.2.5,1/3 sobre Férias,205
+2.2.6,13º Salário,206
+2.2.7,Despesas Sindicais,207
+2.2.8,IRRF,208
+2.2.9,ISSQN,209
+2.2.10,Provisionamentos,210
+2.2.11,Outros Encargos/Tributos (Especificar),211
+2.2.12,INSS,212
+2.3.1,Vale Transporte,301
+2.3.2,Vale Alimentação,302
+2.3.3,Plano de Saúde,303
+2.3.4,Seguro de Vida,304
+2.3.5,Plano Odontológico,305
+2.3.6,"Auxílio Educação (Bolsas de Estudos, Pós-graduação, Outros.)",306
+2.3.7,Salário Família,307
+2.3.8,Outros Benefícios (Especificar),308
+2.4.1,Manutenção de Máquinas e Equipamentos,401
+2.4.2,Auditoria Externa,402
+2.4.3,Assessoria Jurídica,403
+2.4.4,Assessoria Contábil,404
+2.4.5,Serviços de Segurança,405
+2.4.6,Manutenção e Suporte em Software,406
+2.4.7,Locação de Equipamentos e Máquinas,407
+2.4.8,Locação de Imóveis,408
+2.4.9,Despesas de Frete e Locação de Veículos,409
+2.4.10,"Eventos, Cursos e Oficinas",410
+2.4.11,Serviços Gráficos,411
+2.4.12,Outros Serviços de Terceiros (Especificar),412
+2.5.1,Telefonia,501
+2.5.2,Energia Elétrica,502
+2.5.3,Água e Esgoto,503
+2.5.4,"Correios, Telégrafos e Internet",504
+2.5.5,Material de Copa e Cozinha,505
+2.5.6,Material de Limpeza,506
+2.5.7,Material de Expediente,507
+2.5.8,"Despesas de Viagem (Diárias, hospedagens, alimentação, traslados e outros)",508
+2.5.9,Passagens,509
+2.5.10,Seguros,510
+2.5.11,Despesas Bancárias,511
+2.5.12,Juros e Multas,512
+2.5.13,Combustível,513
+2.5.14,Seguro de Veículo,514
+2.5.15,Outras despesas Gerais,515
+2.6.1,IOF,601
+2.6.2,IRFF sobre aplicações,602
+2.6.3,IPVA/RENAVAM/Licenciamento/Seguro Obrigatório,603
+2.6.4,IPTU,604
+2.6.5,Outros Tributos (Especificar),605
+2.7.1,Móveis e Utensílios,701
+2.7.2,Máquinas e Equipamentos,702
+2.7.3,Computadores,703
+2.7.4,Veículos,704
+2.7.5,Softwares e Sistemas Operacionais,705
+2.7.6,Outros (Especificar),706

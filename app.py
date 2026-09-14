@@ -1,65 +1,90 @@
-from __future__ import annotations
-
-import os
-from datetime import datetime
-
 import streamlit as st
 
-from auth.database import AuthDatabase
-from auth.session import current_user
-from auth.views import render_first_admin, render_force_password_change, render_login
-from integrations.google_storage import health_check
-from ui.theme import apply_theme, metric_card, render_sidebar
+from ui.common import brl, db_badge, require_login, tenant_identity
+from services.financeiro import saldos, listar_lancamentos
+from services.security import permitido
+from services.tenancy import listar_tesourarias, app_version
+from services.prestacoes import listar_prestacoes
+from services.email_service import email_configurado
+from services.administracao import listar_usuarios
 
-st.set_page_config(page_title="Extrator RREO Cloud", page_icon="☁️", layout="wide", initial_sidebar_state="expanded")
-apply_theme()
+st.set_page_config(page_title="TESOURARIA APLB", page_icon="💰", layout="wide")
 
-auth_db = AuthDatabase()
-if not auth_db.has_admin():
-    render_first_admin(auth_db)
-    st.stop()
-
-user = current_user()
-if not user:
-    render_login(auth_db)
-    st.stop()
-
-if user.get("trocar_senha"):
-    render_force_password_change(auth_db, user)
-    st.stop()
-
-render_sidebar(auth_db)
-
-cloud_env = bool((os.getenv("GOOGLE_SERVICE_ACCOUNT_JSON") or os.getenv("GCP_KEY") or "").strip())
-gemini_ok = bool((os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY") or "").strip())
-cloud_status = health_check() if cloud_env else {"ok": False}
-
-st.markdown(
-    f'<div class="hero-row"><div><div class="hero-title">Painel de Extração</div><div class="hero-sub">Extração de dados do RREO municipal com Google Cloud Storage, Gemini e Excel.</div></div><div><span style="color:#536179;font-size:12px;margin-right:14px">◷ {datetime.now().strftime("%d/%m/%Y %H:%M:%S")}</span><span class="online">● Sistema Online</span></div></div>',
-    unsafe_allow_html=True,
+OBJETIVO_SISTEMA = (
+    "🎯 OBJETIVO — Sistema completo para gestão financeira, contábil, patrimonial e de relatórios da APLB, "
+    "com controle de lançamentos, Banco/Caixa, códigos oficiais, DRE, importação inteligente de extratos, "
+    "conciliação, fluxo de caixa realizado e projetado, patrimônio, usuários, auditoria e backup seguro no Cloud."
 )
+user=require_login("CONSULTAR")
 
-c1, c2, c3, c4 = st.columns(4)
-with c1: metric_card("☁", "Armazenamento", "Cloud Storage", "Conectado" if cloud_status.get("ok") else "Verificar", "blue")
-with c2: metric_card("🗄", "Banco de Dados", "PostgreSQL" if auth_db.db.is_postgres else "SQLite", "Ativo", "purple")
-with c3: metric_card("🛡", "Credenciais GCS", "Configuradas" if cloud_env else "Pendentes", "OK" if cloud_env else "Atenção", "green")
-with c4: metric_card("✦", "Gemini API", "Configurado" if gemini_ok else "Pendente", "OK" if gemini_ok else "Atenção", "blue")
+# V25.6: a pagina inicial muda integralmente conforme o contexto autenticado.
+# ADMINISTRADOR ve somente a Central; perfis de filial/teste veem somente a
+# unidade operacional em que autenticaram.
+if st.session_state.get("portal_profile") == "ADMINISTRADOR":
+    st.title("CENTRAL DAS TESOURARIAS")
+    st.caption(f"Auditoria, administração e supervisao das unidades · Código-base {app_version()}")
+    st.info(OBJETIVO_SISTEMA)
+    rows=listar_tesourarias(None, True)
+    filiais=[x for x in rows if x.get("tipo")=="FILIADA" and x.get("ambiente")=="PRODUCAO"]
+    testes=[x for x in rows if x.get("ambiente")=="TESTE"]
+    prest=listar_prestacoes()
+    c1,c2,c3,c4=st.columns(4)
+    c1.metric("Filiais cadastradas",len(filiais))
+    c2.metric("Filiais ativas",len([x for x in filiais if x.get("ativa")]))
+    c3.metric("Ambientes de teste",len(testes))
+    c4.metric("Prestações pendentes",len([x for x in prest if x.get("status") in ("ENVIADA","EM_AUDITORIA")]))
+    usuarios=listar_usuarios()
+    sem_email=[x for x in usuarios if not (x.get("email") or "").strip()]
+    c5,c6=st.columns(2)
+    c5.metric("Usuários sem e-mail de login", len(sem_email))
+    c6.metric("Recuperação por e-mail", "ATIVA" if email_configurado() else "CONFIGURAR SMTP")
+    if sem_email:
+        st.warning("Existem contas antigas sem e-mail. Cada usuário deve usar ‘Primeiro acesso / ativar e-mail’ uma única vez antes de usar o login V26.")
+    if not email_configurado():
+        st.warning("O login por e-mail funciona, mas o envio de recuperação ainda depende da configuração SMTP no Render. Enquanto o SMTP não estiver configurado, ‘Esqueci minha senha’ não enviará mensagens.")
+    st.info("A Central não possui saldo, lançamentos, extratos ou movimento financeiro próprio. Para operar uma filial, troque de usuário e autentique uma conta vinculada à unidade.")
+    st.subheader("Ações da Central")
+    c1,c2,c3,c4=st.columns(4)
+    c1.page_link("pages/30_Central_Tesourarias.py",label="🏢 Tesourarias Filiadas",width="stretch")
+    c2.page_link("pages/31_Prestacoes_Contas.py",label="📥 Prestações de Contas",width="stretch")
+    c3.page_link("pages/19_Usuarios_Permissoes.py",label="👥 Usuários e Permissões",width="stretch")
+    c4.page_link("pages/36_Diagnostico_Isolamento.py",label="🛡️ Diagnóstico",width="stretch")
+    st.stop()
 
-st.markdown('<div class="section-card"><div class="section-title"><span class="section-num">1.</span>Começar uma extração</div>', unsafe_allow_html=True)
-a,b = st.columns([3,1])
-with a:
-    st.markdown("Selecione o estado, o município e o ano no painel operacional. O sistema lista os PDFs, processa os dados e gera a planilha automaticamente.")
-with b:
-    col_action_1, col_action_2 = st.columns(2)
-    with col_action_1:
-        st.page_link("pages/1_Painel.py", label="Abrir Painel de Extração", icon="▶️", use_container_width=True)
-    with col_action_2:
-        st.page_link("pages/7_Download_Lote.py", label="Abrir Download em Lote", icon="📦", use_container_width=True)
-st.markdown('</div>', unsafe_allow_html=True)
+tenant=st.session_state.get("tesouraria") or {}
+ident=tenant_identity(tenant)
+st.title(ident["titulo_operacional"])
+st.caption(ident["linha_identificacao"])
+st.caption("Gestão financeira, tesouraria, conciliação, relatórios, fluxo de caixa e patrimonio")
+st.info(OBJETIVO_SISTEMA)
 
-st.markdown('<div class="section-card"><div class="section-title">Fluxo Operacional</div><div class="flow"><div class="flow-step"><div class="flow-num">1</div><div><div class="flow-name">Listagem</div><div class="flow-desc">PDFs localizados no Cloud Storage</div></div></div><div class="flow-arrow">→</div><div class="flow-step"><div class="flow-num">2</div><div><div class="flow-name">Extração</div><div class="flow-desc">Gemini identifica as linhas do RREO</div></div></div><div class="flow-arrow">→</div><div class="flow-step"><div class="flow-num">3</div><div><div class="flow-name">Geração</div><div class="flow-desc">Excel preenchido com os dados</div></div></div><div class="flow-arrow">→</div><div class="flow-step"><div class="flow-num">4</div><div><div class="flow-name">Upload</div><div class="flow-desc">Resultado salvo e liberado</div></div></div></div></div>', unsafe_allow_html=True)
+s=saldos()
+c1,c2,c3,c4=st.columns(4)
+c1.metric("Saldo Banco",brl(s.get("B",0)))
+c2.metric("Saldo Caixa",brl(s.get("C",0)))
+c3.metric("Saldo Geral",brl(s.get("GERAL",0)))
+c4.metric("Usuario",user.get("nome",""))
 
-if not cloud_status.get("ok"):
-    st.warning("A interface está ativa, mas a conexão com o Cloud Storage precisa ser verificada.")
+db_badge()
 
-st.markdown('<div class="footerbar">● Sistema operando com Gemini &nbsp;•&nbsp; Extração inteligente de dados &nbsp;•&nbsp; Processamento em lote &nbsp;•&nbsp; Armazenamento seguro na nuvem</div>', unsafe_allow_html=True)
+st.subheader("Atalhos")
+atalhos=[]
+if permitido(user["perfil"],"LANCAR",user["id"]):
+    atalhos.append(("pages/02_Lancamentos.py","➕ Novo lançamento"))
+if permitido(user["perfil"],"IMPORTAR",user["id"]):
+    atalhos.append(("pages/06_Extratos_Bancarios.py","🏦 Importar extrato"))
+if permitido(user["perfil"],"CONFERIR",user["id"]):
+    atalhos.append(("pages/08_Conferencia.py","✅ Conferência"))
+if permitido(user["perfil"],"RELATORIOS",user["id"]):
+    atalhos.append(("pages/23_Relatorio_Movimento_Financeiro.py","📊 Relatórios"))
+if atalhos:
+    cols=st.columns(min(4,len(atalhos)))
+    for col,(pagina,label) in zip(cols,atalhos):
+        col.page_link(pagina,label=label,width="stretch")
+else:
+    st.caption("Seu perfil nao possui atalhos operacionais.")
+
+st.subheader("Lançamentos recentes")
+rows=listar_lancamentos(limit=10)
+if rows: st.dataframe(rows,width="stretch",hide_index=True)
+else: st.info("Ainda nao ha lançamentos oficiais.")

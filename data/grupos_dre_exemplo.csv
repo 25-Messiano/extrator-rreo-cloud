@@ -1,0 +1,10 @@
+grupo,nome,codigos_exemplo
+2.5.1,Telefonia,0004
+2.5.2,Energia Elétrica,"0002;0909"
+2.5.3,Água e Esgoto,"0003;0910"
+2.5.5,Material de Copa e Cozinha,"0017;0902"
+2.5.6,Material de Limpeza,"0010;0914"
+2.5.9,Passagens,0904
+2.5.11,Despesas Bancárias,0001
+2.5.13,Combustível,0011
+2.5.14,Seguro de Veículo,0012

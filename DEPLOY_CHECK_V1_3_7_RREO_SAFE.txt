@@ -1,9 +1,0 @@
-EXTRATOR RREO CLOUD v1.3.7 - RREO SAFE
-
-CHECKLIST DE DEPLOY
-- Interface mostra v1.3.7 RREO SAFE.
-- pdfplumber e PyMuPDF continuam instalados.
-- Identidade RREO usa cabecalho explicito + UF.
-- Substring solta foi removida da liberacao automatica.
-- Aliases municipais sao controlados em config/rreo_municipality_aliases.json.
-- Divergencia de valor ou identidade continua bloqueando a gravacao.

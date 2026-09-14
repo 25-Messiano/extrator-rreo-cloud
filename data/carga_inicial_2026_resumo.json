@@ -1,0 +1,23 @@
+{
+  "01": {
+    "quantidade": 87,
+    "banco_entrada": "157286.59",
+    "banco_saida": "145878.71",
+    "caixa_entrada": "19859.14",
+    "caixa_saida": "16809.27"
+  },
+  "02": {
+    "quantidade": 90,
+    "banco_entrada": "159401.33",
+    "banco_saida": "146970.40",
+    "caixa_entrada": "15700.00",
+    "caixa_saida": "15715.67"
+  },
+  "03": {
+    "quantidade": 104,
+    "banco_entrada": "165027.98",
+    "banco_saida": "160261.00",
+    "caixa_entrada": "19800.00",
+    "caixa_saida": "19953.80"
+  }
+}

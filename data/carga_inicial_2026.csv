@@ -1,0 +1,282 @@
+﻿seq,competencia,arquivo_origem,pagina,data_movimento,codigo,origem_bc,natureza,especificacao,valor,saldo_apos
+1,2026-01,01_2026.pdf,1,2026-01-05,0001,B,SAIDA,Tar Manuten Conta Ativa,70.60,13887.95
+2,2026-01,01_2026.pdf,1,2026-01-09,0702,B,ENTRADA,875 - Recebimento da Contribuição Sindical e Termo Aditivo através de transferência bancária fevereiro e 12/2025 - (702.2) JOSE NILTON S. BORGES,58.10,13946.05
+3,2026-01,01_2026.pdf,1,2026-01-09,0702,B,ENTRADA,870 - Recebimento da Contribuição Sindical e Termo Aditivo através de (701.1) - Transferência bancária 12/2025 - (702.1) ISABEL BRAGA DANTAS,22.00,13968.05
+4,2026-01,01_2026.pdf,1,2026-01-09,0702,B,ENTRADA,870 - Recebimento da Contribuição Sindical e Termo Aditivo através de (701.1) - Transferência bancária 12/2025 - (702.3) RENILDES PEREIRA,22.00,13990.05
+5,2026-01,01_2026.pdf,1,2026-01-13,0701,B,ENTRADA,Transferência recebida PREF MUNICIPAL ARACI FPM,26.00,14016.05
+6,2026-01,01_2026.pdf,1,2026-01-13,0701,B,ENTRADA,Transferência recebida PREF MUNICIPAL ARACI FPM,636.64,14652.69
+7,2026-01,01_2026.pdf,1,2026-01-13,0701,B,ENTRADA,Transferência recebida PREF MUNICIPAL ARACI FPM,198.60,14851.29
+8,2026-01,01_2026.pdf,1,2026-01-13,0701,B,ENTRADA,Transferência recebida PREF MUNICIPAL ARACI FPM,1568.62,16419.91
+9,2026-01,01_2026.pdf,1,2026-01-13,0701,B,ENTRADA,Transferência recebida PM ARACI-FUS,26.11,16446.02
+10,2026-01,01_2026.pdf,1,2026-01-13,0701,B,ENTRADA,Transferência recebida MDE EDUCACAO REC PROPRIO,120.40,16566.42
+11,2026-01,01_2026.pdf,1,2026-01-13,0701,B,ENTRADA,Transferência recebida FMAS-FUNDO MUNICIPAL,84.90,16651.32
+12,2026-01,01_2026.pdf,1,2026-01-13,0701,B,ENTRADA,870 - Transferência recebida (PM ARACI - FEB),6228.06,22879.38
+13,2026-01,01_2026.pdf,1,2026-01-13,0701,B,ENTRADA,870 - Transferência recebida (PM ARACI - FEB),44683.76,67563.14
+14,2026-01,01_2026.pdf,1,2026-01-13,0701,B,ENTRADA,870 - Transferência recebida (PREF MUNICIPAL ARACI FPM),1688.10,69251.24
+15,2026-01,01_2026.pdf,1,2026-01-13,0701,B,ENTRADA,870 - Transferência recebida (PM ARACI - FEB),463.40,69714.64
+16,2026-01,01_2026.pdf,1,2026-01-13,0701,B,ENTRADA,870 - Transferência recebida (PM ARACI - FEB),7933.80,77648.44
+17,2026-01,01_2026.pdf,1,2026-01-13,0701,B,ENTRADA,870 - Transferência recebida (PM ARACI - FEB),1378.00,79026.44
+18,2026-01,01_2026.pdf,1,2026-01-13,0701,B,ENTRADA,870 - Transferência recebida (PM ARACI - FEB),1294.91,80321.35
+19,2026-01,01_2026.pdf,1,2026-01-13,0701,B,ENTRADA,870 - Transferência recebida (PM ARACI - FEB),87876.40,168197.75
+20,2026-01,01_2026.pdf,1,2026-01-13,0701,B,ENTRADA,870 - Transferência recebida (PM ARACI - FEB),614.17,168811.92
+21,2026-01,01_2026.pdf,2,2026-01-14,0007,B,SAIDA,470 - SECRETARIA JURIDICA 12/2025 serviços advocatícios prestado pelo mesmo na Secretaria Jurídica - (7.1) LUIS HENRIQUE MATOS MOTA,3795.00,165016.92
+22,2026-01,01_2026.pdf,2,2026-01-14,0007,B,SAIDA,470 - Referente ao pagtº pelos serviços prestados com apoio jurídico referente ao mês de 12/2025 - (7.3) DIANE OLIVEIRA DE ALMEIDA,759.00,164257.92
+23,2026-01,01_2026.pdf,2,2026-01-14,0007,B,SAIDA,120 - SECRETARIA JURIDICA 12/2025 Transferencia Referente pagtº pelos serviços relacionado ao previdenciariao prestados aos servidores - (7.4) MARIO CESAR N. OLIVEIRA,2277.00,161980.92
+24,2026-01,01_2026.pdf,2,2026-01-14,0022,B,SAIDA,PRESTAÇÃO DE SERVIÇOS NA ALIMENTAÇÃO DE DADOS NO SISTEMA DA TESOURARIA E SECRETARIA 01/2026 - (22.1) MESSIANO ARAUJO DE SENA,3036.00,158944.92
+25,2026-01,01_2026.pdf,2,2026-01-14,0007,B,SAIDA,470 - SECRETARIA JURIDICA 12/2025 serviços advocatícios prestado pelo mesmo na Secretaria Jurídica - (7.2) GABRIEL GERALDO CARVALHO FONTE,3795.00,155149.92
+26,2026-01,01_2026.pdf,2,2026-01-14,0803,B,SAIDA,(803.2) -PLANOS DE SAÚDE - Central Nacional Unimed C oop Central - Pagamento do boleto/Fatura 01/2026 - UNIMED NACIONAL C CENTRAL,1352.00,153797.92
+27,2026-01,01_2026.pdf,2,2026-01-14,0012,B,SAIDA,109 - Pagtº referente a Boleto - Pagamento mensal - 12/2025 - do seguro automotivo do veículo da APLB/ARACI-BA - (12.3) FCK PROTECAO VEICULAR,143.22,153654.70
+28,2026-01,01_2026.pdf,2,2026-01-14,0803,B,SAIDA,LANOS DE SAÚDE - Central Nacional Unimed Coop Central - Pagamento do boleto/Fatura 01/2026 (803.3) UNIMED SAUDE E ODONTO S.A,5229.80,148424.90
+29,2026-01,01_2026.pdf,2,2026-01-14,0911,B,SAIDA,109 - Referente a pgtº - 12/2025 - de fatura de Internet da sede do CTR/Araci - (911.1) DINFO - PALOMA TORRES DE OLIVEIRA,55.00,148369.90
+30,2026-01,01_2026.pdf,2,2026-01-14,0005,B,SAIDA,Referente a pgtº -01/2026- de fatura de Internet da sede da APLB/Araci - (5.1) GLAUBER SERVIÇOS DE INFORMÁTICA LTDA,62.50,148307.40
+31,2026-01,01_2026.pdf,2,2026-01-14,0006,B,SAIDA,Referente a pgt. - nº 000.000.178 - Compra de MlteFuncional epson ecotank L3250 WI-FI para a sala de tesouraria - parcela 3/4 - da sede da APLB/ARACI-BA - (6.3) 2E TECNOLOGIA E SEGURANÇA ELETRONICA - MILLENIUM,387.25,147920.15
+32,2026-01,01_2026.pdf,2,2026-01-14,0803,B,SAIDA,109 - (803.1) PLANOS DE SAÚDE - Pagamento do boleto/Fatura 01/2026 -UNIMED NACIONAL C CENTRAL,94645.53,53274.62
+33,2026-01,01_2026.pdf,2,2026-01-14,0022,B,SAIDA,109 - Transferencia - Nota 00000011 - Referente ao pagtº pelos serviços prestados com hospedagem de Domínio de Programas/Sistemas Tesouraria/Secretaria para APLB/ARACI- Ba - 01/2026 - (22.2) MARCOS RONALDO ALMEIDA SILVA,260.60,53014.02
+34,2026-01,01_2026.pdf,2,2026-01-14,0003,B,SAIDA,Referente a pgtº de fatura de água da APLB/Araci - BA -01/2026 - (3.1) EMBASA SEDE,54.72,52959.30
+35,2026-01,01_2026.pdf,2,2026-01-14,0918,B,SAIDA,375 - (918.1) DESP. TRABALHISTAS - 01/2026 FGTS Desc. e Arrec. RECEITA FEDERAL,541.41,52417.89
+36,2026-01,01_2026.pdf,2,2026-01-14,0919,B,SAIDA,DESP. TRABALHISTAS - 01/2026 - 50000355066008 - (918.2) GPS RECEITA FEDERAL,138.03,52279.86
+37,2026-01,01_2026.pdf,2,2026-01-14,0001,B,SAIDA,(1.1) Tarifa de Transferencia de Recursos,2.60,52277.26
+38,2026-01,01_2026.pdf,2,2026-01-14,0001,B,SAIDA,(1.1) Tarifa de Transferencia de Recursos,2.60,52274.66
+39,2026-01,01_2026.pdf,2,2026-01-14,0001,B,SAIDA,(1.1) Tarifa de Transferencia de Recursos,1.70,52272.96
+40,2026-01,01_2026.pdf,2,2026-01-14,0001,B,SAIDA,(1.1) Tarifa de Transferencia de Recursos,1.70,52271.26
+41,2026-01,01_2026.pdf,2,2026-01-14,0001,B,SAIDA,(1.1) Tarifa de Transferencia de Recursos,1.70,52269.56
+42,2026-01,01_2026.pdf,2,2026-01-15,0702,B,ENTRADA,870 - Recebimento da Contribuição Sindical e Termo Aditivo através de - Transferência bancária 12/2025 -(702.13) JOSELITA SANTANA DA SILVA,1622.00,53891.56
+43,2026-01,01_2026.pdf,2,2026-01-14,0801,B,SAIDA,002 - (801.1) Suprimento de Caixa - Cheque 851.046,9900.00,43991.56
+44,2026-01,01_2026.pdf,2,2026-01-15,0001,B,SAIDA,Tar Processamento Cheque,19.10,43972.46
+45,2026-01,01_2026.pdf,3,2026-01-15,0205,B,SAIDA,"Pagtº referente a aluguel de palco som e iluminação, o valor total foi de R$ 7.000,00: R$ 3.000,00 em dinheiro, R$ 2.000,00 em cheque 851.042 para o dia 15/12/2025 e o outro cheque 851.043 de R$ 2.000,00 para o dia 15/01/2026. Insturmentos para serem usados durante a festa que foi realizada no dia 23/11/2025 tudo realizado no Espaço de Eventos CTR da APLB Sindicato - Delegacia do Sisal/Araci-BA - da APLB - (205.27) LUIZ CARLOS PEREIRA SANTANA",2000.00,41972.46
+46,2026-01,01_2026.pdf,3,2026-01-16,0801,B,SAIDA,002 - (801.1) Suprimento de Caixa - Cheque 851.047,9900.00,32072.46
+47,2026-01,01_2026.pdf,3,2026-01-16,0001,B,SAIDA,Tarifas Processamento Cheque (Soma das tarifas do dia),3.20,32069.26
+48,2026-01,01_2026.pdf,3,2026-01-16,0001,B,SAIDA,Tarifas Processamento Cheque (Soma das tarifas do dia),19.10,32050.16
+49,2026-01,01_2026.pdf,3,2026-01-19,0702,B,ENTRADA,Transf. Poupança JOSILENE FERREIRA ABREU,640.62,32690.78
+50,2026-01,01_2026.pdf,3,2026-01-21,0002,B,SAIDA,COMPANHIA DE ELETRICIDADE,582.12,32108.66
+51,2026-01,01_2026.pdf,3,2026-01-21,0803,B,SAIDA,UNIÃO MEDICA,6842.23,25266.43
+52,2026-01,01_2026.pdf,3,2026-01-28,0022,B,ENTRADA,Correspondente ao valor da mensalidade pelos serviços de programação/manutenção/hospedagem do aplicativo da secretaria do núcleo da APLB de Euclides da Cunha - Transferência bancária referente aos meses 12/2025 - (22.8) Suely diretor (a) financeiro de EUCLIDES DA CUNHA,100.00,25366.43
+53,2026-01,01_2026.pdf,3,2026-01-14,0801,C,ENTRADA,002 - (801.1) Suprimento de Caixa - Cheque 851046,9900.00,35266.43
+54,2026-01,01_2026.pdf,3,2026-01-14,0801,C,ENTRADA,002 - (801.1) Suprimento de Caixa - Cheque 851047,9900.00,45166.43
+55,2026-01,01_2026.pdf,3,2026-01-15,0906,C,SAIDA,"Pagtº referente a serviços prestados - Serviços Gerais - referente ao restante do pagamento de férias de 05/01/2026 a 03/02/2026 e 1/3 de férias, relativos ao período aquisitivo de 01/03/2025, pelos serviços prestados no Espaço de Eventos CTR da APLB/Araci - (906.3) GILDAZIO SALVADOR DAS NEVES",3178.00,41988.43
+56,2026-01,01_2026.pdf,3,2026-01-15,0906,C,SAIDA,"Pagtº referente a serviços prestados - Serviços Gerais - referente ao restante do pagamento de férias de 05/01/2026 a 03/02/2026 e 1/3 de férias, relativos ao período aquisitivo de 01/03/2025, pelos serviços prestados no Espaço de Eventos CTR da APLB/Araci - (906.1) DERMEVAL JESUS DO NASCIMENTO",2259.93,39728.50
+57,2026-01,01_2026.pdf,3,2026-01-19,0175,C,SAIDA,"Referente ao pagtº - 06398 - referente a despesas com mais frutas para acrescentar - manga, maracujá, goiaba e abacaxi usados no preparo de sucos para serem usados durante a XV Assembleia oline realizado no dia 18/12/2025 na sede da PLB Sindicato/Araci - BA. - (11.1) POSTO ESTRELA DO NORTE",100.00,39628.50
+58,2026-01,01_2026.pdf,3,2026-01-19,0011,C,SAIDA,Referente ao pagtº - 01070 - de abastecimento com gasolina de veículos para abastecimento de carro para serviços diversos dessa instituição - 18/12/2025- da APLB/SINDICATO/ARACI-BA . - (11.1) POSTO ESTRELA DO NORTE,285.68,39342.82
+59,2026-01,01_2026.pdf,3,2026-01-19,0915,C,SAIDA,Referente ao pagtº de compras de sacos de ração para os cães vigilantes do CTR-APLB SINDICATO ARACI/BA) - (915.2) AgriPec,110.00,39232.82
+60,2026-01,01_2026.pdf,3,2026-01-19,0006,C,SAIDA,"109 - Referente a pgt. - nº 191 -materiais: refil tanque de tinta, bateria não recarregavel, kit teclado, cartão memória micro SDXC da sede da APLB/ARACI-BA - (6.3) 2E TECNOLOGIA E SEGURANÇA ELETRONICA - MILLENIUM",94.50,39138.32
+61,2026-01,01_2026.pdf,4,2026-01-19,0017,C,SAIDA,"Pagtº referente a compra de alimentos em greral - pão de forma, açúcar, café, manteiga, etc - para a cozinha da APLB Sindicato - Delegacia do Sisal/Araci-BA - da APL - (17.3) RODRIKSON ZAINER OLIVEIRA",342.90,38795.42
+62,2026-01,01_2026.pdf,4,2026-01-19,0702,C,ENTRADA,"Recebimento da Contribuição Sindical e Termo Aditivo através de pagamento em espécies referente aos meses 11, 12/2025 - (702.14) MARGARETH LOPES DE CARVALHO",59.14,38854.56
+63,2026-01,01_2026.pdf,4,2026-01-19,0804,C,SAIDA,"Referente ao pagtº referente à restituição de pagamento indevido do Plano de Saúde Unimed, correspondente ao mês de Novembro/2025, bem como a Coparticipação referente ao mês de Dezembro/2025. Salientando que a cobrança da Coparticipação do Plano de Saúde NÃO foi solicitada pela APLB/Araci nesse pagamento de Dezembro/2025. - (702.14) MARGARETH LOPES DE CARVALHO",1130.62,37723.94
+64,2026-01,01_2026.pdf,4,2026-01-19,0908,C,SAIDA,393 - Referente ao pagtº - NF - e Nº 000.003.701 - de compras de materiais diversos para contrução no CTR-APLB SINDICATO ARACI/BA - (908.2) Josué Lopes Carneiro,1757.00,35966.94
+65,2026-01,01_2026.pdf,4,2026-01-19,0904,C,SAIDA,Referente ao pagtº - NFC-e 000039078 - Cadeira Diretor QZY2501E2 - parcela da prestação 2/6 referencia do carnê 76820. Para escritório da Sede da APLB Sindicato - Delegacia do Sisal/Araci-BA. - (904.1) ELETRODOMESTICO CAMILA,313.00,35653.94
+66,2026-01,01_2026.pdf,4,2026-01-19,0021,C,SAIDA,Referente ao pagtº - NF - e Nº 27 - de conserto/manutenção do projetor/datasow da SEDE da APLB SINDICATO ARACI/BA - (21.4) ROGERIO VLENTIM MAGALHAES DE,385.00,35268.94
+67,2026-01,01_2026.pdf,4,2026-01-19,0802,C,SAIDA,"Pagtº referente ao 1/3 de férias, relativo ao período aquisitivo de 01/01/2025 a 31/12/2025 -RESARCIMENTO/GRATIFICAÇÃO- de auxílio rural (802.2) TIAGO SANTIAGO DE CARVALHO",266.33,35002.61
+68,2026-01,01_2026.pdf,4,2026-01-19,0802,C,SAIDA,Pagtº referente a despesas com -RESARCIMENTO/GRATIFICAÇÃO- de auxílio rural - 12/2025 - (802.2) TIAGO SANTIAGO DE CARVALHO,799.00,34203.61
+69,2026-01,01_2026.pdf,4,2026-01-21,0008,C,SAIDA,Pagtº referente a - salários proporcional - pelos serviços prestados na limpeza/ organização Sede da APLB Sindicaato - Delegacia do Sisal/Araci-Ba - 12/2025 - (8.1) - MARIA DA CONCEIÇÃO MIRANDA DA ANUNCIAÇÃO,760.00,33443.61
+70,2026-01,01_2026.pdf,4,2026-01-21,0008,C,SAIDA,"Pagtº referente ao pagamento de férias de 05/01/2026 a 03/02/2026 e 1/3 de férias, relativos ao período aquisitivo de 01/01/2025 a 31/12/2025, em serviços prestados na limpeza/preparação de alimentos na sede da APLB Sindicato - delegacia do Sisal/Araci- Ba - (8.1) MARIA DA CONCEIÇÃO MIRANDA DA ANUNCIAÇÃO",1081.00,32362.61
+71,2026-01,01_2026.pdf,4,2026-01-21,0175,C,SAIDA,Pagtº referente - nº 124983 - amido de milho Dona Benta - para a XV assembleia que foi realizada no dia 18/12/2025 tudo realizada no antigo Colégio Ana Oliveira - Delegacia do Sisal/Araci-BA - da APLB - (17.12) MERCADINHO DONA ANITA,3.90,32358.71
+72,2026-01,01_2026.pdf,4,2026-01-21,0010,C,SAIDA,"Pagtº - CNPJ 23.280.304/0001-55 - sabão ariel5l, desimplus5l , multilimp 5l - para a sede da APLB/Araci - (10.1) CASA DAS ESSÊNCIAS",57.00,32301.71
+73,2026-01,01_2026.pdf,4,2026-01-21,0002,C,SAIDA,Referente a pgtº de fatura de energia da APLB/Araci - BA 11/2025 - (2.1) COELBA SEDE,803.41,31498.30
+74,2026-01,01_2026.pdf,4,2026-01-22,0008,C,SAIDA,Pagtº referente a -trabalhos esporádicos - prestados na limpeza/ organização Sede da APLB Sindicato - Delegacia do Sisal/Araci-Ba - (8.3) - DAMIANA DA CONEIÇÃO SILVA,240.00,31258.30
+75,2026-01,01_2026.pdf,4,2026-01-23,0916,C,SAIDA,Pagtº - NFC-e Nº 48 - referente a cofecção de uma copia de chave para o portão da frente do Espaço de Eventos - CTR da APLB/Araci - (10.1) (6.5) GIRLANDIA ALVES SAMPAIO LISBOA,10.00,31248.30
+76,2026-01,01_2026.pdf,5,2026-01-23,0008,C,SAIDA,Pagtº referente a - salários proporcional - pelos serviços prestados na limpeza/ organização Sede da APLB Sindicaato - Delegacia do Sisal/Araci-Ba - 12/2025 - (251.12) JOSIENE JESUS DE SENA,120.00,31128.30
+77,2026-01,01_2026.pdf,5,2026-01-23,0915,C,SAIDA,"Pagtº - NF-e 000.000.111 - referente à compra de plantas, mudas e sementes - para terreno da APLB/Araci - (915.1) - Floricultura e Horto Araci Ltda",320.00,30808.30
+78,2026-01,01_2026.pdf,5,2026-01-26,0916,C,SAIDA,Referente ao pagtº de duas diária de serviços de pedreiro e ajudante na colocação do revestimento externo na parte de cima nas laterais da churasqueira - CTR - APLB SINDICATO ARACI/BA - (916.8) HAVELANGE LUIS OLIVEIRA,220.00,30588.30
+79,2026-01,01_2026.pdf,5,2026-01-26,0017,C,SAIDA,"Referente ao pagtº referente a despesas com - banana, macã, manga e maracujá - para serem consumidos na sede da PLB Sindicato/Araci - BA (17.16) GALEGO HORTIFRUTI",33.00,30555.30
+80,2026-01,01_2026.pdf,5,2026-01-27,0914,C,SAIDA,Pagtº referente a - Nº 254597 - despesas com compra de material de limpeza - rodo 40 cm - para o Espaço de Eventos para os servidores da Educação do município de Araci-Ba APLB/Araci - BA - (914.3) -LOJAO DO POVO Pagtº referente - nº 000039731 - limpa piso/rejunte limp. pesada - no Espaço de Eventos - CTR da APLB/Araci - (908.19) EVANILTON OLIVEIRA CARVALHO (TICO),5.50,30549.80
+81,2026-01,01_2026.pdf,5,2026-01-27,0914,C,SAIDA,,23.00,30526.80
+82,2026-01,01_2026.pdf,5,2026-01-27,0910,C,SAIDA,Pagtº referente - nº 91636 - toalha de papel familiar 50 fls - para a o espaço de Espaço de Eventos CTR da APLB Sindicato - Delegacia do Sisal/Araci-BA - da APLB (6.4) EMBALA FEST COMERCIO DE EMBALAGENS LTDA,12.00,30514.80
+83,2026-01,01_2026.pdf,5,2026-01-27,0017,C,SAIDA,"Pagtº referente à compra de materiais de limpeza - alimentos diversos: neston, bebida l sanpa etc. _ NFC-e nº 162642 - para a sede da APLB/Araci (17.3) - RODIKSON ZAINER OLIVEIRA CARVALHO",37.30,30477.50
+84,2026-01,01_2026.pdf,5,2026-01-27,0906,C,SAIDA,"Pagtº referente a serviços prestados -Servente-, referente ao mês de 01/2026, no terreno do CTR da APLB/Araci - (906.2) ROBISON PEREIRA DOS SANTOS",1994.00,28483.50
+85,2026-01,01_2026.pdf,5,2026-01-28,0017,C,SAIDA,Referente ao pagtº referente a despesas com - arroz branco - para serem consumidos na sede da PLB Sindicato/Araci - BA (17.12) MERCADINHO DONA ANITA,14.20,28469.30
+86,2026-01,01_2026.pdf,5,2026-01-28,0008,C,SAIDA,"Pagtº referente a - limpeza e manutenção dos canteiros - pelos serviços prestados na limpeza/ executado em horário oposto, organização Sede da APLB Sindicaato - Delegacia do Sisal/Araci-Ba - 12/2025 - (8.1) - MARIA DA CONCEIÇÃO MIRANDA DA ANUNCIAÇÃO",50.00,28419.30
+87,2026-01,01_2026.pdf,5,2026-01-28,0017,C,SAIDA,Referente ao pagtº referente a despesas com - limão - para serem usadas na limpeza das grades da churrasqueuira na sede da PLB Sindicato/Araci - BA (17.16) GALEGO HORTIFRUTI,3.00,28416.30
+88,2026-02,02_2026.pdf,1,2026-02-02,0022,B,ENTRADA,Pix - Recebido Correspondente ao valor da mensalidade pelos serviços de programação/manutenção/hospedagem do aplicativo da secretaria do núcleo da APLB de QUIJINGUE - Transferência bancária referente aos meses 02/2026 - (22.9) Robeval diretor financeiro de QUIJINGUE,100.00,28516.30
+89,2026-02,02_2026.pdf,1,2026-02-02,0022,B,SAIDA,Referente ao pagtº a - mês 01/2026 - serviços de programação/manutanção de aplicativo da tesouraria/secretaria da sede da APLB Sindicato - Delegacia do Sisal/Araci-BA. (22.3) CARLOS CKLEI CARVALHO,400.00,28116.30
+90,2026-02,02_2026.pdf,1,2026-02-02,0613,B,SAIDA,"Pagtº referente a suporte com ajuda de custos para Regional Sisaleira, referente a 0?/2025 da APLB/Araci - (613.1) APLB MONTE SANTO",4400.00,23716.30
+91,2026-02,02_2026.pdf,1,2026-02-02,0820,B,SAIDA,"(820.1) Referente ao pagtº de serviços contábeis do escritório de contabilidade, referente aos meses 8, 9, 10, 11, 12/2025 através de deposito em conta corrente, comforme cupom de depósito - (820.1) M . OLIVEIRA ASSESSORIA CONTÁBIL - ACERTAR",900.00,22816.30
+92,2026-02,02_2026.pdf,1,2026-02-02,0001,B,SAIDA,Tarifa pix enviado,8.91,22807.39
+93,2026-02,02_2026.pdf,1,2026-02-02,0001,B,SAIDA,Tarifa transferencia recursos - e/l,1.70,22805.69
+94,2026-02,02_2026.pdf,1,2026-02-02,0001,B,SAIDA,Tarifa DOC/TED Eletronico,13.40,22792.29
+95,2026-02,02_2026.pdf,1,2026-02-03,0801,B,SAIDA,002 - (801.1) Suprimento de Caixa - Cheque 851048,5800.00,16992.29
+96,2026-02,02_2026.pdf,1,2026-02-03,0001,B,SAIDA,Tarifa Manutenção Conta Ativa,70.60,16921.69
+97,2026-02,02_2026.pdf,1,2026-02-03,0001,B,SAIDA,Tarifa Processamento Cheque,19.10,16902.59
+98,2026-02,02_2026.pdf,1,2026-02-04,0022,B,ENTRADA,"Pix - Recebido Correspondente ao valor da mensalidade pelos serviços de programação/manutenção/hospedagem do aplicativo da secretaria do núcleo da APLB de CANUDOS - Transferência bancária referente aos meses 1, 2, 3, 4, 5, 6/2025 - (22.6) - Antoniel dos Anjos, diretor financeiro de CANUDOS",600.00,17502.59
+99,2026-02,02_2026.pdf,1,2026-02-06,0022,B,ENTRADA,BERNADETE MARIA OLIVEIRA,102.00,17604.59
+100,2026-02,02_2026.pdf,2,2026-02-09,0702,B,ENTRADA,875 - Recebimento da Contribuição Sindical e Termo Aditivo através de 99015 - Transferência bancária fevereiro e 01/2026 - (702.2) JOSE NILTON S. BORGES,58.10,17662.69
+101,2026-02,02_2026.pdf,2,2026-02-09,0701,B,ENTRADA,99015 - Transferência recebida (PREF MUNICIPAL ARACI FPM),749.14,18411.83
+102,2026-02,02_2026.pdf,2,2026-02-09,0701,B,ENTRADA,99015 - Transferência recebida (PREF MUNICIPAL ARACI FPM),1568.62,19980.45
+103,2026-02,02_2026.pdf,2,2026-02-09,0701,B,ENTRADA,99015 - Transferência recebida (PREF MUNICIPAL ARACI FPM),26.11,20006.56
+104,2026-02,02_2026.pdf,2,2026-02-09,0701,B,ENTRADA,99015 - MDE EDUCAÇÃO REC PRÓPRIO,120.40,20126.96
+105,2026-02,02_2026.pdf,2,2026-02-09,0701,B,ENTRADA,99015 - FMAS - FUNDO MUNICIPAL DE,60.85,20187.81
+106,2026-02,02_2026.pdf,2,2026-02-09,0701,B,ENTRADA,99015 - Transferência recebida (PM ARACI - FEB),7875.77,28063.58
+107,2026-02,02_2026.pdf,2,2026-02-09,0701,B,ENTRADA,99015 - Transferência recebida (PM ARACI - FEB),6228.06,34291.64
+108,2026-02,02_2026.pdf,2,2026-02-09,0701,B,ENTRADA,99015 - Transferência recebida (PM ARACI - FEB),44653.99,78945.63
+109,2026-02,02_2026.pdf,2,2026-02-09,0701,B,ENTRADA,99015 - Transferência recebida (PM ARACI - FEB),614.17,79559.80
+110,2026-02,02_2026.pdf,2,2026-02-09,0701,B,ENTRADA,99015 - Transferência recebida (PM ARACI - FEB),3938.90,83498.70
+111,2026-02,02_2026.pdf,2,2026-02-09,0701,B,ENTRADA,99015 - Transferência recebida (PM ARACI - FEB),88150.11,171648.81
+112,2026-02,02_2026.pdf,2,2026-02-09,0701,B,ENTRADA,99015 - Transferência recebida (PM ARACI - FEB),1294.91,172943.72
+113,2026-02,02_2026.pdf,2,2026-02-09,0701,B,ENTRADA,99015 - Transferência recebida (PM ARACI - FEB),1390.20,174333.92
+114,2026-02,02_2026.pdf,2,2026-02-10,0801,B,SAIDA,002 - (801.1) Suprimento de Caixa - Cheque 85149,9900.00,164433.92
+115,2026-02,02_2026.pdf,2,2026-02-10,0001,B,SAIDA,Tarifa Processamento Cheque,19.10,164414.82
+116,2026-02,02_2026.pdf,2,2026-02-11,0702,B,ENTRADA,870 - Recebimento da Contribuição Sindical e Termo Aditivo através de (701.1) - Transferência bancária 01/2026 - (702.1) ISABEL BRAGA DANTAS,24.00,164438.82
+117,2026-02,02_2026.pdf,2,2026-02-11,0702,B,ENTRADA,870 - Recebimento da Contribuição Sindical e Termo Aditivo através de - Transferência bancária 01/2026 - (702.3) RENILDES PEREIRA,24.00,164462.82
+118,2026-02,02_2026.pdf,2,2026-02-12,0007,B,SAIDA,470 - SECRETARIA JURIDICA 01/2026 serviços advocatícios prestado pelo mesmo na Secretaria Jurídica - (7.1) LUIS HENRIQUE MATOS MOTA,4052.50,160410.32
+119,2026-02,02_2026.pdf,2,2026-02-12,0022,B,SAIDA,Referente ao pagtº a - mês 02/2026 - serviços de programação/manutanção de aplicativo da tesouraria/secretaria da sede da APLB Sindicato - Delegacia do Sisal/Araci-BA. (22.3) CARLOS CKLEI CARVALHO,400.00,160010.32
+120,2026-02,02_2026.pdf,2,2026-02-12,0007,B,SAIDA,470 - Referente ao pagtº pelos serviços prestados com apoio jurídico referente ao mês de 01/2026 - (7.3) DIANE OLIVEIRA DE ALMEIDA,810.50,159199.82
+121,2026-02,02_2026.pdf,2,2026-02-12,0007,B,SAIDA,120 - SECRETARIA JURIDICA 01/2026 Transferencia Referente pagtº pelos serviços relacionado ao previdenciariao prestados aos servidores - (7.4) MARIO CESAR N. OLIVEIRA,2431.50,156768.32
+122,2026-02,02_2026.pdf,2,2026-02-12,0022,B,SAIDA,PRESTAÇÃO DE SERVIÇOS NA ALIMENTAÇÃO DE DADOS NO SISTEMA DA TESOURARIA E SECRETARIA 02/2026 - (22.1) MESSIANO ARAUJO DE SENA,3242.00,153526.32
+123,2026-02,02_2026.pdf,2,2026-02-12,0007,B,SAIDA,470 - SECRETARIA JURIDICA 01/2026 serviços advocatícios prestado pelo mesmo na Secretaria Jurídica - (7.2) GABRIEL GERALDO CARVALHO FONTE,4052.50,149473.82
+124,2026-02,02_2026.pdf,2,2026-02-12,0002,B,SAIDA,Referente a pgtº de fatura de energia da APLB/Araci - BA 12/2025 - (2.1) COELBA SEDE,796.83,148676.99
+125,2026-02,02_2026.pdf,2,2026-02-12,0006,B,SAIDA,Referente a pgt. - nº 000.000.178 - Compra de MlteFuncional epson ecotank L3250 WI-FI para a sala de tesouraria - parcela 4/4 - da sede da APLB/ARACI-BA - (6.3) 2E TECNOLOGIA E SEGURANÇA ELETRONICA - MILLENIUM,387.25,148289.74
+126,2026-02,02_2026.pdf,3,2026-02-12,0803,B,SAIDA,(803.2) -PLANOS DE SAÚDE - Central Nacional Unimed C oop Central - Pagamento do boleto/Fatura 02/2026 - UNIMED NACIONAL C CENTRAL,1430.00,146859.74
+127,2026-02,02_2026.pdf,3,2026-02-12,0803,B,SAIDA,LANOS DE SAÚDE - Central Nacional Unimed Coop Central - Pagamento do boleto/Fatura 02/2026 (803.3) UNIMED SAUDE E ODONTO S.A,5229.80,141629.94
+128,2026-02,02_2026.pdf,3,2026-02-12,0911,B,SAIDA,109 - Referente a pgtº - 01/2026 - de fatura de Internet da sede do CTR/Araci - (911.1) DINFO - PALOMA TORRES DE OLIVEIRA,55.00,141574.94
+129,2026-02,02_2026.pdf,3,2026-02-12,0005,B,SAIDA,Referente a pgtº - 02/2026 - de fatura de Internet da sede da APLB/Araci - (5.1) GLAUBER SERVIÇOS DE INFORMÁTICA LTDA,62.50,141512.44
+130,2026-02,02_2026.pdf,3,2026-02-12,0022,B,SAIDA,109 - Transferencia - Nota 00000011 - Referente ao pagtº pelos serviços prestados com hospedagem de Domínio de Programas/Sistemas Tesouraria/Secretaria para APLB/ARACI-Ba - 02/2026 - (22.2) MARCOS RONALDO ALMEIDA SILVA,260.60,141251.84
+131,2026-02,02_2026.pdf,3,2026-02-12,0803,B,SAIDA,109 - (803.4) PLANOS DE SAÚDE - Central Nacional Unimed Co op Central - Pagamento do boleto/Fatura 01/2026 Pagamento de Boleto - UNIAO MEDICA,6842.23,134409.61
+132,2026-02,02_2026.pdf,3,2026-02-12,0012,B,SAIDA,109 - Pagtº referente a Boleto - Pagamento mensal - 01/2026 - do seguro automotivo do veículo da APLB/ARACI-BA - (12.3) FCK PROTECAO VEICULAR,143.22,134266.39
+133,2026-02,02_2026.pdf,3,2026-02-12,0803,B,SAIDA,109 - (803.1) PLANOS DE SAÚDE - Pagamento do boleto/Fatura 01/2026 - UNIMED NACIONAL C CENTRAL,94278.62,39987.77
+134,2026-02,02_2026.pdf,3,2026-02-12,0918,B,SAIDA,DESP. TRABALHISTAS - 02/2026 - 50000355066008 - (918.2) GPS RECEITA FEDERAL,191.62,39796.15
+135,2026-02,02_2026.pdf,3,2026-02-12,0918,B,SAIDA,375 - (918.1) DESP. TRABALHISTAS - 02/2026 FGTS Desc. e Arrec. RECEITA FEDERAL,758.92,39037.23
+136,2026-02,02_2026.pdf,3,2026-02-12,0001,B,SAIDA,170 - Tarifas referente a Transferencia de Recursos 035.509,2.60,39034.63
+137,2026-02,02_2026.pdf,3,2026-02-12,0001,B,SAIDA,171 - Tarifas referente a Transferencia de Recursos 035.510,2.60,39032.03
+138,2026-02,02_2026.pdf,3,2026-02-12,0001,B,SAIDA,172 - Tarifas referente a Transferencia de Recursos 065.251,1.70,39030.33
+139,2026-02,02_2026.pdf,3,2026-02-12,0001,B,SAIDA,173 - Tarifas referente a Transferencia de Recursos 065.252,1.70,39028.63
+140,2026-02,02_2026.pdf,3,2026-02-12,0001,B,SAIDA,174 - Tarifas referente a Transferencia de Recursos 065.253,1.70,39026.93
+141,2026-02,02_2026.pdf,3,2026-02-12,0001,B,SAIDA,175 - Tarifas referente a Transferencia de Recursos 065.254,1.70,39025.23
+142,2026-02,02_2026.pdf,3,2026-02-13,0702,B,ENTRADA,Cadastros 00186401 - Recebimento da Contribuição Sindical e Termo Aditivo através de transferência bancária - 01/2026 - (702.4) VANUSIA SANTANA DA CRUZ,1622.00,40647.23
+143,2026-02,02_2026.pdf,3,2026-02-23,0022,B,ENTRADA,Pix - Recebido Correspondente ao valor da mensalidade pelos serviços de programação/manutenção/hospedagem do aplicativo da secretaria do núcleo da APLB de QUIJINGUE - Transferência bancária referente aos meses 12/2025 E 01/2026 - (22.9) Robeval diretor financeiro de QUIJINGUE,200.00,40847.23
+144,2026-02,02_2026.pdf,3,2026-01-02,0017,C,SAIDA,Referente ao pagtº referente a despesas com - leite pó CCGL integral 50x200g - para serem consumidos na sede da PLB Sindicato/Araci - BA (17.12) MERCADINHO DONA ANITA,13.30,40833.93
+145,2026-02,02_2026.pdf,4,2026-01-01,0906,C,SAIDA,"Pagtº referente a serviços prestados - Serviços Gerais - referente ao restante do pagamento de férias de 05/01/2026 a 03/02/2026 e 1/3 de férias, relativos ao período aquisitivo de 01/03/2025, pelos serviços prestados no Espaço de Eventos CTR da APLB/Araci - (906.1) DERMEVAL JESUS DO NASCIMENTO ????????????????????????????????????????????",170.10,40663.83
+146,2026-02,02_2026.pdf,4,2026-02-02,0012,C,SAIDA,Pagtº referente a despesas com lavagem de bancos e estofados em geral do Carro UNO DA APLB - UNO - LUAN SANTOS SANTIAGO,340.00,40323.83
+147,2026-02,02_2026.pdf,4,2026-02-03,0017,C,SAIDA,"Pagtº - referente a compra de material alimentícios diversos, - maçã e banana - para reunião reaizadças no salão de reiniao da APLB/Araci - (17.1) GALEGO HORTIFRUTI",20.00,40303.83
+148,2026-02,02_2026.pdf,4,2026-02-03,0801,C,ENTRADA,002 - (801.1) Suprimento de Caixa - Cheque 851048,5800.00,46103.83
+149,2026-02,02_2026.pdf,4,2026-02-05,0906,C,SAIDA,PREST. SERV. CONST. / CTR - AJUDA DE CUSTO COMBUSTÍVEL 01/2026 - (906.2) ROBISON PEREIRA DOS SANTOS,100.00,46003.83
+150,2026-02,02_2026.pdf,4,2026-02-06,0010,C,SAIDA,Pagtº referente - nº 93660 - saco de lixo - para a sede da APLB Sindicato - Delegacia do Sisal/Araci-BA - da APLB (6.4) EMBALA FEST COMERCIO DE EMBALAGENS LTDA,50.25,45953.58
+151,2026-02,02_2026.pdf,4,2026-02-06,0173,C,SAIDA,Pagtº referente a despesas com serviços diversos com manutenção/instalção de equipamento de áudio e vídeo e seus acessórios para realização da XIV Assembleia realizado no dia 13/11/2025 na quadra de esporte do antigo Colégio Maria de Lurdes. APLB/Araci - BA - (21.3) JOSÉ CARLOS LISBOA OLIVEIRA - MINÚ,100.00,45853.58
+152,2026-02,02_2026.pdf,4,2026-02-06,0174,C,SAIDA,Pagtº referente a despesas com serviços diversos com manutenção/instalção de equipamento de áudio e vídeo e seus acessórios para realização da XIV Assembleia realizado no dia 18/12/2025 na quadra de esporte do antigo Colégio Maria de Lurdes. APLB/Araci - BA - (21.3) JOSÉ CARLOS LISBOA OLIVEIRA - MINÚ,100.00,45753.58
+153,2026-02,02_2026.pdf,4,2026-02-10,0908,C,SAIDA,393 - Referente ao pagtº - NF - e Nº 000.000.220 - de compras de materiais diversos para contrução no CTR-APLB SINDICATO ARACI/BA - (908.2) JUSCELINO OLIVEIRA LIMA,1080.00,44673.58
+154,2026-02,02_2026.pdf,4,2026-02-10,0017,C,SAIDA,"Pagtº - referente a compra de material alimentícios diversos, - maçã e banana - para reunião reaizadças no salão de reiniao da APLB/Araci - (17.1) GALEGO HORTIFRUTI",20.00,44653.58
+155,2026-02,02_2026.pdf,4,2026-02-10,0908,C,SAIDA,"Pagtº - NF-e - referente à compra de plantas Felicio P, Felício M, Podocarpo, Pingo de ouro - para terreno da APLB/Araci - (915.1) - DIAMERSON MELO DE SANTANA",498.00,44155.58
+156,2026-02,02_2026.pdf,4,2026-02-10,0801,C,ENTRADA,002 - (801.1) Suprimento de Caixa - Cheque 851049,9900.00,54055.58
+157,2026-02,02_2026.pdf,4,2026-02-10,0501,C,SAIDA,Pagtº referente a compra de bolos de diversos sabores para reuniões realizada no dia 29/01/2026 na sede da APLB Araci/Ba com a presença da secretária da Educação do Município de Araci - Ba trasmissao da XIV Assembleia remota reslizada na sede da - APLB/ARACI - BA - -(501.2) JEIVANIA DIAS FERREIRA - JEI,30.00,54025.58
+158,2026-02,02_2026.pdf,5,2026-02-10,0906,C,SAIDA,"Pagtº referente a serviços prestados -Servente-, referente ao mês de 02/2026 mais o 1/3 de férias, adiantamento de férias, no terreno do CTR da APLB/Araci - (906.2) ROBISON PEREIRA DOS SANTOS",1495.00,52530.58
+159,2026-02,02_2026.pdf,5,2026-02-10,0501,C,SAIDA,Pagtº referente a compra de bolos de diversos sabores para reuniões realizada no dia 29/01/2026 na sala de reunioes da sede da APLB Araci/Ba com a presença da secretária da Educação do Município de Araci - APLB/ARACI - BA - (501.2) JEIVANIA DIAS FERREIRA - JEI,34.00,52496.58
+160,2026-02,02_2026.pdf,5,2026-02-10,0908,C,SAIDA,Referente ao pagtº referente ao pagamento por fornecimento de seis caminhões de água da Embasa - placa caminhão JRM 2127/BA - para o CTR- APLB SINDICATO ARACI/BA - (908.1) ARILSON SANTOS DA ANUNCIAÇÃO,1020.00,51476.58
+161,2026-02,02_2026.pdf,5,2026-02-10,0904,C,SAIDA,Referente ao pagtº - NFC-e 000039078 - Cadeira Diretor QZY2501E2 - parcela da prestação 3/6 referencia do carnê 76820. Para escritório da Sede da APLB Sindicato - Delegacia do Sisal/Araci-BA. - (904.1) ELETRODOMESTICO CAMILA,313.00,51163.58
+162,2026-02,02_2026.pdf,5,2026-02-10,0011,C,SAIDA,Referente ao pagtº - 01070 - de abastecimento com gasolina de veículos para abastecimento de carro para serviços diversos dessa instituição - ??/02/2026- da APLB/SINDICATO/ARACI-BA . - (11.1) POSTO ESTRELA DO NORTE,291.32,50872.26
+163,2026-02,02_2026.pdf,5,2026-02-10,0006,C,SAIDA,Referente a pgt. - nº 000.002.425- Compra de material diversos para expediente - caixa de papel de ofício - sede da APLB/ARACI-BA - (6.1) PAPEL E CIA LIVRARIA E PAPELARIA LTDA,354.70,50517.56
+164,2026-02,02_2026.pdf,5,2026-02-10,0802,C,SAIDA,Pagtº referente a despesas com -RESARCIMENTO/GRATIFICAÇÃO- de auxílio rural - 01/2026 - (802.2) TIAGO SANTIAGO DE CARVALHO,799.00,49718.56
+165,2026-02,02_2026.pdf,5,2026-02-11,0010,C,SAIDA,Pagtº referente - nº 216348 a - papel higienico veludo - para ser usado na sede e no Espaço de Eventos CTR da APLB Sindicato - Delegacia do Sisal/Araci-BA - da APLB (205.1) JOSEMAR SILVA FERREIRA EIRELI,92.00,49626.56
+166,2026-02,02_2026.pdf,5,2026-02-13,0904,C,SAIDA,"Referente ao pagtº - NFC-e 000.001.144 - uma Cadeira Diretor QZY2501E2, dois BEB. ESMALTEC EGC35B BR.220V (COLUNA) - compra parcelada em 6 vezes com entrada de R$ 500,00 ficando assim com 6 parcelas de R$ 335,00 para serem pagas por mes - Delegacia do Sisal/Araci-BA. - (904.1) ELETRODOMESTICO CAMILA",500.00,49126.56
+167,2026-02,02_2026.pdf,5,2026-02-20,0914,C,SAIDA,Pagtº referente - nº 94374 - 1 kg saco AD c/furo N8 15x20cm 100und - para a o espaço de Espaço de Eventos CTR da APLB Sindicato - Delegacia do Sisal/Araci- BA - da APLB (6.4) EMBALA FEST COMERCIO DE EMBALAGENS LTDA,15.00,49111.56
+168,2026-02,02_2026.pdf,5,2026-02-24,0017,C,SAIDA,Referente ao pagtº DAV Nro: 130412 referente a despesas com - isqueiro bic maxi grande - para a cozinha da sede da PLB Sindicato/Araci - BA BA (17.12) MERCADINHO DONA ANITA,9.60,49101.96
+169,2026-02,02_2026.pdf,5,2026-02-24,0013,C,SAIDA,"Pagtº referente - nº 034280 - água galão, para serem usados na cozinha da sede da APLB - (251.17) - DISK GELADO",9.00,49092.96
+170,2026-02,02_2026.pdf,5,2026-02-25,0017,C,SAIDA,"Referente ao pagtº- Nº 643 referente a despesas com - Canela Pau, Tapioca. Para serem usados na cozinha da APLB.Araci-Ba - (17.16) HORTIFRUI SANTIAGO L J 2",9.48,49083.48
+171,2026-02,02_2026.pdf,6,2026-02-25,0017,C,SAIDA,Referente ao pagtº DAV Nro: 130465 referente a despesas com - coco ralado - para a cozinha da sede da PLB Sindicato/Araci - BA BA (17.12) MERCADINHO DONA ANITA,2.90,49080.58
+172,2026-02,02_2026.pdf,6,2026-02-25,0017,C,SAIDA,"Pagtº referente a compra de alimentos em greral - creme de leite, iogurte - Delegacia do Sisal/Araci-BA - da APL - (17.3) RODRIKSON ZAINER OLIVEIRA",29.10,49051.48
+173,2026-02,02_2026.pdf,6,2026-02-26,0501,C,SAIDA,"Pagtº - NFC-a nª 22425 - chinezinha cocada pe de moleque, nego bom, quebra queixo - para reunioes realizada na sede da APLB/Araci - (17.10) ANALU BOMBONIERE",37.00,49014.48
+174,2026-02,02_2026.pdf,6,2026-02-26,0501,C,SAIDA,Pagtº referente a compra de bolos de diversos sabores para reuniões realizada no dia 29/01/2026 na sala de reunioes da sede da APLB Araci/Ba com a presença da secretária da Educação do Município de Araci - APLB/ARACI - BA - (501.2) JEIVANIA DIAS FERREIRA - JEI,34.00,48980.48
+175,2026-02,02_2026.pdf,6,2026-02-26,0501,C,SAIDA,"Referente ao pagtº- Nº 793 referente a despesas com - Kiui, Uva, Ameirxa, Maçã. Para serem usados em reunião no salão da APLB.Araci-Ba - (17.16) HORTIFRUI SANTIAGO L J 2",34.12,48946.36
+176,2026-02,02_2026.pdf,6,2026-02-26,0916,C,SAIDA,Referente ao pagtº de confecção de pedras de marmore para a pia e os balcões da churrasqueira do CTR da APLB Sindicato - Delegacia do Sisal/Araci-BA. (916.12) - GERMANO REIS DO NASCIMENTO,8100.00,40846.36
+177,2026-02,02_2026.pdf,6,2026-02-26,0017,C,SAIDA,"Pagtº referente a compra de alimentos em greral - leite pó CCGL, TAPIOCA - - Delegacia do Sisal/Araci-BA - da APL - (17.3) RODRIKSON ZAINER OLIVEIRA",14.80,40831.56
+178,2026-03,03_2026.pdf,1,2026-03-03,0801,B,SAIDA,002 - (801.1) Suprimento de Caixa - Cheque 851050,9900.00,30931.56
+179,2026-03,03_2026.pdf,1,2026-03-03,0007,B,SAIDA,470 - Referente ao pagtº pelos serviços prestados com apoio jurídico referente ao mês de 02 /2026 - (7.3) DIANE OLIVEIRA DE ALMEIDA,810.50,30121.06
+180,2026-03,03_2026.pdf,1,2026-03-03,0007,B,SAIDA,120 - SECRETARIA JURIDICA 02/2026 Transferencia Referente pagtº pelos serviços relacionado ao previdenciariao prestados aos servidores - (7.4) MARIO CESAR N. OLIVEIRA,2431.50,27689.56
+181,2026-03,03_2026.pdf,1,2026-03-03,0022,B,SAIDA,PRESTAÇÃO DE SERVIÇOS NA ALIMENTAÇÃO DE DADOS NO SISTEMA DA TESOURARIA E SECRETARIA 03/2026 - (22.1) MESSIANO ARAUJO DE SENA,3242.00,24447.56
+182,2026-03,03_2026.pdf,1,2026-03-03,0003,B,SAIDA,Referente a pgtº de fatura de água da APLB/Araci - BA -03/2026 - (3.1) EMBASA SEDE,53.62,24393.94
+183,2026-03,03_2026.pdf,1,2026-03-03,0001,B,SAIDA,Cobrança referente 03/03/2026,70.60,24323.34
+184,2026-03,03_2026.pdf,1,2026-03-03,0001,B,SAIDA,Cobrança referente 03/03/2026,2.60,24320.74
+185,2026-03,03_2026.pdf,1,2026-03-03,0001,B,SAIDA,Cobrança referente 03/03/2026,2.60,24318.14
+186,2026-03,03_2026.pdf,1,2026-03-03,0001,B,SAIDA,Cobrança referente 03/03/2026,1.70,24316.44
+187,2026-03,03_2026.pdf,1,2026-03-03,0001,B,SAIDA,Cobrança referente 03/03/2026,19.10,24297.34
+188,2026-03,03_2026.pdf,1,2026-03-05,0701,B,ENTRADA,05/03 13:40 PREF MUNICIPAL ARACI FPM,1568.62,25865.96
+189,2026-03,03_2026.pdf,1,2026-03-05,0701,B,ENTRADA,05/03 13:40 PREF MUNICIPAL ARACI FPM,749.14,26615.10
+190,2026-03,03_2026.pdf,1,2026-03-05,0701,B,ENTRADA,05/03 13:40 PREF MUNICIPAL ARACI FPM,397.20,27012.30
+191,2026-03,03_2026.pdf,1,2026-03-05,0701,B,ENTRADA,05/03 13:39 PM ARACI -FUS,48.87,27061.17
+192,2026-03,03_2026.pdf,1,2026-03-05,0701,B,ENTRADA,05/03 13:47 MDE EDUCACAO REC PROPRIO,120.40,27181.57
+193,2026-03,03_2026.pdf,1,2026-03-05,0701,B,ENTRADA,05/03 13:37 FMAS-FUNDO MUNICIPAL DE,60.85,27242.42
+194,2026-03,03_2026.pdf,1,2026-03-05,0701,B,ENTRADA,05/03 13:34 SME ARACI - FEB,44321.26,71563.68
+195,2026-03,03_2026.pdf,1,2026-03-05,0701,B,ENTRADA,05/03 13:34 SME ARACI - FEB,713.79,72277.47
+196,2026-03,03_2026.pdf,1,2026-03-05,0701,B,ENTRADA,05/03 13:34 SME ARACI - FEB,7238.20,79515.67
+197,2026-03,03_2026.pdf,1,2026-03-05,0701,B,ENTRADA,05/03 13:34 SME ARACI - FEB,7967.99,87483.66
+198,2026-03,03_2026.pdf,1,2026-03-05,0701,B,ENTRADA,05/03 13:34 SME ARACI - FEB,5196.70,92680.36
+199,2026-03,03_2026.pdf,2,2026-03-05,0701,B,ENTRADA,05/03 13:34 SME ARACI - FEB,1294.91,93975.27
+200,2026-03,03_2026.pdf,2,2026-03-05,0701,B,ENTRADA,05/03 13:34 SME ARACI - FEB,86365.25,180340.52
+201,2026-03,03_2026.pdf,2,2026-03-05,0701,B,ENTRADA,05/03 13:34 SME ARACI - FEB,1555.70,181896.22
+202,2026-03,03_2026.pdf,2,2026-03-05,0022,B,ENTRADA,Correspondente ao valor da mensalidade pelos serviços de programação/manutenção/hospedagem do aplicativo da secretaria do núcleo da APLB de Euclides da Cunha - Transferência bancária referente aos meses10 e 01/2026 - (22.8) Suely diretor (a) financeiro de EUCLIDES DA CUNHA,100.00,181996.22
+203,2026-03,03_2026.pdf,2,2026-03-09,0702,B,ENTRADA,875 - Recebimento da Contribuição Sindical e Termo Aditivo através de 99015 - Transferência bancária fevereiro e 02/2026 - (702.2) JOSE NILTON S. BORGES,58.10,182054.32
+204,2026-03,03_2026.pdf,2,2026-03-09,0702,B,ENTRADA,870 - Recebimento da Contribuição Sindical e Termo Aditivo através de - Transferência bancária 02/2026 - (702.3) RENILDES PEREIRA,24.00,182078.32
+205,2026-03,03_2026.pdf,2,2026-03-10,0702,B,ENTRADA,870 - Recebimento da Contribuição Sindical e Termo Aditivo através de (701.1) - Transferência bancária 02/2026 - (702.1) ISABEL BRAGA DANTAS,24.00,182102.32
+206,2026-03,03_2026.pdf,2,2026-03-12,0801,B,SAIDA,002 - (801.1) Suprimento de Caixa - Cheque 851051,9900.00,172202.32
+207,2026-03,03_2026.pdf,2,2026-03-12,0801,C,ENTRADA,002 - (801.1) Suprimento de Caixa - Cheque 851051,9900.00,182102.32
+208,2026-03,03_2026.pdf,2,2026-03-12,0007,B,SAIDA,470 - SECRETARIA JURIDICA 02/2026 serviços advocatícios prestado pelo mesmo na Secretaria Jurídica - (7.1) LUIS HENRIQUE MATOS MOTA,4052.50,178049.82
+209,2026-03,03_2026.pdf,2,2026-03-12,0022,B,SAIDA,Referente ao pagtº a - mês 03 /2026 - serviços de programação/manutanção de aplicativo da tesouraria/secretaria da sede da APLB Sindicato - Delegacia do Sisal/Araci-BA. (22.3) CARLOS CKLEI CARVALHO,400.00,177649.82
+210,2026-03,03_2026.pdf,2,2026-03-12,0007,B,SAIDA,470 - SECRETARIA JURIDICA 02 /2026 serviços advocatícios prestado pelo mesmo na Secretaria Jurídica - (7.2) GABRIEL GERALDO CARVALHO FONTE,4052.50,173597.32
+211,2026-03,03_2026.pdf,2,2026-03-12,0911,B,SAIDA,109 - Referente a pgtº - 02/2026 - de fatura de Internet da sede do CTR/Araci - (911.1) DINFO - PALOMA TORRES DE OLIVEIRA,55.00,173542.32
+212,2026-03,03_2026.pdf,2,2026-03-12,0803,B,SAIDA,UNIAO MEDICA,7952.07,165590.25
+213,2026-03,03_2026.pdf,2,2026-03-12,0803,B,SAIDA,UNIMED NACIONAL C CENTRAL,93598.38,71991.87
+214,2026-03,03_2026.pdf,2,2026-03-12,0005,B,SAIDA,Referente a pgtº - 03/2026 - de fatura de Internet da sede da APLB/Araci - (5.1) GLAUBER SERVIÇOS DE INFORMÁTICA LTDA,62.50,71929.37
+215,2026-03,03_2026.pdf,2,2026-03-12,0012,B,SAIDA,109 - Pagtº referente a Boleto - Pagamento mensal - 02/2026 - do seguro automotivo do veículo da APLB/ARACI-BA - (12.3) FCK PROTECAO VEICULAR,143.22,71786.15
+216,2026-03,03_2026.pdf,2,2026-03-12,0803,B,SAIDA,UNIMED SAUDE E ODONTO S.A,5174.24,66611.91
+217,2026-03,03_2026.pdf,2,2026-03-12,0000,B,SAIDA,12/03 16:40 CEF MATRIZ,152.31,66459.60
+218,2026-03,03_2026.pdf,2,2026-03-03,0003,B,SAIDA,Referente a pgtº de fatura de água da APLB/Araci - BA - 03/2026 - (3.1) EMBASA SEDE,53.62,66405.98
+219,2026-03,03_2026.pdf,2,2026-03-12,0000,B,SAIDA,RFB-DARF CODIGO DE BARRAS,598.24,65807.74
+220,2026-03,03_2026.pdf,2,2026-03-12,0613,B,SAIDA,"Pagtº referente a suporte com ajuda de custos para Regional Sisaleira, referente a 11/2025 da APLB/Araci - (613.1) APLB MONTE SANTO",1100.00,64707.74
+221,2026-03,03_2026.pdf,2,2026-03-12,0001,B,SAIDA,Cobrança referente 12/03/2026,1.70,64706.04
+222,2026-03,03_2026.pdf,2,2026-03-12,0001,B,SAIDA,Cobrança referente 12/03/2026,1.70,64704.34
+223,2026-03,03_2026.pdf,2,2026-03-12,0001,B,SAIDA,Cobrança referente 12/03/2026,1.70,64702.64
+224,2026-03,03_2026.pdf,2,2026-03-12,0001,B,SAIDA,Cobrança referente 12/03/2026,19.10,64683.54
+225,2026-03,03_2026.pdf,2,2026-03-12,0001,B,SAIDA,Cobrança referente 12/03/2026,13.40,64670.14
+226,2026-03,03_2026.pdf,3,2026-03-13,0022,B,ENTRADA,Pix - Recebido Correspondente ao valor da mensalidade pelos serviços de programação/manutenção/hospedagem do aplicativo da secretaria do núcleo da APLB de QUIJINGUE - Transferência bancária referente aos meses 02/2026 - (22.9) Robeval diretor financeiro de QUIJINGUE,100.00,64770.14
+227,2026-03,03_2026.pdf,3,2026-03-17,0812,B,ENTRADA,ESTORNO BANCÁRIO,5500.00,70270.14
+228,2026-03,03_2026.pdf,3,2026-03-17,0908,B,SAIDA,393 - Referente ao pagtº - NF - e Nº 000.000.223 - de compras de materiais diversos para contrução no CTR-APLB SINDICATO ARACI/BA - (908.2) JUSCELINO OLIVEIRA LIMA,4547.50,65722.64
+229,2026-03,03_2026.pdf,3,2026-03-17,0908,B,SAIDA,104 4765 01973740508 JOSE MARCOS MOURA - A SAÍDA FOI EXTORNADA,5500.00,60222.64
+230,2026-03,03_2026.pdf,3,2026-03-17,0001,B,SAIDA,Cobrança referente 17/03/2026,13.40,60209.24
+231,2026-03,03_2026.pdf,3,2026-03-17,0001,B,SAIDA,Cobrança referente 17/03/2026,13.40,60195.84
+232,2026-03,03_2026.pdf,3,2026-03-18,0702,B,ENTRADA,Cadastros 00186401 - Recebimento da Contribuição Sindical e Termo Aditivo através de transferência bancária - 02/2026 - (702.4) VANUSIA SANTANA DA CRUZ,1622.00,61817.84
+233,2026-03,03_2026.pdf,3,2026-03-18,0803,B,ENTRADA,18/03 09:19 00070786704500 MESSIANO AR,1.00,61818.84
+234,2026-03,03_2026.pdf,3,2026-03-18,0002,B,SAIDA,109 - Referente a pgtº de fatura de energia da APLB/Araci - BA 12/2025 - (2.1) COELBA SEDE,546.30,61272.54
+235,2026-03,03_2026.pdf,3,2026-03-18,0022,B,SAIDA,109 - Transferencia - Nota 00000011 - Referente ao pagtº pelos serviços prestados com hospedagem de Domínio de Programas/Sistemas Tesouraria/Secretaria para APLB/ARACI-Ba - 03/2026 - (22.2) MARCOS RONALDO ALMEIDA SILVA,260.60,61011.94
+236,2026-03,03_2026.pdf,3,2026-03-18,0908,B,SAIDA,Referente ao pagtº por restante de blocos de cimento para piso/calçamento na construção no centro de Treinamento e Recreação - última parcela - no CTR-APLB SINDICATO ARACI/BA - (908.11) JOSE MARCOS MOURA LIMA,5500.00,55511.94
+237,2026-03,03_2026.pdf,3,2026-03-18,0001,B,SAIDA,Cobrança referente 18/03/2026,13.40,55498.54
+238,2026-03,03_2026.pdf,3,2026-03-02,0501,C,SAIDA,Referente ao pagtº- Nº 14274 referente a despesas com almoço para advogados que vinheram para reunião para alinhamento dos processos jurídicos na sede da APLB.Araci-Ba - (17.16) HORTIFRUI SANTIAGO L J 2,135.00,55363.54
+239,2026-03,03_2026.pdf,3,2026-03-02,0017,C,SAIDA,Referente ao pagtº DAV Nro: 130922 referente a despesas com - café - para a cozinha da sede da PLB Sindicato/Araci - BA BA (17.12) MERCADINHO DONA ANITA,17.50,55346.04
+240,2026-03,03_2026.pdf,3,2026-03-03,0906,C,SAIDA,"Pagtº referente a serviços prestados - Serviços Gerais -, referente ao mês de 02/2026, no terreno do CTR da APLB/Araci - CPF868.458.025-72 (906.1) DERMEVAL JESUS DO NASCIMENTO",1530.93,53815.11
+241,2026-03,03_2026.pdf,3,2026-03-03,0906,C,SAIDA,PREST. SERV. CONST. / CTR - AJUDA DE CUSTO COMBUSTÍVEL 02/2026 CPF868.458.025-72 (906.1) DERMEVAL JESUS DO NASCIMENTO,100.00,53715.11
+242,2026-03,03_2026.pdf,3,2026-03-03,0008,C,SAIDA,Pagtº referente a - salários proporcional - pelos serviços prestados na limpeza/ organização Sede da APLB Sindicaato - Delegacia do Sisal/Araci-Ba - 02/2026 - CPF 777.576.295-00 (8.1) - MARIA DA CONCEIÇÃO MIRANDA DA ANUNCIAÇÃO,810.50,52904.61
+243,2026-03,03_2026.pdf,3,2026-03-03,0906,C,SAIDA,"Pagtº referente a serviços prestados -Pedreiro-, referente ao mês de 02/2026, no terreno do CTR da APLB/Araci Ba - CPF 005.201.895-40 (906.3) GILDAZIO SALVADOR DAS NEVES",2383.00,50521.61
+244,2026-03,03_2026.pdf,3,2026-03-03,0906,C,SAIDA,PREST. SERV. CONST. / CTR - AJUDA DE CUSTO COMBUSTÍVEL 02/2026 - CPF 005.201.895- 40 (906.3) GILDAZIO SALVADOR DAS NEVES,100.00,50421.61
+245,2026-03,03_2026.pdf,4,2026-03-03,0017,C,SAIDA,Referente ao pagtº- Nº 1579 referente a despesas com - banana prata penca - Para serem usados na cozinha da APLB.Araci-Ba - (17.16) HORTIFRUI SANTIAGO L J 2,10.00,50411.61
+246,2026-03,03_2026.pdf,4,2026-03-04,0501,C,SAIDA,Pagtº referente a serviços prestados extras na limpeza e organização de ambiente Sede do Sindicato - Delegacia do Sisal/Araci-Ba CPF 777.576.295-00 (8.1) - MARIA DA CONCEIÇÃO MIRANDA DA ANUNCIAÇÃO,350.00,50061.61
+247,2026-03,03_2026.pdf,4,2026-03-04,0916,C,SAIDA,"Pagtº referente a 137:50hs de serviços de carpintaria a 30 reais por hora - para colocar e reestruturar o pergolado da churasqueira e as cancelas de eucalipto nas escadas, colocação de bica na cobertura de salao de jogos no espaço do balcão/churrasqueira no Espaço de Eventos CTR da APLB/Araci - (916.14) JOSE LOPES CARNEIRO FILHO",2865.00,47196.61
+248,2026-03,03_2026.pdf,4,2026-03-04,0802,C,SAIDA,"Pgtº referente ao ressarcimento da gratificação de área rural de Diretores da APLB/Araci, referente ao mês de 01/2026 - ELMER CARVALHO DE OLIVEIRA",596.00,46600.61
+249,2026-03,03_2026.pdf,4,2026-03-04,0802,C,SAIDA,"Pgtº referente ao ressarcimento da gratificação de área rural de Diretores da APLB/Araci, referente ao mês de 0 2/2026 - ELMER CARVALHO DE OLIVEIRA",596.00,46004.61
+250,2026-03,03_2026.pdf,4,2026-03-04,0802,C,SAIDA,Pgtº referente a 1/3 de férias de 2025 - ressarcimento da gratificação de área rural de Diretores da APLB/Araci - ELMER CARVALHO DE OLIVEIRA,198.66,45805.95
+251,2026-03,03_2026.pdf,4,2026-03-09,0017,C,SAIDA,"Pagtº referente à compra de materiais de limpeza - leite pó CCGL, café marata, biscoito cracker -. _ NFC-e nº 164427 - para a sede da APLB/Araci (17.3) - RODIKSON ZAINER OLIVEIRA CARVALHO",74.80,45731.15
+252,2026-03,03_2026.pdf,4,2026-03-10,0013,C,SAIDA,"Pagtº referente - nº 034280 - água galão, para serem usados na cozinha da sede da APLB - (251.17) - DISK GELADO",9.00,45722.15
+253,2026-03,03_2026.pdf,4,2026-03-11,0908,C,SAIDA,Pagtº referente à compra de uma caçãmba de aterro para a rampa do camarim para o palco do eventos CTR APLB/Araci - (908.14) CRISTOVÃO EVANGELISTA DA SILVA DE ALCANTARA,200.00,45522.15
+254,2026-03,03_2026.pdf,4,2026-03-03,0801,C,ENTRADA,002 - (801.1) Suprimento de Caixa - Cheque 85050,9900.00,55422.15
+255,2026-03,03_2026.pdf,4,2026-03-16,0017,C,SAIDA,Referente ao pagtº- Nº 1579 referente a despesas com - banana prata penca - Para serem usados na cozinha da APLB.Araci-Ba - (17.16) HORTIFRUI SANTIAGO L J 2,22.28,55399.87
+256,2026-03,03_2026.pdf,4,2026-03-16,0017,C,SAIDA,"Pagtº referente à compra de materiais de limpeza - leite leite lv betania zero lactose, iogurte natural-. _ NFC-e nº 164746 - para a sede da APLB/Araci (17.3) - RODIKSON ZAINER OLIVEIRA CARVALHO",15.80,55384.07
+257,2026-03,03_2026.pdf,4,2026-03-17,0006,C,SAIDA,Referente a pgt. - nº - Compra de adaptador para carregador do notbook de Tiago na sede da APLB/ARACI-BA - Hamilton Almeida dos Santos,5.00,55379.07
+258,2026-03,03_2026.pdf,4,2026-03-18,0904,C,SAIDA,"Referente a pgt. - nº 000.003.463 - materiais: MONITOR AOC LED E9 70SWHNL 18 ,5 HDMI VGA - da sede da APLB/ARACI-BA - (6.3) 2E TECNOLOGIA E SEGURANÇA ELETRONICA - MILLENIUM",449.00,54930.07
+259,2026-03,03_2026.pdf,4,2026-03-18,0006,C,SAIDA,"Referente a pgt. - nº 000.003.464 - materiais: CABO USB IMPRESSORA KNUP KP - 5001 3M, REFIL TANQUE TINTA EPSON T544 PRETO- da sede da APLB/ARACI-BA - (6.3) 2E TECNOLOGIA E SEGURANÇA ELETRONICA - MILLENIUM",77.90,54852.17
+260,2026-03,03_2026.pdf,4,2026-03-19,0013,C,SAIDA,Pagtº referente - nº 035362 - água galão para ser usada na sede da APLB - Delegacia do Sisal/Araci-BA - da APLB - (251.17) - DISK GELADO,9.00,54843.17
+261,2026-03,03_2026.pdf,4,2026-03-19,0021,C,SAIDA,Referente a pgt. - - Serviços de manutenção corretiva de impressora da sede da sede da APLB/ARACI-BA - (21.4) MATEUS HENRIQUE NASCIMENTO SOUSA,100.00,54743.17
+262,2026-03,03_2026.pdf,4,2026-03-20,0012,C,SAIDA,Pagtº referente a seviços prestados na manutenção/conserto do veiculo da APLB - Delogacia Sindical do Sisal de Aracii/BA - MARCIO R. DE MOURA,700.00,54043.17
+263,2026-03,03_2026.pdf,5,2026-03-20,0916,C,SAIDA,"Pagtº referente a - pelos serviços prestados na limpeza e manutenção dos dois espaços, casa e Bar no CTR espaço de Eventos da APLB Sindicaato - Delegacia do Sisal/Araci-Ba - (8.1) - CPF 777.576.295-00 (8.1) - MARIA DA CONCEIÇÃO MIRANDA DA ANUNCIAÇÃO",40.00,54003.17
+264,2026-03,03_2026.pdf,5,2026-03-23,0904,C,SAIDA,Referente ao pagtº - NFC-e 000039078 - Cadeira Diretor QZY2501E2 - parcela da prestação 4/6 referencia do carnê 76820. Para escritório da Sede da APLB Sindicato - Delegacia do Sisal/Araci-BA. - (904.1) ELETRODOMESTICO CAMILA,313.00,53690.17
+265,2026-03,03_2026.pdf,5,2026-03-23,0904,C,SAIDA,"Referente ao pagtº - NFC-e 000.001.144 - uma Cadeira Diretor QZY2501E2, dois BEB. ESMALTEC EGC35B BR.220V (COLUNA) - compra parcelada em 6 vezes com entrada de R$ 500,00 ficando assim com 6 parcelas de R$ 335,00 para serem pagas por mes - parcela 1/6 - Delegacia do Sisal/Araci-BA. - (904.1) ELETRODOMESTICO CAMILA",335.00,53355.17
+266,2026-03,03_2026.pdf,5,2026-03-24,0017,C,SAIDA,"Pagtº referente à compra de materiais de limpeza - biscoito marilan, café kimino, bebida l samp. - _ NFC-e nº 165112 - para a sede da APLB/Araci (17.3) - RODIKSON ZAINER OLIVEIRA CARVALHO",57.60,53297.57
+267,2026-03,03_2026.pdf,5,2026-03-24,0017,C,SAIDA,"Pagtº referente - nº 78683 - goiaba, banana - para ser usados na sede da APLB - Delegacia do Sisal/Araci-BA (251.3) PAULIMAGNO CERQUEIRA BRITO",13.30,53284.27
+268,2026-03,03_2026.pdf,5,2026-03-25,0017,C,SAIDA,Pgtº referente - Nota Fiscal nº 1044436 - a compra de - açúcar para a cozinha da sede da APLB - Compre Facil Supermecado LTDA,12.00,53272.27
+269,2026-03,03_2026.pdf,5,2026-03-26,0017,C,SAIDA,"Pagtº referente à compra de materiais de limpeza - bebida l sampa, pao bisnaguinha. - _ NFC- e nº 165226 - para a sede da APLB/Araci (17.3) - RODIKSON ZAINER OLIVEIRA CARVALHO",14.00,53258.27
+270,2026-03,03_2026.pdf,5,2026-03-27,0014,C,SAIDA,"Referente ao pagtº de serviços prestados de mototaxista, moto placa JSN 5030 para realizar serviços da tesouraria da APLB - (14.2) JUAREZ SILVA DA CRUZ",42.00,53216.27
+271,2026-03,03_2026.pdf,5,2026-03-27,0008,C,SAIDA,Pagtº referente a - salários proporcional - pelos serviços prestados na limpeza/ organização Sede da APLB Sindicaato - Delegacia do Sisal/Araci-Ba - 03/2026 - CPF 777.576.295-00 (8.1) - MARIA DA CONCEIÇÃO MIRANDA DA ANUNCIAÇÃO,810.50,52405.77
+272,2026-03,03_2026.pdf,5,2026-03-27,0506,C,SAIDA,Referente ao pagtº de abastecimento com gasolina de Carro - NFC-e nº 00001933 -. Diretores da APLB que foram para eventos do CONSELHO GERAL DA APLB. POSTO PAYAYA,213.00,52192.77
+273,2026-03,03_2026.pdf,5,2026-03-27,0506,C,SAIDA,Referente ao pagtº de alimentos para Diretores da APLB que foram para eventos do CONSELHO GERAL DA APLB. RESTAURANTE & LANCHONETE GAROTO,10.00,52182.77
+274,2026-03,03_2026.pdf,5,2026-03-30,0908,C,SAIDA,Referente ao pagtº - NFC-e 42903 - compra de 4 cadeados para colocar nas cancelas do alambrado do Espaço de Eventos da APLB - Delegacia do Sisal/Araci-BA. - (904.1) ELETRODOMESTICO CAMILA,60.00,52122.77
+275,2026-03,03_2026.pdf,5,2026-03-31,0906,C,SAIDA,"Pagtº referente a serviços prestados -Servente-, referente ao mês de 03/2026 mais o 1/3 de férias, adiantamento de férias, no terreno do CTR da APLB/Araci - (906.2) ROBISON PEREIRA DOS SANTOS",1495.00,50627.77
+276,2026-03,03_2026.pdf,5,2026-03-31,0906,C,SAIDA,PREST. SERV. CONST. / CTR - AJUDA DE CUSTO COMBUSTÍVEL 03/2026 - (906.2) ROBISON PEREIRA DOS SANTOS,100.00,50527.77
+277,2026-03,03_2026.pdf,5,2026-03-31,0906,C,SAIDA,"Pagtº referente a serviços prestados - Servente -, referente ao mês de 03/2026, no terreno do CTR da APLB/Araci - (906.1) CPF868.458.025-72 (906.1) DERMEVAL JESUS DO NASCIMENTO",1701.03,48826.74
+278,2026-03,03_2026.pdf,5,2026-03-31,0906,C,SAIDA,0906-PREST. SERV. CONST. / CTR - AJUDA DE CUSTO COMBUSTÍVEL 03/2026 CPF 868.458.025-72 - (906.1) CPF868.458.025-72 (906.1) DERMEVAL JESUS DO NASCIMENTO,100.00,48726.74
+279,2026-03,03_2026.pdf,6,2026-03-31,0906,C,SAIDA,"Pagtº referente a serviços prestados -Pedreiro-, referente ao mês de 03/2026, no terreno do CTR da APLB/Araci Ba - CPF 005.201.895-40 (906.3) GILDAZIO SALVADOR DAS NEVES",2383.00,46343.74
+280,2026-03,03_2026.pdf,6,2026-03-31,0906,C,SAIDA,PREST. SERV. CONST. / CTR - AJUDA DE CUSTO COMBUSTÍVEL 3/2026 - (906.3) GILDÁSIO SALVADOR DAS NEVES,100.00,46243.74
+281,2026-03,03_2026.pdf,6,2026-03-31,0802,C,SAIDA,Pagtº referente a despesas com -RESARCIMENTO/GRATIFICAÇÃO- de auxílio rural - 03/2026 - (802.2) TIAGO SANTIAGO DE CARVALHO,799.00,45444.74

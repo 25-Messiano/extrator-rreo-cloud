@@ -1,8 +1,0 @@
-EXTRATOR RREO CLOUD v1.3.5.1 - CORRECAO DE PUBLICACAO/NAVEGACAO
-
-Depois do deploy, a versao correta e comprovada visualmente por DOIS sinais:
-1) Menu lateral: "Download em Lote" entre "Central de Correcoes" e "Arquivos Cloud".
-2) Rodape lateral: "v1.3.5.1".
-
-A pagina tambem possui acesso redundante na tela inicial: "Abrir Download em Lote".
-Se esses sinais nao aparecerem, o Render nao esta executando este pacote/commit.

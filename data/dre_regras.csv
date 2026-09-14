@@ -1,0 +1,8 @@
+prioridade,grupo,natureza,codigo,regex,observacao
+10,2.4.12,SAIDA,0803,,"Orientação dos DRE oficiais jan-mar/2026: pagamentos 0803 compõem Outros Serviços de Terceiros"
+20,2.4.12,SAIDA,0021,,"Manutenção de equipamentos eletrônicos classificada como Outros Serviços de Terceiros nos meses de referência"
+30,2.4.12,SAIDA,0014,,"Prestação de serviços diversos para a sede"
+40,2.4.12,SAIDA,0012,"lavagem.*(bancos|estofad)","Serviço de lavagem/estofados - não confundir com seguro/manutenção do veículo"
+50,2.4.12,SAIDA,0501,"servi[cç]os prestados extras.*limpeza","Serviço extraordinário de limpeza"
+60,2.4.12,SAIDA,0008,"trabalhos espor[aá]dicos|canteiros|251[.]12","Serviços esporádicos de limpeza/manutenção, fora da folha regular"
+70,2.4.12,SAIDA,0916,"c[oó]pia de chave|duas di[aá]ria.*pedreiro|137[: ]?50hs.*carpintaria|limpeza e manuten[cç][aã]o dos dois espa[cç]os","Serviços diversos efetivamente prestados; exclui aquisição/confecção de materiais"

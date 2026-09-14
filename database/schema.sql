@@ -1,0 +1,2 @@
+-- Referência SQL conceitual. A criação efetiva usa SQLAlchemy em models/entities.py.
+-- Produção: PostgreSQL Cloud.
